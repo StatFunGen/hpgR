@@ -23,9 +23,9 @@ NULL
 #' @rdname models_genotype_error
 #' @export
 simulateGenotypeCalls <- function(n, frequency, error) {
-    n <- .scalarInteger(n, "n")
-    .probability(frequency, "frequency")
-    .probability(error, "error")
+    n <- scalarInteger(n, "n")
+    probability(frequency, "frequency")
+    probability(error, "error")
     truth <- sample(0:2, n, replace = TRUE, prob = hweProbability(frequency))
     observed <- truth
     error_event <- runif(n) < error
@@ -36,21 +36,21 @@ simulateGenotypeCalls <- function(n, frequency, error) {
 #' @rdname models_genotype_error
 #' @export
 hweProbability <- function(f) {
-  .probability(f, "f")
+  probability(f, "f")
   c(G0 = (1 - f)^2, G1 = 2 * f * (1 - f), G2 = f^2)
 }
 
 #' @rdname models_genotype_error
 #' @export
 genotypeLogLik <- function(f, g) {
-  .dosageVector(g, "g")
+  dosageVector(g, "g")
   sum(log(hweProbability(f)[g + 1]))
 }
 
 #' @rdname models_genotype_error
 #' @export
 genotypeErrorMatrix <- function(epsilon) {
-  .probability(epsilon, "epsilon")
+  probability(epsilon, "epsilon")
   out <- matrix(epsilon / 3, 3, 3,
                 dimnames = list(observed = 0:2, true = 0:2))
   diag(out) <- 1 - 2 * epsilon / 3
@@ -60,7 +60,7 @@ genotypeErrorMatrix <- function(epsilon) {
 #' @rdname models_genotype_error
 #' @export
 genotypeErrorJoint <- function(d, f, epsilon) {
-  .dosageVector(d, "d")
+  dosageVector(d, "d")
   genotypeErrorMatrix(epsilon)[d + 1, , drop = FALSE] *
     rep(hweProbability(f), each = length(d))
 }
@@ -96,11 +96,11 @@ genotypeErrorUpdate <- function(d, f, epsilon) {
 #' @export
 fitGenotypeError <- function(d, f = mean(d) / 2, epsilon = 0.05,
                    tolerance = 1e-10, max_iterations = 10000) {
-  .dosageVector(d, "d")
-  .probability(f, "f")
-  .probability(epsilon, "epsilon")
-  .positiveScalar(tolerance, "tolerance")
-  max_iterations <- .scalarInteger(max_iterations, "max_iterations")
+  dosageVector(d, "d")
+  probability(f, "f")
+  probability(epsilon, "epsilon")
+  positiveScalar(tolerance, "tolerance")
+  max_iterations <- scalarInteger(max_iterations, "max_iterations")
   converged <- FALSE
   history <- data.frame(
     iteration = 0, f = f, epsilon = epsilon,

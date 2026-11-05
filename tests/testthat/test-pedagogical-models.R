@@ -39,7 +39,7 @@ test_that("generation records feed the same conditional variance inverse", {
     x <- simulateFrequencyRecords()
     expect_identical(dim(x$counts), c(20L, 105L))
     expect_true(all(x$counts[1, ] == 16L))
-    estimate <- estimate_from_generations(x$records$frequency[1, ],
+    estimate <- estimateFromGenerations(x$records$frequency[1, ],
                                           x$records$frequency[2, ])
     expect_equal(unname(estimate['Ne_V']), 16.07360, tolerance = 1e-5)
     law <- frequencyCountDistribution()
@@ -51,11 +51,11 @@ test_that("small source-model controls retain simple limiting cases", {
     x <- driftMoments(c(16,100), 0:600)
     expect_equal(2 * x$variance + x$diversity,
                  matrix(.5, nrow(x$variance), ncol(x$variance)), tolerance = 1e-12)
-    expect_identical(LD(rep(.25,4)), 0)
-    expect_identical(LD(c(3,1,1,3)/8), 1/8)
-    expect_length(pti_rooted_trees(1:4), 15L)
+    expect_identical(ld(rep(.25,4)), 0)
+    expect_identical(ld(c(3,1,1,3)/8), 1/8)
+    expect_length(ptiRootedTrees(1:4), 15L)
     G <- rbind(c(0,0,0), c(1,0,0), c(0,1,0), c(0,0,1))
-    expect_length(pti_compatible_trees(G), 15L)
+    expect_length(ptiCompatibleTrees(G), 15L)
     f <- simulateNewMutationPaths()
     expect_identical(dim(f$paths), c(1001L,200L))
     expect_false(anyNA(f$paths[1001, ]))
@@ -74,8 +74,8 @@ test_that("genealogy animation retains the seeded coalescent realization", {
 
 test_that("classroom Kingman trees use the shared source-derived event kernel", {
     for (n in c(2L, 3L, 5L, 12L)) {
-        source <- hpgR:::.msprimeAncestryCopies(n, 80, 1L, seed = 820001L)
-        tree <- pg_kingman_tree(80, n, ancestry_seed = 820001L)
+        source <- hpgR:::msprimeAncestryCopies(n, 80, 1L, seed = 820001L)
+        tree <- pgKingmanTree(80, n, ancestry_seed = 820001L)
         expect_identical(tree$nodes$id, source$nodes$id + 1L)
         expect_identical(tree$nodes$time, source$nodes$time)
         expect_identical(tree$edges$parent, source$edges$parent + 1L)
@@ -83,21 +83,21 @@ test_that("classroom Kingman trees use the shared source-derived event kernel", 
     }
     for (samples in c(1L, 2L, 3L))
         expect_identical(simulateAncestry(samples, 80, 10, seed = 820002L),
-            hpgR:::.msprimeAncestryCopies(2L * samples, 80, 10, seed = 820002L))
-    expect_true(".msprimeAncestryCopies" %in% all.names(body(pg_kingman_tree)))
+            hpgR:::msprimeAncestryCopies(2L * samples, 80, 10, seed = 820002L))
+    expect_true("msprimeAncestryCopies" %in% all.names(body(pgKingmanTree)))
 })
 
 test_that("classroom tree mutations use the shared source-derived mutation kernel", {
-    tree <- pg_kingman_tree(80, 5L, ancestry_seed = 820003L)
+    tree <- pgKingmanTree(80, 5L, ancestry_seed = 820003L)
     for (mu in c(0, .0002)) {
-        ancestry <- hpgR:::.pgTreeAncestry(tree, 1000)
+        ancestry <- hpgR:::pgTreeAncestry(tree, 1000)
         source <- mutateAncestry(ancestry, mu, seed = 820004L)
-        sample <- pg_mutate_tree(tree, 1000, mu, mutation_seed = 820004L)
+        sample <- pgMutateTree(tree, 1000, mu, mutation_seed = 820004L)
         expect_identical(unname(sample$haplotypes), ancestryData(source)$observed$haplotypes)
         expect_identical(sample$positions_bp, source$sites$position)
         expect_identical(sample$mutations$time, source$mutations$time)
         expect_identical(sample$mutations$child, tree$nodes$id[source$mutations$node + 1L])
         expect_equal(sample$ancestral_exposure, 1000 * sum(tree$edges$length))
     }
-    expect_true(".msprimeMutations" %in% all.names(body(pg_mutate_tree)))
+    expect_true("msprimeMutations" %in% all.names(body(pgMutateTree)))
 })

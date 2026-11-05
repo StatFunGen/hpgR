@@ -10,8 +10,8 @@
 # Assumptions: neutral biallelic sequences, known phase/map/rate, random mating.
 # Validation uses exact small matrices and direct pair enumeration.
 
-.populationHaplotypes <- function(haplotypes) {
-    x <- .genotypeMatrix(haplotypes)
+populationHaplotypes <- function(haplotypes) {
+    x <- genotypeMatrix(haplotypes)
     if (nrow(x) < 2L || any(x > 1L)) {
         stop("haplotypes must have at least two rows and contain only 0 and 1",
              call. = FALSE)
@@ -19,7 +19,7 @@
     x
 }
 
-.populationLengths <- function(chromosome, sequenceLength) {
+populationLengths <- function(chromosome, sequenceLength) {
     ids <- unique(chromosome)
     represented <- vapply(ids, function(id) sum(chromosome == id), integer(1))
     if (!is.numeric(sequenceLength) || any(!is.finite(sequenceLength)) ||
@@ -65,14 +65,14 @@
 summarizePopulationSample <- function(haplotypes, chromosome = NULL,
                                       sequenceLength = ncol(haplotypes),
                                       sfsGroups = NULL) {
-    x <- .populationHaplotypes(haplotypes)
+    x <- populationHaplotypes(haplotypes)
     n <- nrow(x)
     if (is.null(chromosome)) chromosome <- rep("1", ncol(x))
     if (length(chromosome) != ncol(x) || anyNA(chromosome)) {
         stop("chromosome must label every represented site", call. = FALSE)
     }
     chromosome <- as.character(chromosome)
-    lengths <- .populationLengths(chromosome, sequenceLength)
+    lengths <- populationLengths(chromosome, sequenceLength)
     k <- colSums(x)
     minor <- pmin(k, n - k)
     maxMinor <- floor(n / 2)
@@ -95,9 +95,9 @@ summarizePopulationSample <- function(haplotypes, chromosome = NULL,
     }
     byChromosome <- lapply(names(lengths), function(id) {
         selected <- chromosome == id
-        sfs <- .tskitSfs(k[selected], n, polarised = FALSE)
+        sfs <- tskitSfs(k[selected], n, polarised = FALSE)
         names(sfs) <- as.character(seq_len(maxMinor))
-        differences <- sum(.tskitDiversity(k[selected], n))
+        differences <- sum(tskitDiversity(k[selected], n))
         list(chromosome = id, sequenceLength = lengths[[id]],
              pairwiseDifferences = differences,
              piPerSite = differences / lengths[[id]],
@@ -141,15 +141,15 @@ summarizePopulationSample <- function(haplotypes, chromosome = NULL,
 estimateDiversitySize <- function(haplotypes, mutationRate,
                                   sequenceLength = ncol(haplotypes),
                                   mutationModel = c("infinite_sites", "symmetric_parental")) {
-    x <- .populationHaplotypes(haplotypes)
-    mu <- .positiveScalar(mutationRate, "mutationRate")
+    x <- populationHaplotypes(haplotypes)
+    mu <- positiveScalar(mutationRate, "mutationRate")
     if (mu >= .5) stop("mutationRate must be smaller than 1/2", call. = FALSE)
-    length <- .positiveScalar(sequenceLength, "sequenceLength")
+    length <- positiveScalar(sequenceLength, "sequenceLength")
     if (length < ncol(x)) stop("sequenceLength is smaller than the site count", call. = FALSE)
     model <- match.arg(mutationModel)
     k <- colSums(x)
     n <- nrow(x)
-    H <- sum(.tskitDiversity(k, n)) / length
+    H <- sum(tskitDiversity(k, n)) / length
     if (model == "infinite_sites") {
         Ne <- H / (4 * mu)
     } else {
@@ -161,7 +161,7 @@ estimateDiversitySize <- function(haplotypes, mutationRate,
          nHaplotypes = n, mutationModel = model)
 }
 
-.inferencePairIndices <- function(m, maxPairs) {
+inferencePairIndices <- function(m, maxPairs) {
     count <- m * (m - 1) / 2
     if (count <= maxPairs) return(t(utils::combn(m, 2L)))
     if (count <= 1e6) {
@@ -210,7 +210,7 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
                            distanceBreaks = c(.03, .07, .12, .2),
                            minMinorAlleleFrequency = .1, maxPairs = 50000L,
                            seed = 1L) {
-    x <- .populationHaplotypes(haplotypes)
+    x <- populationHaplotypes(haplotypes)
     n <- nrow(x)
     if (n < 4L) stop("at least four sampled haplotypes are required", call. = FALSE)
     if (!is.numeric(geneticPositions) || length(geneticPositions) != ncol(x) ||
@@ -226,17 +226,17 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
         any(diff(distanceBreaks) <= 0)) {
         stop("distanceBreaks must be increasing nonnegative Morgan distances", call. = FALSE)
     }
-    cutoff <- .positiveScalar(minMinorAlleleFrequency, "minMinorAlleleFrequency")
+    cutoff <- positiveScalar(minMinorAlleleFrequency, "minMinorAlleleFrequency")
     if (cutoff >= .5) stop("minor allele frequency cutoff must be below 1/2", call. = FALSE)
-    maxPairs <- .scalarInteger(maxPairs, "maxPairs")
-    seed <- .scalarInteger(seed, "seed", 0L)
-    restore <- .rngRestorer()
+    maxPairs <- scalarInteger(maxPairs, "maxPairs")
+    seed <- scalarInteger(seed, "seed", 0L)
+    restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     set.seed(seed)
     p <- colMeans(x)
     selected <- which(pmin(p, 1 - p) >= cutoff)
     if (length(selected) < 2L) stop("fewer than two sites pass the frequency filter", call. = FALSE)
-    indices <- .inferencePairIndices(length(selected), maxPairs)
+    indices <- inferencePairIndices(length(selected), maxPairs)
     first <- selected[indices[, 1L]]
     second <- selected[indices[, 2L]]
     distance <- abs(geneticPositions[first] - geneticPositions[second])
@@ -248,8 +248,8 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
     if (!length(first)) stop("no within-chromosome pairs fall in the distance bins", call. = FALSE)
     joint <- vapply(seq_along(first), function(j)
         mean(x[, first[j]] * x[, second[j]]), numeric(1))
-    D <- .tskitD(joint, p[first], p[second])
-    rho2 <- .tskitR2(joint, p[first], p[second])
+    D <- tskitD(joint, p[first], p[second])
+    rho2 <- tskitR2(joint, p[first], p[second])
     r <- -expm1(-2 * distance) / 2
     gamma <- ((1 - r)^2 + r^2) / (2 * r * (2 - r))
     correction <- 1 / n
@@ -285,10 +285,10 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
 #' @param f Four haplotype frequencies ordered AB, Ab, aB, ab.
 #' @param parent_frequency Equal, interior parental frequencies across at least two independent transitions.
 #' @param offspring_frequency Matching offspring frequencies, one per transition.
-#' @returns LD returns scalar D. estimate_from_generations returns parental_p, transitions, variance, c_V and Ne_V; offspring records must have positive variance.
+#' @returns ld returns scalar D. estimateFromGenerations returns parental_p, transitions, variance, c_V and Ne_V; offspring records must have positive variance.
 #' @examples
-#' LD(c(.3,.2,.2,.3))
-#' estimate_from_generations(rep(.5,4), c(.4,.5,.6,.5))
+#' ld(c(.3,.2,.2,.3))
+#' estimateFromGenerations(rep(.5,4), c(.4,.5,.6,.5))
 NULL
 
 # Frequency-class drift inversion and two-locus D from the course's
@@ -296,11 +296,11 @@ NULL
 
 #' @rdname models_frequency_controls
 #' @export
-LD <- function(f) .tskitD(f[1], f[1] + f[2], f[1] + f[3])
+ld <- function(f) tskitD(f[1], f[1] + f[2], f[1] + f[3])
 
 #' @rdname models_frequency_controls
 #' @export
-estimate_from_generations <- function(parent_frequency, offspring_frequency) {
+estimateFromGenerations <- function(parent_frequency, offspring_frequency) {
     stopifnot(length(parent_frequency) == length(offspring_frequency),
               length(parent_frequency) > 1L, length(unique(parent_frequency)) == 1L)
     p <- parent_frequency[1]

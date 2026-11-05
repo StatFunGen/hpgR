@@ -8,11 +8,11 @@ library(hpgR)
 library(hpgR)
 
 failure <- function(expr) stopifnot(inherits(try(expr, silent = TRUE), "try-error"))
-compare_record <- function(record) {
+compareRecord <- function(record) {
     stopifnot(record$map_length == 0, length(record$local_trees) == 1L)
     n <- length(record$sample_nodes)
     tree <- record$local_trees[[1L]]
-    quick <- pg_forward_exposure(record$size_history$N, n,
+    quick <- pgForwardExposure(record$size_history$N, n,
                                  record$ancestry_seed,
                                  sample_indices = record$sample_indices)
     reference <- tabulate(lengths(tree$descendants), nbins = n - 1L)
@@ -30,9 +30,9 @@ designs <- list(list(sizes = rep(1L, 3L), n = 2L, sample = c(1L, 2L)),
                 list(sizes = 3L, n = 3L, sample = c(2L, 4L, 6L)))
 for (i in seq_along(designs)) {
     d <- designs[[i]]
-    record <- pg_record_ancestry(d$sizes, 1000, d$n, ancestry_seed = 81800L + i,
+    record <- pgRecordAncestry(d$sizes, 1000, d$n, ancestry_seed = 81800L + i,
                                  sample_indices = d$sample)
-    compare_record(record)
+    compareRecord(record)
 }
 cat("PASS: exact full-map exposure, root age and extension on four tiny designs\n")
 
@@ -44,7 +44,7 @@ if (!is.na(truth_index)) {
     for (dataset in truth) for (region in dataset$regions) {
         record <- region$ancestry
         if (record$map_length != 0) next
-        compare_record(record)
+        compareRecord(record)
         compared <- compared + 1L
     }
     stopifnot(compared == 9L)
@@ -52,40 +52,40 @@ if (!is.na(truth_index)) {
 }
 
 # A separately initialized mutation RNG draws independent aggregate Poisson bins.
-exposure <- pg_forward_exposure(rep(8L, 5L), n = 6L, ancestry_seed = 9912L)
+exposure <- pgForwardExposure(rep(8L, 5L), n = 6L, ancestry_seed = 9912L)
 expected <- 2e-4 * 1000 * exposure$branch_generations
-mutations <- pg_with_seed(9941L, function()
+mutations <- pgWithSeed(9941L, function()
     replicate(20000L, rpois(length(expected), expected)))
 stopifnot(all(abs(rowMeans(mutations) - expected) <
                   6 * sqrt(pmax(expected, 1e-12) / ncol(mutations)) + 1e-10),
           all(abs(apply(mutations, 1, var) - expected) <
                   .1 * pmax(expected, 1)))
-zero <- pg_forward_sfs(rep(3L, 4L), n = 4L, mu = 0)
+zero <- pgForwardSfs(rep(3L, 4L), n = 4L, mu = 0)
 stopifnot(length(zero$sfs) == 3L, all(zero$sfs == 0),
-          identical(pg_forward_sfs(rep(3L, 4L), n = 4L),
-                    pg_forward_sfs(rep(3L, 4L), n = 4L)))
-failure(pg_forward_exposure(0L, 2L))
-failure(pg_forward_exposure(2L, c(2L, 3L)))
-failure(pg_forward_exposure(2L, 5L))
-failure(pg_forward_exposure(2L, 2.5))
-failure(pg_forward_exposure(2L, 2L, sample_indices = c(1L, 1L)))
-failure(pg_forward_exposure(2L, 2L, sample_indices = c(1L, 5L)))
-failure(pg_forward_exposure(2L, 2L, max_extension = -1L))
-failure(pg_forward_exposure(2L, 2L, max_extension = 0L))
-failure(pg_forward_sfs(3L, n = 2L, mu = -1))
-failure(pg_forward_sfs(3L, n = 2L, length_bp = 0))
+          identical(pgForwardSfs(rep(3L, 4L), n = 4L),
+                    pgForwardSfs(rep(3L, 4L), n = 4L)))
+failure(pgForwardExposure(0L, 2L))
+failure(pgForwardExposure(2L, c(2L, 3L)))
+failure(pgForwardExposure(2L, 5L))
+failure(pgForwardExposure(2L, 2.5))
+failure(pgForwardExposure(2L, 2L, sample_indices = c(1L, 1L)))
+failure(pgForwardExposure(2L, 2L, sample_indices = c(1L, 5L)))
+failure(pgForwardExposure(2L, 2L, max_extension = -1L))
+failure(pgForwardExposure(2L, 2L, max_extension = 0L))
+failure(pgForwardSfs(3L, n = 2L, mu = -1))
+failure(pgForwardSfs(3L, n = 2L, length_bp = 0))
 set.seed(426L)
 before <- .Random.seed
-invisible(pg_forward_sfs(rep(3L, 4L), n = 4L))
+invisible(pgForwardSfs(rep(3L, 4L), n = 4L))
 stopifnot(identical(before, .Random.seed))
 rm(".Random.seed", envir = .GlobalEnv)
-invisible(pg_forward_sfs(rep(3L, 4L), n = 4L))
+invisible(pgForwardSfs(rep(3L, 4L), n = 4L))
 stopifnot(!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
 cat("PASS: Poisson means/variances, zero mutation, seed replay, invalid input, RNG restoration\n")
 
 elapsed <- system.time({
     library <- lapply(seq_len(1000L), function(i)
-        pg_forward_sfs(c(80L, rep(20L, 40L), rep(80L, 20L)),
+        pgForwardSfs(c(80L, rep(20L, 40L), rep(80L, 20L)),
                         ancestry_seed = 1500000L + i,
                         mutation_seed = 1600000L + i))
 })[["elapsed"]]

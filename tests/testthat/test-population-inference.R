@@ -130,7 +130,7 @@ test_that("pair subsampling is deterministic and restores the caller's RNG state
     expect_lte(nrow(a$pairs), 50)
     # Exercise the bounded-memory pair sampler independently of LD values.
     set.seed(1)
-    pairs <- hpgR:::.inferencePairIndices(2000L, 1000L)
+    pairs <- hpgR:::inferencePairIndices(2000L, 1000L)
     expect_equal(nrow(pairs), 1000)
     expect_true(all(pairs[, 1] < pairs[, 2]))
     expect_false(anyDuplicated(pairs) > 0)

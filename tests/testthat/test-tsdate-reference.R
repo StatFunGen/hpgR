@@ -1,7 +1,7 @@
 test_that("R likelihood kernels reproduce original C++ numerical results", {
     fixtures <- readRDS(test_path("fixtures", "tsdate-reference.rds"))
     for (x in fixtures$kernels) {
-        actual <- hpgR:::.td_tsdate_precalc_mutation_liks(x$muts, x$spans,
+        actual <- hpgR:::tdTsdatePrecalcMutationLiks(x$muts, x$spans,
             x$fixed, x$dt, x$mu, TRUE, FALSE)
         expect_equal(actual, x$expected, tolerance = 1e-12)
     }

@@ -13,7 +13,7 @@
 #' @return Zero-based integer bin indices; -1 marks excluded positions.
 #' @export
 assignCMBins <- function(cM, cm_min, bin_width_cm, n_bins) {
-    n_bins <- .scalarInteger(n_bins, "n_bins")
+    n_bins <- scalarInteger(n_bins, "n_bins")
     if (!is.numeric(cM) || any(!is.finite(cM)) ||
         length(cm_min) != 1L || !is.finite(cm_min) ||
         length(bin_width_cm) != 1L || !is.finite(bin_width_cm)) {
@@ -61,7 +61,7 @@ pairCountHistogram <- function(snps_per_bin) {
 #' @return List containing weighted sums, bin counts, squared sums and pair counts.
 #' @export
 weightedLDBins <- function(genotype, p_A, p_B, p_hat, bin_id, n_bins) {
-    n_bins <- .scalarInteger(n_bins, "n_bins")
+    n_bins <- scalarInteger(n_bins, "n_bins")
     if (!is.matrix(genotype) || !is.numeric(genotype) ||
         any(!is.finite(genotype)) || nrow(genotype) < 1L || ncol(genotype) < 1L) {
         stop("genotype must be a finite nonempty numeric matrix", call. = FALSE)

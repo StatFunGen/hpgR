@@ -1,6 +1,6 @@
 # Render-data rebuild. Scientific posterior calculations are in hpgR.
 args <- commandArgs(trailingOnly=TRUE)
-if (length(args) != 1L) stop('Supply the P8149_2026_vignettes directory')
+if (length(args) != 1L) stop('Supply the course notebook directory')
 site <- normalizePath(args[1L],mustWork=TRUE)
 library(hpgR)
 book <- jsonlite::fromJSON(file.path(site,'P8149_Lecture_2_HMM_Basics.ipynb'),

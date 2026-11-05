@@ -9,7 +9,7 @@
 #' @param tie_tolerance Nonnegative log likelihood tolerance for retaining tied best fits.
 #' @param tree Recursively nested list of labelled tips.
 #' @param theta Nonnegative interval mutation exposures (mutation rate times length times generation durations).
-#' @param A Numeric edge-by-ranked-interval design matrix from pti_rank_designs.
+#' @param A Numeric edge-by-ranked-interval design matrix from ptiRankDesigns.
 #' @param counts Nonnegative derived-variant counts assigned to the design edges, in matching row order.
 #' @param gradient Logical; return the objective gradient instead of its scalar value.
 #' @param four Logical; require four rows when TRUE, otherwise at least two.
@@ -19,20 +19,20 @@
 #' @param tips Distinct integer tip labels, normally 1:4.
 #' @param include_tips Logical; include singleton clades.
 #' @param include_root Logical; include the root clade.
-#' @param design One ranked-tree design returned by pti_rank_designs.
+#' @param design One ranked-tree design returned by ptiRankDesigns.
 #' @param rate Positive mutation rate times analyzed length, per generation.
-#' @param pair_result Data frame returned by pti_pair_intervals, including its sampling attributes.
+#' @param pair_result Data frame returned by ptiPairIntervals, including its sampling attributes.
 #' @param clade Distinct one-based sample indices defining a clade.
-#' @returns pti_polymorphic returns variable columns; pti_carrier_keys and pti_key return comma-separated carrier labels. pti_rooted_trees, pti_compatible_trees and pti_tree_clades return lists of nested trees or clades. pti_consensus returns status, compatible_count, supported_clades, trees and a consensus tree. pti_rank_designs returns ranked designs and their edge-duration matrices. pti_fit_rank and pti_fit_ages return likelihood fits, ages, boundaries and optimizer diagnostics. pti_pair_intervals returns pairwise Poisson clock estimates and simultaneous intervals; pti_clade_interval combines these for a clade. pti_linked_constraints returns incompatibility witnesses, minimum_blocks, minimum_changes and cut gaps. pti_poisson_objective returns a scalar negative log likelihood or its gradient; pti_validate_G invisibly returns G.
+#' @returns ptiPolymorphic returns variable columns; ptiCarrierKeys and ptiKey return comma-separated carrier labels. ptiRootedTrees, ptiCompatibleTrees and ptiTreeClades return lists of nested trees or clades. ptiConsensus returns status, compatible_count, supported_clades, trees and a consensus tree. ptiRankDesigns returns ranked designs and their edge-duration matrices. ptiFitRank and ptiFitAges return likelihood fits, ages, boundaries and optimizer diagnostics. ptiPairIntervals returns pairwise Poisson clock estimates and simultaneous intervals; ptiCladeInterval combines these for a clade. ptiLinkedConstraints returns incompatibility witnesses, minimum_blocks, minimum_changes and cut gaps. ptiPoissonObjective returns a scalar negative log likelihood or its gradient; ptiValidateG invisibly returns G.
 #' @examples
 #' G <- rbind(c(1,1,0), c(1,0,0), c(0,0,1), c(0,0,0))
-#' pti_consensus(G)$status
-#' pti_pair_intervals(G, mu=1e-4, L=1000)
+#' ptiConsensus(G)$status
+#' ptiPairIntervals(G, mu=1e-4, L=1000)
 NULL
 
 #' @rdname models_tree_inference
 #' @export
-pti_validate_G <- function(G, four = TRUE) {
+ptiValidateG <- function(G, four = TRUE) {
     if (!is.matrix(G) || !is.numeric(G) || anyNA(G) ||
         any(!is.finite(G)) || any(!G %in% c(0, 1)))
         stop("G must be a finite binary numeric matrix")
@@ -43,19 +43,19 @@ pti_validate_G <- function(G, four = TRUE) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_key <- function(x) paste(sort(as.integer(x)), collapse = ",")
+ptiKey <- function(x) paste(sort(as.integer(x)), collapse = ",")
 
 #' @rdname models_tree_inference
 #' @export
-pti_polymorphic <- function(G) {
-    pti_validate_G(G)
+ptiPolymorphic <- function(G) {
+    ptiValidateG(G)
     keep <- colSums(G) > 0L & colSums(G) < nrow(G)
     G[, keep, drop = FALSE]
 }
 
 #' @rdname models_tree_inference
 #' @export
-pti_rooted_trees <- function(tips = 1:4) {
+ptiRootedTrees <- function(tips = 1:4) {
     if (!is.numeric(tips) || !length(tips) || anyNA(tips) ||
         any(tips != as.integer(tips)) || anyDuplicated(tips))
         stop("tips must be distinct integer labels")
@@ -77,7 +77,7 @@ pti_rooted_trees <- function(tips = 1:4) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_tree_clades <- function(tree, include_tips = TRUE, include_root = TRUE) {
+ptiTreeClades <- function(tree, include_tips = TRUE, include_root = TRUE) {
     recurse <- function(t) {
         if (!is.list(t)) return(list(as.integer(t)))
         c(list(sort(as.integer(unlist(t)))),
@@ -92,38 +92,38 @@ pti_tree_clades <- function(tree, include_tips = TRUE, include_root = TRUE) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_carrier_keys <- function(G) {
+ptiCarrierKeys <- function(G) {
     if (!ncol(G)) return(character())
-    vapply(seq_len(ncol(G)), function(j) pti_key(which(G[, j] == 1)), character(1))
+    vapply(seq_len(ncol(G)), function(j) ptiKey(which(G[, j] == 1)), character(1))
 }
 
 #' @rdname models_tree_inference
 #' @export
-pti_compatible_trees <- function(G) {
-    G <- pti_polymorphic(G)
-    keys <- unique(pti_carrier_keys(G))
-    Filter(function(tree) all(keys %in% vapply(pti_tree_clades(tree), pti_key, character(1))),
-           pti_rooted_trees(seq_len(nrow(G))))
+ptiCompatibleTrees <- function(G) {
+    G <- ptiPolymorphic(G)
+    keys <- unique(ptiCarrierKeys(G))
+    Filter(function(tree) all(keys %in% vapply(ptiTreeClades(tree), ptiKey, character(1))),
+           ptiRootedTrees(seq_len(nrow(G))))
 }
 
 #' @rdname models_tree_inference
 #' @export
-pti_consensus <- function(G) {
-    G <- pti_polymorphic(G)
-    trees <- pti_compatible_trees(G)
-    keys <- unique(pti_carrier_keys(G))
+ptiConsensus <- function(G) {
+    G <- ptiPolymorphic(G)
+    trees <- ptiCompatibleTrees(G)
+    keys <- unique(ptiCarrierKeys(G))
     supported <- lapply(keys, function(k) as.integer(strsplit(k, ",", fixed = TRUE)[[1]]))
     supported <- supported[lengths(supported) > 1L & lengths(supported) < nrow(G)]
-    supported <- supported[order(lengths(supported), vapply(supported, pti_key, character(1)))]
+    supported <- supported[order(lengths(supported), vapply(supported, ptiKey, character(1)))]
     if (!length(trees)) return(list(status = "incompatible", compatible_count = 0L,
         supported_clades = supported, trees = list(), tree = NULL))
     clades <- c(lapply(seq_len(nrow(G)), function(i) i), supported, list(seq_len(nrow(G))))
     list(status = if (length(trees) == 1L) "unique_binary" else "unresolved",
          compatible_count = length(trees), supported_clades = supported,
-         trees = trees, tree = .cladeTree(clades, seq_len(nrow(G))))
+         trees = trees, tree = cladeTree(clades, seq_len(nrow(G))))
 }
 
-.cladeTree <- function(clades, tips) {
+cladeTree <- function(clades, tips) {
     build <- function(parent) {
         if (length(parent) == 1L) return(parent)
         children <- Filter(function(x) length(x) < length(parent) && all(x %in% parent), clades)
@@ -137,11 +137,11 @@ pti_consensus <- function(G) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_rank_designs <- function(tree) {
+ptiRankDesigns <- function(tree) {
     tips <- sort(as.integer(unlist(tree)))
     if (!identical(tips, 1:4)) stop("tree must have the four labels 1, 2, 3, 4")
-    all_clades <- pti_tree_clades(tree)
-    keys <- vapply(all_clades, pti_key, character(1))
+    all_clades <- ptiTreeClades(tree)
+    keys <- vapply(all_clades, ptiKey, character(1))
     if (length(all_clades) != 7L || anyDuplicated(keys) ||
         any(vapply(Filter(is.list, list(tree)), length, integer(1)) != 2L))
         stop("tree must be rooted and binary")
@@ -149,15 +149,15 @@ pti_rank_designs <- function(tree) {
     binary <- function(t) !is.list(t) || (length(t) == 2L && all(vapply(t, binary, logical(1))))
     if (!binary(tree)) stop("tree must be rooted and binary")
     internal <- all_clades[lengths(all_clades) > 1L]
-    internal <- internal[order(lengths(internal), vapply(internal, pti_key, character(1)))]
-    ikeys <- vapply(internal, pti_key, character(1))
-    root <- pti_key(1:4)
+    internal <- internal[order(lengths(internal), vapply(internal, ptiKey, character(1)))]
+    ikeys <- vapply(internal, ptiKey, character(1))
+    root <- ptiKey(1:4)
     edge_clades <- all_clades[keys != root]
-    edge_clades <- edge_clades[order(lengths(edge_clades), vapply(edge_clades, pti_key, character(1)))]
-    ekeys <- vapply(edge_clades, pti_key, character(1))
+    edge_clades <- edge_clades[order(lengths(edge_clades), vapply(edge_clades, ptiKey, character(1)))]
+    ekeys <- vapply(edge_clades, ptiKey, character(1))
     parents <- vapply(edge_clades, function(child) {
         possible <- Filter(function(x) length(x) > length(child) && all(child %in% x), all_clades)
-        pti_key(possible[[which.min(lengths(possible))]])
+        ptiKey(possible[[which.min(lengths(possible))]])
     }, character(1))
     perms <- function(x) if (length(x) == 1L) list(x) else
         unlist(lapply(seq_along(x), function(i)
@@ -168,13 +168,13 @@ pti_rank_designs <- function(tree) {
         all(match(ikeys[descendants], order) < match(ikeys[i], order))
     }, logical(1))), perms(ikeys))
     lapply(orders, function(order) {
-        age_row <- function(key) {
+        ageRow <- function(key) {
             r <- match(key, order)
             if (is.na(r)) return(rep(0, 3L))
             as.numeric(seq_len(3L) <= r)
         }
         A <- t(vapply(seq_along(ekeys), function(i)
-            age_row(parents[i]) - age_row(ekeys[i]), numeric(3)))
+            ageRow(parents[i]) - ageRow(ekeys[i]), numeric(3)))
         dimnames(A) <- list(ekeys, paste0("duration_", 1:3))
         list(tree = tree, order = order, A = A, edge_clades = edge_clades,
              edge_keys = ekeys, parent_keys = parents)
@@ -183,7 +183,7 @@ pti_rank_designs <- function(tree) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_poisson_objective <- function(theta, A, counts, gradient = FALSE) {
+ptiPoissonObjective <- function(theta, A, counts, gradient = FALSE) {
     lambda <- as.vector(A %*% theta)
     impossible <- counts > 0 & lambda <= 0
     if (any(impossible) || any(lambda < 0))
@@ -200,7 +200,7 @@ pti_poisson_objective <- function(theta, A, counts, gradient = FALSE) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_fit_rank <- function(design, counts, rate) {
+ptiFitRank <- function(design, counts, rate) {
     A <- design$A
     scale <- max(1, sum(counts) / sum(A))
     solutions <- list()
@@ -211,7 +211,7 @@ pti_fit_rank <- function(design, counts, rate) {
         if (any(counts > 0 & rowSums(A[, free, drop = FALSE]) == 0)) next
         if (!length(free)) {
             solutions[[length(solutions) + 1L]] <- list(theta = rep(0, 3),
-                objective = pti_poisson_objective(rep(0, 3), A, counts), convergence = 0L)
+                objective = ptiPoissonObjective(rep(0, 3), A, counts), convergence = 0L)
             next
         }
         starts <- list(rep(scale, length(free)),
@@ -219,8 +219,8 @@ pti_fit_rank <- function(design, counts, rate) {
                        scale * rev(seq(.2, 2, length.out = length(free))))
         expand <- function(x) {theta <- numeric(3); theta[free] <- x; theta}
         for (start in starts) {
-            fit <- optim(start, function(x) pti_poisson_objective(expand(x), A, counts),
-                gr = function(x) pti_poisson_objective(expand(x), A, counts, TRUE)[free],
+            fit <- optim(start, function(x) ptiPoissonObjective(expand(x), A, counts),
+                gr = function(x) ptiPoissonObjective(expand(x), A, counts, TRUE)[free],
                 method = "L-BFGS-B", lower = rep(0, length(free)),
                 control = list(factr = 1e3, pgtol = 1e-9, maxit = 2000))
             solutions[[length(solutions) + 1L]] <- list(theta = expand(fit$par),
@@ -234,7 +234,7 @@ pti_fit_rank <- function(design, counts, rate) {
     nz <- vapply(solutions[tied], function(x) sum(x$theta > 0), integer(1))
     best <- solutions[[tied[which.min(nz)]]]
     theta <- best$theta
-    gradient <- pti_poisson_objective(theta, A, counts, TRUE)
+    gradient <- ptiPoissonObjective(theta, A, counts, TRUE)
     positive <- theta > 1e-7
     kkt <- max(c(abs(gradient[positive]), pmax(-gradient[!positive], 0), 0))
     delta <- theta / rate
@@ -242,35 +242,35 @@ pti_fit_rank <- function(design, counts, rate) {
     c(design, list(counts = counts, theta = theta, durations = delta, ages = ages,
         branch_lengths = setNames(as.vector(A %*% delta), design$edge_keys),
         expected_counts = setNames(as.vector(A %*% theta), design$edge_keys),
-        loglik = -pti_poisson_objective(theta, A, counts), boundary = any(theta == 0),
+        loglik = -ptiPoissonObjective(theta, A, counts), boundary = any(theta == 0),
         kkt_violation = kkt, convergence = best$convergence,
         start_objectives = values))
 }
 
 #' @rdname models_tree_inference
 #' @export
-pti_fit_ages <- function(G, mu, L, tie_tolerance = 1e-7) {
-    G <- pti_polymorphic(G)
+ptiFitAges <- function(G, mu, L, tie_tolerance = 1e-7) {
+    G <- ptiPolymorphic(G)
     if (length(mu) != 1L || !is.finite(mu) || mu <= 0 ||
         length(L) != 1L || !is.finite(L) || L <= 0 ||
         length(tie_tolerance) != 1L || !is.finite(tie_tolerance) || tie_tolerance < 0)
         stop("mu, L, and tie_tolerance must be finite; mu and L must be positive")
-    consensus <- pti_consensus(G)
+    consensus <- ptiConsensus(G)
     if (!length(consensus$trees)) return(list(status = "incompatible", consensus = consensus,
         fits = list(), best_fits = list(), node_ages = data.frame()))
-    observed_keys <- pti_carrier_keys(G)
+    observed_keys <- ptiCarrierKeys(G)
     fits <- list()
     for (tree_index in seq_along(consensus$trees)) {
-        for (design in pti_rank_designs(consensus$trees[[tree_index]])) {
+        for (design in ptiRankDesigns(consensus$trees[[tree_index]])) {
             counts <- vapply(design$edge_keys, function(k) sum(observed_keys == k), numeric(1))
-            fit <- pti_fit_rank(design, counts, mu * L)
+            fit <- ptiFitRank(design, counts, mu * L)
             fit$tree_index <- tree_index
             fits[[length(fits) + 1L]] <- fit
         }
     }
     best_loglik <- max(vapply(fits, `[[`, numeric(1), "loglik"))
     best_fits <- Filter(function(x) x$loglik >= best_loglik - tie_tolerance, fits)
-    reported <- c(vapply(consensus$supported_clades, pti_key, character(1)), pti_key(1:4))
+    reported <- c(vapply(consensus$supported_clades, ptiKey, character(1)), ptiKey(1:4))
     node_ages <- do.call(rbind, lapply(reported, function(key) {
         ages <- vapply(best_fits, function(x) unname(x$ages[key]), numeric(1))
         data.frame(clade = key, estimate_min = min(ages), estimate_max = max(ages),
@@ -284,8 +284,8 @@ pti_fit_ages <- function(G, mu, L, tie_tolerance = 1e-7) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_pair_intervals <- function(G, mu, L, alpha = .05) {
-    pti_validate_G(G, four = FALSE)
+ptiPairIntervals <- function(G, mu, L, alpha = .05) {
+    ptiValidateG(G, four = FALSE)
     if (length(mu) != 1L || !is.finite(mu) || mu <= 0 ||
         length(L) != 1L || !is.finite(L) || L <= 0 ||
         length(alpha) != 1L || !is.finite(alpha) || alpha <= 0 || alpha >= 1)
@@ -308,29 +308,29 @@ pti_pair_intervals <- function(G, mu, L, alpha = .05) {
 
 #' @rdname models_tree_inference
 #' @export
-pti_clade_interval <- function(pair_result, clade = 1:4) {
+ptiCladeInterval <- function(pair_result, clade = 1:4) {
     if (!all(c("i", "j", "estimate", "lower", "upper") %in% names(pair_result)))
-        stop("pair_result must come from pti_pair_intervals")
+        stop("pair_result must come from ptiPairIntervals")
     if (!length(clade) || anyNA(clade) || anyDuplicated(clade) ||
         any(!clade %in% seq_len(attr(pair_result, "sample_count")))) stop("invalid clade")
-    if (length(clade) == 1L) return(list(clade = pti_key(clade), estimate_max_pair = 0,
+    if (length(clade) == 1L) return(list(clade = ptiKey(clade), estimate_max_pair = 0,
         lower = 0, upper = 0, simultaneous_coverage_at_least = 1 - attr(pair_result, "alpha")))
     x <- pair_result[pair_result$i %in% clade & pair_result$j %in% clade, , drop = FALSE]
-    list(clade = pti_key(clade), estimate_max_pair = max(x$estimate), lower = max(x$lower),
+    list(clade = ptiKey(clade), estimate_max_pair = max(x$estimate), lower = max(x$lower),
          upper = max(x$upper), simultaneous_coverage_at_least = 1 - attr(pair_result, "alpha"))
 }
 
 #' @rdname models_tree_inference
 #' @export
-pti_linked_constraints <- function(G, positions) {
-    pti_validate_G(G)
+ptiLinkedConstraints <- function(G, positions) {
+    ptiValidateG(G)
     if (!is.numeric(positions) || length(positions) != ncol(G) || anyNA(positions) ||
         any(!is.finite(positions)) || is.unsorted(positions, strictly = TRUE))
         stop("positions must be finite, strictly increasing, and match the columns of G")
     keep <- which(colSums(G) > 0L & colSums(G) < nrow(G))
     G <- G[, keep, drop = FALSE]; positions <- positions[keep]
     m <- ncol(G)
-    keys <- pti_carrier_keys(G)
+    keys <- ptiCarrierKeys(G)
     sets <- lapply(seq_len(m), function(j) which(G[, j] == 1))
     incompatible <- matrix(FALSE, m, m)
     witnesses <- list()

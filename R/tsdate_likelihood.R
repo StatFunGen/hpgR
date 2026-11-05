@@ -3,19 +3,19 @@
 # hashes are recorded in inst/provenance/source-map.tsv. Base R dpois replaces
 # the identical Poisson log-PMF; triangular indexing remains zero based at APIs.
 
-.td_tsdate_logsumexp <- function(x) {
+tdTsdateLogsumexp <- function(x) {
     a <- max(x)
     if (!is.finite(a)) return(a)
     a + log(sum(exp(x - a)))
 }
-.td_tsdate_mutation_lik_fixed <- function(muts, span, timediff, mutation_rate,
+tdTsdateMutationLikFixed <- function(muts, span, timediff, mutation_rate,
                                          log_space, standardize) {
     y <- stats::dpois(muts, timediff * mutation_rate * span, log = log_space)
     if (standardize && is.finite(max(y)))
         y <- if (log_space) y - max(y) else y / max(y)
     y
 }
-.td_tsdate_precalc_mutation_liks <- function(mut_edges, edge_spans, is_fixed_child,
+tdTsdatePrecalcMutationLiks <- function(mut_edges, edge_spans, is_fixed_child,
                                             timediff_lower_tri, mutation_rate,
                                             log_space, standardize) {
     index <- rep(-1L, length(mut_edges))
@@ -26,7 +26,7 @@
         if (!length(k)) {
             keys <- rbind(keys, data.frame(muts = mut_edges[i], span = edge_spans[i]))
             k <- nrow(keys)
-            values[[k]] <- .td_tsdate_mutation_lik_fixed(mut_edges[i], edge_spans[i],
+            values[[k]] <- tdTsdateMutationLikFixed(mut_edges[i], edge_spans[i],
                 timediff_lower_tri, mutation_rate, log_space, standardize)
         }
         index[i] <- k - 1L
@@ -35,22 +35,22 @@
         matrix(numeric(), 0L, length(timediff_lower_tri))
     list(cache = cache, edge_cache_idx = index, n_unique = as.integer(nrow(keys)))
 }
-.td_triangular_sum <- function(input, starts, log_space) {
+tdTriangularSum <- function(input, starts, log_space) {
     ends <- c(starts[-1L], length(input))
     vapply(seq_along(starts), function(i) {
         value <- input[seq.int(starts[i] + 1L, ends[i])]
-        if (log_space) .td_tsdate_logsumexp(value) else sum(value)
+        if (log_space) tdTsdateLogsumexp(value) else sum(value)
     }, 0)
 }
-.td_tsdate_rowsum_lower_tri_log <- function(input, row_starts)
-    .td_triangular_sum(input, row_starts, TRUE)
-.td_tsdate_rowsum_lower_tri_lin <- function(input, row_starts)
-    .td_triangular_sum(input, row_starts, FALSE)
-.td_tsdate_rowsum_upper_tri_log <- function(input, col_starts)
-    .td_triangular_sum(input, col_starts, TRUE)
-.td_tsdate_rowsum_upper_tri_lin <- function(input, col_starts)
-    .td_triangular_sum(input, col_starts, FALSE)
-.td_constrain_ages <- function(time, fixed, parent, child, epsilon, iterations = 0L) {
+tdTsdateRowsumLowerTriLog <- function(input, row_starts)
+    tdTriangularSum(input, row_starts, TRUE)
+tdTsdateRowsumLowerTriLin <- function(input, row_starts)
+    tdTriangularSum(input, row_starts, FALSE)
+tdTsdateRowsumUpperTriLog <- function(input, col_starts)
+    tdTriangularSum(input, col_starts, TRUE)
+tdTsdateRowsumUpperTriLin <- function(input, col_starts)
+    tdTriangularSum(input, col_starts, FALSE)
+tdConstrainAges <- function(time, fixed, parent, child, epsilon, iterations = 0L) {
     # tsdate_constrain_ages, including the final rootward constraint sweep.
     parent <- parent + 1L
     child <- child + 1L

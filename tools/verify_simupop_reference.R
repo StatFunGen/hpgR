@@ -25,9 +25,9 @@ record <- function(name, x, y, margin, variance=TRUE) {
     delta <- mean(y)-mean(x)
     mean_ok <- abs(delta)+z*se <= margin
     variance_delta <- var(y)-var(x)
-    variance_se <- function(a) sqrt(max(0,
+    varianceSe <- function(a) sqrt(max(0,
         (mean((a-mean(a))^4)-(length(a)-3)/(length(a)-1)*var(a)^2)/length(a)))
-    vse <- sqrt(variance_se(x)^2+variance_se(y)^2)
+    vse <- sqrt(varianceSe(x)^2+varianceSe(y)^2)
     vmargin <- .35*mean(c(var(x),var(y)))
     variance_ok <- !variance || abs(variance_delta)+z*vse <= vmargin+1e-12
     grid <- sort(unique(c(x,y)))
@@ -65,9 +65,9 @@ for(j in seq_along(design$clones)) {
     cat("R clone",d$N,d$steps,length(y),"runs",proc.time()[3]-t0,"seconds\n")
 }
 
-mutate <- getFromNamespace(".simupopMutate","hpgR")
-meiosis <- getFromNamespace(".simupopMeiosis","hpgR")
-sample_diploids <- getFromNamespace(".simupopSample","hpgR")
+mutate <- getFromNamespace("simupopMutate","hpgR")
+meiosis <- getFromNamespace("simupopMeiosis","hpgR")
+sample_diploids <- getFromNamespace("simupopSample","hpgR")
 operator_checks <- list()
 for(d in design$operators) {
     seed <- as.integer(d$seed)+99991L

@@ -3,7 +3,7 @@
 # give a Monte Carlo discrepancy check. Check fractions describe the declared
 # candidate's predictive distribution. Linked loci remain dependent within runs.
 
-.historySummaryMatrix <- function(x, name) {
+historySummaryMatrix <- function(x, name) {
     if (!is.matrix(x) || !is.numeric(x) || nrow(x) < 2L || !ncol(x) ||
         any(!is.finite(x)) || is.null(colnames(x)) ||
         anyDuplicated(colnames(x)) || any(!nzchar(colnames(x)))) {
@@ -42,9 +42,9 @@ buildHistoryLibrary <- function(training, calibration, varianceFloor = 1e-12) {
         stop("training and calibration require the same named candidate histories",
              call. = FALSE)
     }
-    floor <- .positiveScalar(varianceFloor, "varianceFloor")
-    training <- lapply(training, .historySummaryMatrix, name = "training")
-    calibration <- lapply(calibration[names(training)], .historySummaryMatrix, name = "calibration")
+    floor <- positiveScalar(varianceFloor, "varianceFloor")
+    training <- lapply(training, historySummaryMatrix, name = "training")
+    calibration <- lapply(calibration[names(training)], historySummaryMatrix, name = "calibration")
     features <- colnames(training[[1L]])
     if (any(!vapply(c(training, calibration), function(x)
         identical(colnames(x), features), logical(1)))) {
@@ -104,8 +104,8 @@ terminalSpectrumFit <- function(spectra, mutationRate, sequenceLength) {
     if (!is.matrix(spectra) || !is.numeric(spectra) || nrow(spectra) < 1L ||
         ncol(spectra) < 2L || any(!is.finite(spectra)) || any(spectra < 0))
         stop("spectra must contain nonnegative finite counts for n >= 3")
-    mu <- .positiveScalar(mutationRate, "mutationRate")
-    L <- .positiveScalar(sequenceLength, "sequenceLength")
+    mu <- positiveScalar(mutationRate, "mutationRate")
+    L <- positiveScalar(sequenceLength, "sequenceLength")
     n <- ncol(spectra) + 1L
     B <- nrow(spectra)
     total <- colSums(spectra)

@@ -14,18 +14,18 @@
 #' @param mutation_seed Nonnegative integer seed for conditional mutation draws.
 #' @param sizes Nonempty positive integer diploid sizes in forward generation order, beginning with the ancestral population.
 #' @param max_extension Nonnegative integer limit for generations added before the stated history to complete sample ancestry.
-#' @param record Finite-copy ancestry record returned by pg_record_ancestry.
-#' @param local One local interval record returned by pg_local_trees.
+#' @param record Finite-copy ancestry record returned by pgRecordAncestry.
+#' @param local One local interval record returned by pgLocalTrees.
 #' @param nodes Node data frame with one-based id and nonnegative time before the sample.
 #' @param edges Edge data frame with parent and child IDs; copy records also use left and right interval coordinates in bases.
 #' @param sample_nodes Distinct one-based IDs of sampled nodes.
 #' @param model Character label describing the generating model.
 #' @param position Position in bases, inside the left-closed, right-open analyzed region.
-#' @returns Tree constructors and compressors return nodes, edges, sample_nodes, sample_ids, root, descendants and model; pg_compress_trees returns a list of local trees. pg_tree_summaries returns pair_time, TMRCA, branch lengths by descendant count and waiting_times. pg_mutate_tree returns haplotypes, positions_bp, mutations and their spectrum. pg_sample_labels validates labels and returns invisible NULL.
+#' @returns Tree constructors and compressors return nodes, edges, sample_nodes, sample_ids, root, descendants and model; pgCompressTrees returns a list of local trees. pgTreeSummaries returns pair_time, TMRCA, branch lengths by descendant count and waiting_times. pgMutateTree returns haplotypes, positions_bp, mutations and their spectrum. pgSampleLabels validates labels and returns invisible NULL.
 #' @examples
-#' tree <- pg_kingman_tree(20, n=4, ancestry_seed=42)
-#' pg_tree_summaries(tree)$TMRCA
-#' dna <- pg_mutate_tree(tree, length_bp=1000, mu=1e-4, mutation_seed=43)
+#' tree <- pgKingmanTree(20, n=4, ancestry_seed=42)
+#' pgTreeSummaries(tree)$TMRCA
+#' dna <- pgMutateTree(tree, length_bp=1000, mu=1e-4, mutation_seed=43)
 #' dim(dna$haplotypes)
 NULL
 
@@ -34,38 +34,38 @@ NULL
 
 #' @rdname models_genealogy
 #' @export
-pg_sample_labels <- function(sample_ids, n) {
-    pg_check(is.character(sample_ids) && length(sample_ids) == n &&
+pgSampleLabels <- function(sample_ids, n) {
+    pgCheck(is.character(sample_ids) && length(sample_ids) == n &&
                  !anyNA(sample_ids) && all(nzchar(sample_ids)) &&
                  !anyDuplicated(sample_ids), "invalid sample labels")
 }
 
 #' @rdname models_genealogy
 #' @export
-pg_make_tree <- function(nodes, edges, sample_nodes, sample_ids, model) {
-    pg_integer(sample_nodes, 1, "sample_nodes")
+pgMakeTree <- function(nodes, edges, sample_nodes, sample_ids, model) {
+    pgInteger(sample_nodes, 1, "sample_nodes")
     n <- length(sample_nodes)
-    pg_check(n >= 2L && !anyDuplicated(sample_nodes), "invalid tree sample")
-    pg_sample_labels(sample_ids, n)
-    pg_check(is.data.frame(nodes) && all(c("id", "time") %in% names(nodes)) &&
+    pgCheck(n >= 2L && !anyDuplicated(sample_nodes), "invalid tree sample")
+    pgSampleLabels(sample_ids, n)
+    pgCheck(is.data.frame(nodes) && all(c("id", "time") %in% names(nodes)) &&
                  is.data.frame(edges) && all(c("parent", "child") %in% names(edges)),
              "invalid tree node/edge columns")
-    pg_integer(nodes$id, 1, "node IDs")
-    pg_check(!anyDuplicated(nodes$id) && all(sample_nodes %in% nodes$id) &&
+    pgInteger(nodes$id, 1, "node IDs")
+    pgCheck(!anyDuplicated(nodes$id) && all(sample_nodes %in% nodes$id) &&
                  is.numeric(nodes$time) && all(is.finite(nodes$time)) &&
                  all(nodes$time >= 0), "invalid tree nodes")
-    pg_check(all(edges$parent %in% nodes$id) && all(edges$child %in% nodes$id) &&
+    pgCheck(all(edges$parent %in% nodes$id) && all(edges$child %in% nodes$id) &&
                  !anyDuplicated(edges$child) && nrow(edges) == nrow(nodes) - 1L,
              "each nonroot tree node needs one parent")
     roots <- setdiff(nodes$id, edges$child)
-    pg_check(length(roots) == 1L, "tree must have one root")
+    pgCheck(length(roots) == 1L, "tree must have one root")
     age <- setNames(nodes$time, nodes$id)
     edges$length <- unname(age[as.character(edges$parent)] -
                                age[as.character(edges$child)])
-    pg_check(all(is.finite(edges$length)) && all(edges$length > 0) &&
+    pgCheck(all(is.finite(edges$length)) && all(edges$length > 0) &&
                  all(age[as.character(sample_nodes)] == 0), "invalid tree branch ages")
     children <- split(edges$child, edges$parent)
-    pg_check(!any(sample_nodes %in% edges$parent) &&
+    pgCheck(!any(sample_nodes %in% edges$parent) &&
                  all(lengths(children) >= 2L) &&
                  setequal(setdiff(nodes$id, edges$parent), sample_nodes),
              "compressed tree leaves must be samples; internal nodes must branch")
@@ -76,11 +76,11 @@ pg_make_tree <- function(nodes, edges, sample_nodes, sample_ids, model) {
         if (!length(child)) next
         sets <- descendants[as.character(child)]
         joined <- unlist(sets, use.names = FALSE)
-        pg_check(all(lengths(sets) > 0L) && !anyDuplicated(joined),
+        pgCheck(all(lengths(sets) > 0L) && !anyDuplicated(joined),
                  "tree children must have disjoint descendants")
         descendants[[as.character(id)]] <- sort(joined)
     }
-    pg_check(identical(descendants[[as.character(roots)]], seq_len(n)),
+    pgCheck(identical(descendants[[as.character(roots)]], seq_len(n)),
              "root must cover every sampled copy")
     nodes$sample_id <- sample_ids[match(nodes$id, sample_nodes)]
     rownames(nodes) <- rownames(edges) <- NULL
@@ -91,7 +91,7 @@ pg_make_tree <- function(nodes, edges, sample_nodes, sample_ids, model) {
 
 #' @rdname models_genealogy
 #' @export
-pg_compress_local <- function(record, local, sample_ids) {
+pgCompressLocal <- function(record, local, sample_ids) {
     # Internal operation on one local tree of an already validated copy record.
     parent <- setNames(local$edges$parent, local$edges$child)
     children <- split(local$edges$child, local$edges$parent)
@@ -104,7 +104,7 @@ pg_compress_local <- function(record, local, sample_ids) {
         older
     }, integer(1))
     nodes <- record$nodes[match(retained, record$nodes$id), c("id", "time"), drop = FALSE]
-    tree <- pg_make_tree(nodes, data.frame(parent = compressed_parent, child = child),
+    tree <- pgMakeTree(nodes, data.frame(parent = compressed_parent, child = child),
                          record$sample_nodes, sample_ids,
                          "compressed local tree from the recorded full WF parent maps")
     tree$left <- local$left
@@ -115,32 +115,32 @@ pg_compress_local <- function(record, local, sample_ids) {
 
 #' @rdname models_genealogy
 #' @export
-pg_compress_tree <- function(record, position = 0,
+pgCompressTree <- function(record, position = 0,
                              sample_ids = paste0("S", seq_along(record$sample_nodes))) {
-    pg_validate_ancestry(record)
-    pg_check(length(position) == 1L && is.finite(position) && position >= 0 &&
+    pgValidateAncestry(record)
+    pgCheck(length(position) == 1L && is.finite(position) && position >= 0 &&
                  position < record$length_bp, "position lies outside the region")
-    trees <- pg_local_trees(record)
+    trees <- pgLocalTrees(record)
     selected <- which(vapply(trees, function(x)
         x$left <= position && position < x$right, logical(1)))
-    pg_check(length(selected) == 1L, "position must select one local tree")
-    pg_compress_local(record, trees[[selected]], sample_ids)
+    pgCheck(length(selected) == 1L, "position must select one local tree")
+    pgCompressLocal(record, trees[[selected]], sample_ids)
 }
 
 #' @rdname models_genealogy
 #' @export
-pg_compress_trees <- function(record,
+pgCompressTrees <- function(record,
                               sample_ids = paste0("S", seq_along(record$sample_nodes))) {
-    pg_validate_ancestry(record)
-    lapply(pg_local_trees(record), function(local)
-        pg_compress_local(record, local, sample_ids))
+    pgValidateAncestry(record)
+    lapply(pgLocalTrees(record), function(local)
+        pgCompressLocal(record, local, sample_ids))
 }
 
 #' @rdname models_genealogy
 #' @export
-pg_tree_summaries <- function(tree, pair = 1:2) {
-    pg_integer(pair, 1, "pair")
-    pg_check(length(pair) == 2L && !anyDuplicated(pair) && all(pair <= tree$n),
+pgTreeSummaries <- function(tree, pair = 1:2) {
+    pgInteger(pair, 1, "pair")
+    pgCheck(length(pair) == 2L && !anyDuplicated(pair) && all(pair <= tree$n),
              "pair must name two distinct sample indices")
     nodes <- tree$nodes
     edges <- tree$edges
@@ -171,14 +171,14 @@ pg_tree_summaries <- function(tree, pair = 1:2) {
 
 #' @rdname models_genealogy
 #' @export
-pg_kingman_tree <- function(Ne, n = 12L, ancestry_seed = 814901L,
+pgKingmanTree <- function(Ne, n = 12L, ancestry_seed = 814901L,
                             sample_ids = paste0("S", seq_len(n))) {
-    pg_check(length(Ne) == 1L && is.finite(Ne) && Ne > 0, "Ne must be positive")
-    pg_integer(n, 2, "n")
-    pg_check(length(n) == 1L, "n must be scalar")
-    pg_sample_labels(sample_ids, n)
-    ancestry <- .msprimeAncestryCopies(n, Ne, 1L, seed = ancestry_seed)
-    tree <- pg_make_tree(
+    pgCheck(length(Ne) == 1L && is.finite(Ne) && Ne > 0, "Ne must be positive")
+    pgInteger(n, 2, "n")
+    pgCheck(length(n) == 1L, "n must be scalar")
+    pgSampleLabels(sample_ids, n)
+    ancestry <- msprimeAncestryCopies(n, Ne, 1L, seed = ancestry_seed)
+    tree <- pgMakeTree(
         data.frame(id = ancestry$nodes$id + 1L, time = ancestry$nodes$time),
         data.frame(parent = ancestry$edges$parent + 1L, child = ancestry$edges$child + 1L),
         seq_len(n), sample_ids, "constant-size Kingman exponential pair mergers")
@@ -189,17 +189,17 @@ pg_kingman_tree <- function(Ne, n = 12L, ancestry_seed = 814901L,
 
 #' @rdname models_genealogy
 #' @export
-pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
+pgDiscreteGenealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
                                   max_extension = 20000L,
                                   sample_ids = paste0("S", seq_len(n))) {
-    pg_integer(sizes, 1, "sizes")
-    pg_integer(n, 2, "n")
-    pg_integer(max_extension, 0, "max_extension")
-    pg_check(all(sizes <= .Machine$integer.max / 2) && length(n) == 1L &&
+    pgInteger(sizes, 1, "sizes")
+    pgInteger(n, 2, "n")
+    pgInteger(max_extension, 0, "max_extension")
+    pgCheck(all(sizes <= .Machine$integer.max / 2) && length(n) == 1L &&
                  n <= 2 * tail(sizes, 1L) && length(max_extension) == 1L,
              "invalid population, sample size or completion limit")
-    pg_sample_labels(sample_ids, n)
-    pg_with_seed(ancestry_seed, function() {
+    pgSampleLabels(sample_ids, n)
+    pgWithSeed(ancestry_seed, function() {
         nodes <- data.frame(id = seq_len(n), time = rep(0, n))
         edges <- data.frame(parent = integer(), child = integer())
         lineages <- seq_len(n)
@@ -208,7 +208,7 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
         max_age <- horizon + max_extension
         age <- 0L
         while (length(lineages) > 1L) {
-            pg_check(age < max_age, "discrete genealogy reached its root-completion limit")
+            pgCheck(age < max_age, "discrete genealogy reached its root-completion limit")
             N <- if (age < horizon) parent_sizes[age + 1L] else sizes[1L]
             # Consecutive draws use the same N only up to the next size change.
             remaining <- Inf
@@ -223,7 +223,7 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
             probability <- if (k > pool) 1 else
                 -expm1(sum(log1p(-(seq_len(k) - 1L) / pool)))
             batch <- min(remaining, 1024L, max(1L, ceiling(1 / probability)))
-            draws <- matrix(.simupopDrawParents(pool, k * batch), nrow = k)
+            draws <- matrix(simupopDrawParents(pool, k * batch), nrow = k)
             collision <- rep(FALSE, batch)
             for (i in 2:k) for (j in seq_len(i - 1L))
                 collision <- collision | draws[i, ] == draws[j, ]
@@ -234,7 +234,7 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
             }
             first <- hit[1L]
             age <- age + first
-            pg_check(age <= max_age, "discrete genealogy reached its root-completion limit")
+            pgCheck(age <= max_age, "discrete genealogy reached its root-completion limit")
             # Retain every merger in this generation, including separate pair
             # mergers and multifurcations. Batched iid draws change computation,
             # not the discrete parent-copy law; unused later columns are ignored.
@@ -252,7 +252,7 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
             }
             lineages <- older
         }
-        tree <- pg_make_tree(nodes, edges, seq_len(n), sample_ids,
+        tree <- pgMakeTree(nodes, edges, seq_len(n), sample_ids,
                              "exact discrete WF iid ancestral-copy draws")
         tree$ancestry_seed <- ancestry_seed
         tree$size_history <- sizes
@@ -261,7 +261,7 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
     })
 }
 
-.pgTreeAncestry <- function(tree, length_bp) {
+pgTreeAncestry <- function(tree, length_bp) {
     ids <- tree$nodes$id
     structure(list(nodes = data.frame(id = seq_along(ids) - 1L,
         time = tree$nodes$time, flags = as.integer(ids %in% tree$sample_nodes)),
@@ -275,15 +275,15 @@ pg_discrete_genealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
 
 #' @rdname models_genealogy
 #' @export
-pg_mutate_tree <- function(tree, length_bp = 1000, mu = 2e-5,
+pgMutateTree <- function(tree, length_bp = 1000, mu = 2e-5,
                             mutation_seed = 914901L) {
-    pg_check(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
+    pgCheck(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
              "length_bp must be positive")
-    pg_check(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
+    pgCheck(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
     exposure <- length_bp * tree$edges$length
-    pg_check(all(is.finite(mu * exposure)), "mutation exposure is too large")
-    ancestry <- .pgTreeAncestry(tree, length_bp)
-    mutated <- .msprimeMutations(ancestry, mu, mutation_seed)
+    pgCheck(all(is.finite(mu * exposure)), "mutation exposure is too large")
+    ancestry <- pgTreeAncestry(tree, length_bp)
+    mutated <- msprimeMutations(ancestry, mu, mutation_seed)
     observed <- ancestryData(mutated)$observed
     G <- observed$haplotypes
     variant_ids <- if (ncol(G)) paste0("v", seq_len(ncol(G))) else character()
@@ -293,30 +293,30 @@ pg_mutate_tree <- function(tree, length_bp = 1000, mu = 2e-5,
          mutations = data.frame(position = mutations$position,
              child = tree$nodes$id[mutations$node + 1L],
              time = mutations$time, derived_state = mutations$derived_state),
-         sfs = .tskitSfs(colSums(G), tree$n),
+         sfs = tskitSfs(colSums(G), tree$n),
          ancestral_exposure = sum(exposure), mutation_seed = mutation_seed)
 }
 
 #' @rdname models_genealogy_controls
 #' @export
-recorded_subset <- function(tree, selected = 1:4) {
+recordedSubset <- function(tree, selected = 1:4) {
     sets <- lapply(tree$descendants, intersect, y = selected)
     valid <- lengths(sets) >= 2
-    keys <- vapply(sets[valid], pti_key, character(1))
+    keys <- vapply(sets[valid], ptiKey, character(1))
     ages <- tree$nodes$time[match(as.integer(names(sets)[valid]), tree$nodes$id)]
     ages <- tapply(ages, keys, min)
     ages <- setNames(as.numeric(ages), names(ages))
-    root_key <- pti_key(selected)
+    root_key <- ptiKey(selected)
     root_age <- ages[root_key]
     ages <- ages[ages <= root_age]
     clades <- lapply(names(ages), function(k) as.integer(strsplit(k, ",", fixed = TRUE)[[1]]))
     clades <- c(lapply(selected, function(i) i), clades)
-    list(tree = .cladeTree(clades, selected), ages = ages)
+    list(tree = cladeTree(clades, selected), ages = ages)
 }
 
 # Derived-allele counts for the small polarized-sequence examples.
 #' @rdname models_genealogy_controls
 #' @export
 sfs <- function(G) {
-    .tskitSfs(colSums(G), nrow(G))
+    tskitSfs(colSums(G), nrow(G))
 }

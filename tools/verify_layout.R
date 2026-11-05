@@ -50,6 +50,7 @@ stopifnot(all(grepl("^simupop(_[a-z0-9]+)*[.]R$", manifest$file[simupop_files]))
           !dir.exists(file.path(root, "docs")),
           file.exists(file.path(root, "inst", "PORTING_SOP.md")))
 stopifnot(!anyDuplicated(functions),
+          all(grepl("^[a-z][A-Za-z0-9]*$", functions)),
           !any(grepl("lecture|example[_.]?[0-9]", c(files, functions), ignore.case = TRUE)))
 review <- utils::read.delim(file.path(root,"inst/catalog/teaching-functions.tsv"))
 stopifnot(!anyDuplicated(review$function_name),

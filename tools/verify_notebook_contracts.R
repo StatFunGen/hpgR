@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Check the maintained public inputs, code records and figure ownership.
 args <- commandArgs(trailingOnly = TRUE)
-if (!length(args)) stop("Supply the P8149_2026_vignettes directory")
+if (!length(args)) stop("Supply the course notebook directory")
 site <- normalizePath(args[1L], mustWork = TRUE)
 library(hpgR)
 popgen_files <- c("P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
@@ -10,12 +10,23 @@ popgen_files <- c("P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
     "P8149_Lecture_9_Two_DNA_Copies.ipynb",
     "P8149_Lecture_9_Mutations_on_a_Tree.ipynb",
     "P8149_Lecture_9_Ancestral_Graphs.ipynb")
-files <- sort(list.files(site, '^P8149_Lecture_.*[.]ipynb$'))
+catalog <- if (file.exists(file.path(site,'catalog.json')))
+    jsonlite::fromJSON(file.path(site,'catalog.json'),simplifyVector=FALSE) else NULL
+files <- if (is.null(catalog)) sort(list.files(site, '^P8149_Lecture_.*[.]ipynb$')) else
+    sort(vapply(catalog$notebooks, `[[`, '', 'file'))
+if (!is.null(catalog)) {
+    stopifnot(!anyDuplicated(files), all(basename(files) == files),
+        setequal(files,list.files(site,'[.]ipynb$')))
+    for (entry in catalog$notebooks) stopifnot(
+        entry$role %in% c('teaching_demonstration','student_assignment'),
+        identical(entry$website, entry$lecture %in% c(2L,3L,5L,8L,9L)),
+        !grepl('answer|solution|midterm|instructor',entry$file,ignore.case=TRUE))
+}
 stopifnot(all(popgen_files %in% files))
 books <- setNames(lapply(file.path(site, files), jsonlite::fromJSON,
     simplifyVector = FALSE), files)
-source_text <- function(cell) paste(cell$source, collapse = "")
-code_cells <- function(book) Filter(function(c) c$cell_type == "code", book$cells)
+sourceText <- function(cell) paste(cell$source, collapse = "")
+codeCells <- function(book) Filter(function(c) c$cell_type == "code", book$cells)
 sha_program <- Sys.which("shasum")
 sha_args <- c("-a", "256")
 if (!nzchar(sha_program)) {
@@ -35,20 +46,21 @@ source_hashes <- setNames(lapply(paths, sha), paste0("R/", basename(paths)))
 rows <- list()
 for (name in names(books)) {
     book <- books[[name]]
-    cells <- code_cells(book)
-    code <- vapply(cells, source_text, "")
+    cells <- codeCells(book)
+    code <- vapply(cells, sourceText, "")
     stopifnot(identical(book$metadata$kernelspec$name, "ir"),
         identical(book$metadata$kernelspec$language, "R"),
         identical(book$metadata$hpgR_version, as.character(packageVersion("hpgR"))))
     invisible(lapply(code, function(text) parse(text = text)))
     imports <- sum(vapply(gregexpr("library(hpgR)", code, fixed = TRUE),
         function(x) sum(x > 0L), 0L))
-    stopifnot(imports == 1L,
+    executable <- nzchar(trimws(code))
+    stopifnot(imports == as.integer(any(executable)),
         !any(trimws(code) == "library(hpgR)"),
         !any(grepl(".p7_eval(", code, fixed = TRUE)),
         all(vapply(cells[nzchar(trimws(code))], function(c) !is.null(c$execution_count), TRUE)))
-    plotting_helpers <- c('draw_figure', 'draw_tree', 'draw_carriers',
-        'clade_nodes', 'tree_positions', 'draw_recorded_tree')
+    plotting_helpers <- c('drawFigure', 'drawTree', 'drawCarriers',
+        'cladeNodes', 'treePositions', 'drawRecordedTree')
     for (part in code) for (expr in parse(text = part)) {
         if (is.call(expr) && identical(expr[[1L]], as.name('<-')) &&
             is.symbol(expr[[2L]]) && is.call(expr[[3L]]) &&
@@ -57,7 +69,7 @@ for (name in names(books)) {
             stop('A reusable implementation remains in ', name, ': ', expr[[2L]])
     }
     packed <- as.character(jsonlite::toJSON(lapply(cells,
-        function(c) list(c$id, source_text(c))), auto_unbox = TRUE))
+        function(c) list(c$id, sourceText(c))), auto_unbox = TRUE))
     stopifnot(identical(book$metadata$notebook_code_sha256, sha(text = packed)),
         setequal(names(book$metadata$hpgR_source_sha256), names(source_hashes)))
     for (path in names(source_hashes))
@@ -71,21 +83,24 @@ for (name in names(books)) {
             paste(o$text, collapse = ""))), outputs)
     figures <- sum(vapply(outputs, function(o) "image/png" %in% names(o$data), TRUE))
     stopifnot(!length(errors), !length(warnings))
-    rows[[name]] <- list(notebook = name, code_cells = length(cells),
-        figures = figures, errors = list(), warnings = list(),
+    rows[[name]] <- list(notebook = name, codeCells = length(cells),
+        figures = figures, executableCodeCells = sum(executable),
+        role = book$metadata$course_role,
+        executionStatus = book$metadata$hpgR_validation$status,
+        errors = list(), warnings = list(),
         package_version = as.character(packageVersion("hpgR")))
 }
 
-public_data <- function(name) {
+publicData <- function(name) {
     cell <- Filter(function(c) c$id == "public-data", books[[name]]$cells)
     stopifnot(length(cell) == 1L)
     env <- new.env(parent = .GlobalEnv)
-    eval(parse(text = source_text(cell[[1L]])), envir = env)
+    eval(parse(text = sourceText(cell[[1L]])), envir = env)
     env
 }
-population <- public_data(popgen_files[3L])
-pair <- public_data(popgen_files[4L])
-tree <- public_data(popgen_files[5L])
+population <- publicData(popgen_files[3L])
+pair <- publicData(popgen_files[4L])
+tree <- publicData(popgen_files[5L])
 stopifnot(identical(pair$observed, tree$observed),
     identical(pair$observed, readRDS(file.path(site, "data/popgen_forward_p1/observed.rds"))),
     identical(tree$calibration, readRDS(file.path(site, "data/popgen_forward_p1/calibration.rds"))))
@@ -94,8 +109,8 @@ for (name in c("observed", "calibration"))
         readRDS(file.path(site, "data/population_history", paste0(name, ".rds")))))
 stopifnot(identical(population$prediction_data,
     readRDS(file.path(site, "data/population_history/history_predictions.rds"))))
-owners <- vapply(books, function(book) any(vapply(code_cells(book), function(c)
-    grepl('draw_figure("p7_common_sample_validation"', source_text(c), fixed = TRUE), TRUE)), TRUE)
+owners <- vapply(books, function(book) any(vapply(codeCells(book), function(c)
+    grepl('drawFigure("p7_common_sample_validation"', sourceText(c), fixed = TRUE), TRUE)), TRUE)
 stopifnot(identical(names(owners)[owners], popgen_files[3L]),
     !file.exists(file.path(site, "P8149_2026_Lecture_9_Simulation_Inference.ipynb")))
 
@@ -139,8 +154,8 @@ if (length(args) > 2L) {
     visit("lectures/columbia_2026_P8149/P8149_2026_Lecture_9.tex")
     textbook <- c(p7_pritchard_f2_57_complete = "Pritchard, Fig. 2.57")
     for (figure in setdiff(figures, names(textbook))) {
-        owner <- vapply(books, function(book) sum(vapply(code_cells(book), function(c)
-            grepl(paste0('draw_figure("', figure, '"'), source_text(c), fixed = TRUE), TRUE)), 0L)
+        owner <- vapply(books, function(book) sum(vapply(codeCells(book), function(c)
+            grepl(paste0('drawFigure("', figure, '"'), sourceText(c), fixed = TRUE), TRUE)), 0L)
         if (sum(owner) != 1L) stop("Figure needs one public generating cell: ", figure)
     }
     cat("Active lecture figure sources:", length(setdiff(figures, names(textbook))),
@@ -150,7 +165,7 @@ if (length(args) > 2L) {
 
 result <- unname(rows)
 if (length(args) > 1L) jsonlite::write_json(result, args[2L], auto_unbox = TRUE, pretty = TRUE)
-cat('PASS:', length(files), 'independently executed R notebooks, matching inputs and source hashes.\n')
-cat("Code cells", sum(vapply(rows, `[[`, 0L, "code_cells")),
+cat('PASS:', length(files), 'notebooks; supplied R cells, inputs and source hashes checked.\n')
+cat("Code cells", sum(vapply(rows, `[[`, 0L, "codeCells")),
     "; figures", sum(vapply(rows, `[[`, 0L, "figures")), "\n")
 cat("Shared genealogy observations and the single closing-figure source match.\n")

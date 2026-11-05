@@ -20,8 +20,8 @@
 # MatrixMutator. Recorded events give deterministic replay.
 # Reference comparisons are recorded in inst/SIMUPOP_VALIDATION.md.
 
-.simupopCheckHaplotypes <- function(haplotypes) {
-    haplotypes <- .genotypeMatrix(haplotypes)
+simupopCheckHaplotypes <- function(haplotypes) {
+    haplotypes <- genotypeMatrix(haplotypes)
     if (nrow(haplotypes) %% 2L || any(haplotypes > 1L)) {
         stop("haplotypes must have paired diploid rows and binary 0/1 alleles",
              call. = FALSE)
@@ -31,7 +31,7 @@
 
 # Draw precisely the success set of independent Bernoulli(probability) trials.
 # Keeping sparse events avoids allocating one uniform variate for every site.
-.simupopBernoulli <- function(size, probability) {
+simupopBernoulli <- function(size, probability) {
     if (!size || probability == 0) return(integer())
     if (probability == 1) return(seq_len(size))
     count <- as.integer(stats::rbinom(1L, size, probability))
@@ -44,20 +44,20 @@
 # Equivalent to the two-state SNPMutator transition matrix. Mutation acts on
 # parental chromosomes before they are used by any offspring, so two gametes
 # inheriting the same parental entry share that entry's mutation outcome.
-.simupopMutate <- function(haplotypes, forward, reverse = forward,
+simupopMutate <- function(haplotypes, forward, reverse = forward,
                             events = NULL, returnEvents = FALSE) {
     if (!is.matrix(haplotypes) || !is.numeric(haplotypes) ||
         !nrow(haplotypes) || !ncol(haplotypes)) {
         stop("haplotypes must be a nonempty numeric matrix", call. = FALSE)
     }
-    forward <- .positiveScalar(forward, "forward", zero = TRUE)
-    reverse <- .positiveScalar(reverse, "reverse", zero = TRUE)
+    forward <- positiveScalar(forward, "forward", zero = TRUE)
+    reverse <- positiveScalar(reverse, "reverse", zero = TRUE)
     if (forward > 1 || reverse > 1) {
         stop("mutation probabilities must lie between zero and one", call. = FALSE)
     }
     if (is.null(events)) {
         proposalRate <- max(forward, reverse)
-        events <- .simupopBernoulli(length(haplotypes), proposalRate)
+        events <- simupopBernoulli(length(haplotypes), proposalRate)
         if (length(events) && forward != reverse) {
             old <- haplotypes[events]
             if (anyNA(old) || any(old != 0L & old != 1L)) {
@@ -87,14 +87,14 @@
 
 # Two independent ANY_SEX RandomParentChooser calls, with replacement and
 # allowSelfing=TRUE. Each entry supplies one gamete of an offspring.
-.simupopParents <- function(parentSize, offspringSize, parents = NULL) {
-    parentSize <- .scalarInteger(parentSize, "parentSize")
-    offspringSize <- .scalarInteger(offspringSize, "offspringSize")
+simupopParents <- function(parentSize, offspringSize, parents = NULL) {
+    parentSize <- scalarInteger(parentSize, "parentSize")
+    offspringSize <- scalarInteger(offspringSize, "offspringSize")
     if (offspringSize > .Machine$integer.max / 2L) {
         stop("offspringSize is too large", call. = FALSE)
     }
     if (is.null(parents)) {
-        return(.simupopDrawParents(parentSize, 2L * offspringSize))
+        return(simupopDrawParents(parentSize, 2L * offspringSize))
     }
     if (!is.numeric(parents) || length(parents) != 2L * offspringSize ||
         any(!is.finite(parents)) || any(parents != floor(parents) |
@@ -105,12 +105,12 @@
     as.integer(parents)
 }
 
-.simupopSwitches <- function(gametes, probabilities) {
+simupopSwitches <- function(gametes, probabilities) {
     empty <- matrix(integer(), nrow = 0L, ncol = 2L,
                     dimnames = list(NULL, c("gamete", "after")))
     if (!length(probabilities) || max(probabilities) == 0) return(empty)
     proposalRate <- max(probabilities)
-    selected <- .simupopBernoulli(gametes * length(probabilities), proposalRate)
+    selected <- simupopBernoulli(gametes * length(probabilities), proposalRate)
     if (!length(selected)) return(empty)
     after <- (selected - 1L) %/% gametes + 1L
     if (any(probabilities != proposalRate)) {
@@ -131,7 +131,7 @@
 # Replay starts are 0/1, with rows=gametes and columns=chromosomes. Each switches
 # matrix has columns gamete and after, where after is a chromosome-local site
 # index: switching after site k changes the source beginning at site k+1.
-.simupopMeiosis <- function(haplotypes, parents, loci, fractions,
+simupopMeiosis <- function(haplotypes, parents, loci, fractions,
                             events = NULL, returnEvents = FALSE) {
     if (!is.matrix(haplotypes) || !is.numeric(haplotypes) ||
         !nrow(haplotypes) || nrow(haplotypes) %% 2L || !ncol(haplotypes)) {
@@ -170,7 +170,7 @@
     if (is.null(events)) {
         starts <- matrix(sample.int(2L, gametes * length(loci), replace = TRUE) - 1L,
                          nrow = gametes, ncol = length(loci))
-        switches <- lapply(rates, function(rate) .simupopSwitches(gametes, rate))
+        switches <- lapply(rates, function(rate) simupopSwitches(gametes, rate))
     } else {
         if (!is.list(events) || !is.matrix(events$starts) ||
             !identical(dim(events$starts), c(gametes, length(loci))) ||
@@ -221,12 +221,12 @@
 
 # RandomSampler draws a uniform subset of diploids without replacement.
 # extractIndividuals retains their original population order, not shuffle order.
-.simupopSample <- function(haplotypes, size, indices = NULL) {
+simupopSample <- function(haplotypes, size, indices = NULL) {
     if (!is.matrix(haplotypes) || !is.numeric(haplotypes) ||
         !nrow(haplotypes) || nrow(haplotypes) %% 2L || !ncol(haplotypes)) {
         stop("haplotypes must have paired diploid rows", call. = FALSE)
     }
-    size <- .scalarInteger(size, "size")
+    size <- scalarInteger(size, "size")
     populationSize <- nrow(haplotypes) %/% 2L
     if (size > populationSize) {
         stop("sample size cannot exceed the diploid population", call. = FALSE)

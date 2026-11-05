@@ -25,4 +25,10 @@ i denotes a derived allele carried by i of n sampled haploid sequences.
 }
 \examples{
 expectedSFS(n = 6, Ne = 10000, mu = 1e-8, length_bp = 10000)
+n <- 12L
+Ne <- 10000
+mu <- 1e-8
+L <- 10000
+prediction <- expectedSFS(n, Ne, mu, L)
+stopifnot(isTRUE(all.equal(prediction, 4 * Ne * mu * L / seq_len(n - 1L))))
 }

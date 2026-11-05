@@ -23,10 +23,10 @@ NULL
 #' @rdname models_em
 #' @export
 simulateGaussianMixture <- function(n, means, sd = 1) {
-    n <- .scalarInteger(n, "n", 2L)
+    n <- scalarInteger(n, "n", 2L)
     if (n %% 2L != 0L) stop("n must be even for equal group sizes", call. = FALSE)
-    .numericVector(means, "means", length = 2L)
-    .positiveScalar(sd, "sd")
+    numericVector(means, "means", length = 2L)
+    positiveScalar(sd, "sd")
     group <- sample(rep(c(0, 1), each = n / 2))
     observed <- rnorm(n, mean = means[group + 1], sd = sd)
     list(observed = observed, group = group)
@@ -35,9 +35,9 @@ simulateGaussianMixture <- function(n, means, sd = 1) {
 #' @rdname models_em
 #' @export
 gaussianResponsibilities <- function(observed, pi, mu) {
-  .numericVector(observed, "observed")
-  .probability(pi, "pi")
-  .numericVector(mu, "mu", length = 2L)
+  numericVector(observed, "observed")
+  probability(pi, "pi")
+  numericVector(mu, "mu", length = 2L)
   log_odds <- log(pi) - log1p(-pi) + dnorm(observed, mu[2], 1, log = TRUE) -
     dnorm(observed, mu[1], 1, log = TRUE)
   plogis(log_odds)
@@ -46,9 +46,9 @@ gaussianResponsibilities <- function(observed, pi, mu) {
 #' @rdname models_em
 #' @export
 gaussianMixtureLogLik <- function(observed, pi, mu) {
-  .numericVector(observed, "observed")
-  .probability(pi, "pi")
-  .numericVector(mu, "mu", length = 2L)
+  numericVector(observed, "observed")
+  probability(pi, "pi")
+  numericVector(mu, "mu", length = 2L)
   log_0 <- log1p(-pi) + dnorm(observed, mu[1], 1, log = TRUE)
   log_1 <- log(pi) + dnorm(observed, mu[2], 1, log = TRUE)
   largest <- pmax(log_0, log_1)
@@ -74,13 +74,13 @@ gaussianMixtureUpdate <- function(observed, pi, mu) {
 #' @export
 fitGaussianMixture <- function(observed, start, tolerance = 1e-8,
                                max_iterations = 500L) {
-  .numericVector(observed, "observed")
-  .positiveScalar(tolerance, "tolerance")
-  max_iterations <- .scalarInteger(max_iterations, "max_iterations")
+  numericVector(observed, "observed")
+  positiveScalar(tolerance, "tolerance")
+  max_iterations <- scalarInteger(max_iterations, "max_iterations")
   if (!is.list(start) || !all(c("pi", "mu") %in% names(start)))
     stop("start must contain pi and two group means in mu", call. = FALSE)
-  .probability(start$pi, "start$pi")
-  .numericVector(start$mu, "start$mu", length = 2L)
+  probability(start$pi, "start$pi")
+  numericVector(start$mu, "start$mu", length = 2L)
   if (start$pi == 0 || start$pi == 1)
     stop("start$pi must be strictly between zero and one", call. = FALSE)
   converged <- FALSE

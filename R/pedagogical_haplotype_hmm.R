@@ -25,10 +25,10 @@ NULL
 #' @rdname models_hmm
 #' @export
 binaryHMM <- function(observed, switch_probability, emission_error) {
-    .probability(observed, "observed", length = NULL)
+    probability(observed, "observed", length = NULL)
     if (any(!observed %in% 0:1)) stop("observed must contain 0 or 1", call. = FALSE)
-    .probability(switch_probability, "switch_probability")
-    .probability(emission_error, "emission_error")
+    probability(switch_probability, "switch_probability")
+    probability(emission_error, "emission_error")
     transition <- matrix(c(1 - switch_probability, switch_probability,
         switch_probability, 1 - switch_probability), 2, byrow = TRUE)
     emission <- cbind(ifelse(observed == 0, 1 - emission_error, emission_error),
@@ -55,19 +55,19 @@ binaryHMM <- function(observed, switch_probability, emission_error) {
 #' @export
 ancestryHMM <- function(observed, frequency, geneticPositions,
                         redrawRate = 8, initial = NULL) {
-    .numericMatrix(frequency, "frequency")
-    .probability(as.vector(frequency), "frequency", length = NULL)
+    numericMatrix(frequency, "frequency")
+    probability(as.vector(frequency), "frequency", length = NULL)
     if (!(is.numeric(observed) || is.logical(observed)) || is.complex(observed) || !is.null(dim(observed)) ||
         length(observed) != nrow(frequency) ||
         any(!is.na(observed) & !observed %in% 0:1))
         stop("observed must give one binary allele or NA per marker", call. = FALSE)
-    .numericVector(geneticPositions, "geneticPositions", nrow(frequency))
+    numericVector(geneticPositions, "geneticPositions", nrow(frequency))
     if (any(diff(geneticPositions) < 0))
         stop("geneticPositions must be nondecreasing", call. = FALSE)
-    .positiveScalar(redrawRate, "redrawRate", zero = TRUE)
+    positiveScalar(redrawRate, "redrawRate", zero = TRUE)
     k <- ncol(frequency)
     if (is.null(initial)) initial <- rep(1 / k, k)
-    .probability(initial, "initial", k)
+    probability(initial, "initial", k)
     if (abs(sum(initial) - 1) > 1e-10)
         stop("initial must sum to one", call. = FALSE)
     emission <- matrix(1, nrow(frequency), k, dimnames = dimnames(frequency))
@@ -85,8 +85,8 @@ ancestryHMM <- function(observed, frequency, geneticPositions,
 #' @rdname models_hmm
 #' @export
 copyingTransition <- function(stay, weights) {
-    .probability(stay, "stay")
-    .probability(weights, "weights", length = NULL)
+    probability(stay, "stay")
+    probability(weights, "weights", length = NULL)
     if (abs(sum(weights) - 1) >= 1e-10) stop("weights must sum to 1", call. = FALSE)
     k <- length(weights)
     stay * diag(k) + (1 - stay) * matrix(rep(weights, each = k), nrow = k)
@@ -95,12 +95,12 @@ copyingTransition <- function(stay, weights) {
 #' @rdname models_hmm
 #' @export
 copyingEmission <- function(reference, observed, error) {
-    .numericMatrix(reference, "reference")
+    numericMatrix(reference, "reference")
     if (any(!reference %in% 0:1) || !is.numeric(observed) || is.complex(observed) ||
         !is.null(dim(observed)) || nrow(reference) != length(observed) ||
         any(!is.na(observed) & !observed %in% 0:1))
         stop("reference must be binary with one row per observed allele (0, 1 or NA)", call. = FALSE)
-    .probability(error, "error")
+    probability(error, "error")
     out <- matrix(1, nrow(reference), ncol(reference),
         dimnames = list(marker = rownames(reference), state = colnames(reference)))
     typed <- which(!is.na(observed))
@@ -111,10 +111,10 @@ copyingEmission <- function(reference, observed, error) {
 #' @rdname models_hmm
 #' @export
 simulateCopyingPath <- function(reference, redraw, error) {
-    .numericMatrix(reference, "reference")
+    numericMatrix(reference, "reference")
     if (any(!reference %in% 0:1)) stop("reference must contain 0 or 1", call. = FALSE)
-    .probability(redraw, "redraw")
-    .probability(error, "error")
+    probability(redraw, "redraw")
+    probability(error, "error")
     M <- nrow(reference)
     K <- ncol(reference)
     path <- target <- integer(M)
@@ -131,8 +131,8 @@ simulateCopyingPath <- function(reference, redraw, error) {
 #' @rdname models_hmm
 #' @export
 simulateReferenceHaplotype <- function(frequency, copy_probability = 0.70) {
-  .probability(frequency, "frequency", length = NULL)
-  .probability(copy_probability, "copy_probability")
+  probability(frequency, "frequency", length = NULL)
+  probability(copy_probability, "copy_probability")
   haplotype <- integer(length(frequency))
   haplotype[1] <- rbinom(1, 1, frequency[1])
   if (length(haplotype) > 1L) for (s in 2:length(haplotype)) {

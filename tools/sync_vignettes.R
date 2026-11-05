@@ -1,14 +1,18 @@
 #!/usr/bin/env Rscript
-# Run maintained notebooks with this package, verify them, then refresh the site.
-# Rscript tools/sync_vignettes.R /path/to/P8149_2026_vignettes [--build-site]
+# Run the course notebooks with this package and verify their saved outputs.
+# Rscript tools/sync_vignettes.R [NOTEBOOK_DIRECTORY] [--build-site]
 main <- function() {
 args <- commandArgs(trailingOnly=TRUE)
-if (!length(args) || any(!args[-1L] %in% '--build-site'))
-    stop('Supply the vignette directory and optionally --build-site')
-site <- normalizePath(args[1L], mustWork=TRUE)
-build_site <- '--build-site' %in% args
 script <- sub('^--file=', '', commandArgs()[grepl('^--file=', commandArgs())])
 root <- normalizePath(file.path(dirname(script), '..'), mustWork=TRUE)
+directories <- args[!startsWith(args, '--')]
+if (length(directories) > 1L || any(startsWith(args, '--') & args != '--build-site'))
+    stop('Supply at most one notebook directory and optionally --build-site')
+site <- normalizePath(if (length(directories)) directories[1L] else
+    file.path(root, 'notebooks'), mustWork=TRUE)
+build_site <- '--build-site' %in% args
+if (build_site && !file.exists(file.path(site, 'myst.yml')))
+    stop('A MyST site configuration is required for --build-site')
 if (!requireNamespace('jsonlite', quietly=TRUE)) stop('Install jsonlite for notebook maintenance')
 rscript <- file.path(R.home('bin'),'Rscript')
 r <- file.path(R.home('bin'),'R')
@@ -35,31 +39,67 @@ dir.create(stage)
 cat('Staged validation: ',stage,'\n',sep='')
 source_paths <- list.files(file.path(root,'R'),'[.]R$',full.names=TRUE)
 source_hashes <- setNames(lapply(source_paths,sha),paste0('R/',basename(source_paths)))
-read_book <- function(path) jsonlite::fromJSON(path,simplifyVector=FALSE)
-source_cells <- function(book) lapply(book$cells,function(c)
-    list(id=c$id,type=c$cell_type,source=c$source))
-files <- sort(list.files(site,'^P8149_Lecture_.*[.]ipynb$'))
+readBook <- function(path) jsonlite::fromJSON(path,simplifyVector=FALSE)
+sourceCells <- function(book) lapply(book$cells,function(c)
+    list(id=c$id,type=c$cell_type,source=paste(c$source,collapse='')))
+catalog_path <- file.path(site, 'catalog.json')
+catalog <- if (file.exists(catalog_path))
+    jsonlite::fromJSON(catalog_path, simplifyVector=FALSE) else NULL
+files <- if (is.null(catalog)) sort(list.files(site,'^P8149_Lecture_.*[.]ipynb$')) else
+    sort(vapply(catalog$notebooks, `[[`, '', 'file'))
 if (!length(files)) stop('No maintained notebooks found')
-original <- setNames(lapply(file.path(site,files),read_book),files)
+if (anyDuplicated(files) || any(basename(files) != files)) stop('Invalid notebook catalog')
+original <- setNames(lapply(file.path(site,files),readBook),files)
 inputs <- unique(unlist(lapply(original,function(b)names(b$metadata$notebook_input_sha256))))
 input_hashes <- setNames(lapply(inputs,function(path) {
     resolved <- normalizePath(file.path(site,path),mustWork=TRUE)
     if (!startsWith(resolved,paste0(site,.Platform$file.sep))) stop('Input outside site: ',path)
     sha(resolved)
 }),inputs)
-for (path in c(files,inputs)) {
+assets <- list.files(file.path(site,'widgets'), recursive=TRUE, full.names=FALSE)
+assets <- if (length(assets)) file.path('widgets', assets) else character()
+staged_paths <- unique(c(files, inputs, assets,
+    if (!is.null(catalog)) 'catalog.json'))
+for (path in staged_paths) {
     dest <- file.path(stage,path)
     dir.create(dirname(dest),recursive=TRUE,showWarnings=FALSE)
     if (!file.copy(file.path(site,path),dest)) stop('Could not stage ',path)
 }
-run(r,c('CMD','INSTALL',shQuote(root)),file.path(stage,'install.log'))
+validation_library <- file.path(stage, 'library')
+dir.create(validation_library)
+run(r,c('CMD','INSTALL',paste0('--library=',shQuote(validation_library)),shQuote(root)),
+    file.path(stage,'install.log'))
 version <- read.dcf(file.path(root,'DESCRIPTION'))[1L,'Version']
 
 # Figure files are generated only when explicitly requested by the lecturer.
-old_figure_dir <- Sys.getenv('P8149_FIGURE_DIR',unset=NA_character_)
+variables <- c('P8149_FIGURE_DIR','R_HOME','R_LIBS','PATH','JUPYTER_PATH')
+old_environment <- Sys.getenv(variables, unset=NA_character_)
+oldwd <- getwd()
+on.exit({
+    setwd(oldwd)
+    for (name in variables) {
+        if (is.na(old_environment[[name]])) Sys.unsetenv(name) else
+            do.call(Sys.setenv, setNames(list(old_environment[[name]]), name))
+    }
+}, add=TRUE)
 Sys.unsetenv(c('P8149_FIGURE_DIR','R_HOME'))
-oldwd <- setwd(stage)
+kernel_root <- file.path(stage, 'jupyter')
+dir.create(file.path(kernel_root, 'kernels/ir'), recursive=TRUE)
+jsonlite::write_json(list(argv=c(r,'--slave','--vanilla','-e',
+    'options(width=120L); IRkernel::main()',
+    '--args','{connection_file}'), display_name='R',language='R'),
+    file.path(kernel_root,'kernels/ir/kernel.json'),auto_unbox=TRUE,pretty=TRUE)
+Sys.setenv(R_LIBS=validation_library,
+    PATH=paste(dirname(r),Sys.getenv('PATH'),sep=.Platform$path.sep),
+    JUPYTER_PATH=paste(c(kernel_root,if (!is.na(old_environment[['JUPYTER_PATH']]))
+        old_environment[['JUPYTER_PATH']]),collapse=.Platform$path.sep))
+setwd(stage)
 for (file in files) {
+    executable <- Filter(function(c) c$cell_type == 'code' &&
+        nzchar(trimws(paste(c$source,collapse=''))), original[[file]]$cells)
+    if (!length(executable)) {
+        cat('Check instructions ',file,'\n',sep=''); next
+    }
     cat('Execute ',file,'\n',sep=''); flush.console()
     run(jupyter,c('nbconvert','--to','notebook','--execute','--inplace',
         '--ExecutePreprocessor.kernel_name=ir','--ExecutePreprocessor.timeout=600',
@@ -68,8 +108,8 @@ for (file in files) {
 run(rscript,c(shQuote(file.path(root,'tools/rebuild_hmm_widget.R')),shQuote(stage)),
     file.path(stage,'widgets.log'))
 for (file in files) {
-    book <- read_book(file.path(stage,file))
-    if (!identical(source_cells(original[[file]]),source_cells(book)))
+    book <- readBook(file.path(stage,file))
+    if (!identical(sourceCells(original[[file]]),sourceCells(book)))
         stop('Execution changed notebook source: ',file)
     for (i in seq_along(book$cells)) if (!length(book$cells[[i]]$metadata))
         book$cells[[i]]$metadata <- structure(list(),names=character())
@@ -80,7 +120,11 @@ for (file in files) {
     book$metadata$notebook_code_hash_format <- 'UTF-8 JSON cell-id/source pairs followed by newline'
     book$metadata$hpgR_source_sha256 <- source_hashes
     book$metadata$hpgR_version <- version
-    book$metadata$hpgR_validation <- list(status='fresh_R_session_pass',version=version)
+    executable <- Filter(function(c) nzchar(trimws(paste(c$source,collapse=''))), cells)
+    book$metadata$hpgR_validation <- list(status=if (!length(executable))
+        'instructions_checked' else if (identical(book$metadata$course_role,
+        'student_assignment')) 'supplied_cells_pass' else 'fresh_R_session_pass',
+        version=version)
     book$metadata$notebook_source <- 'R calculations provided by hpgR'
     paths <- names(book$metadata$notebook_input_sha256)
     book$metadata$notebook_input_sha256 <- if(length(paths))
@@ -96,8 +140,8 @@ run(rscript,c(shQuote(file.path(root,'tools/verify_notebook_contracts.R')),
 # Detect concurrent edits before replacing any canonical notebook output.
 for (i in seq_along(source_paths)) if (!identical(sha(source_paths[i]),source_hashes[[i]]))
     stop('Package source changed during notebook execution; rerun synchronization')
-for (file in files) if (!identical(source_cells(read_book(file.path(site,file))),
-                                  source_cells(original[[file]])))
+for (file in files) if (!identical(sourceCells(readBook(file.path(site,file))),
+                                  sourceCells(original[[file]])))
     stop('Notebook source changed during execution: ',file)
 for (path in inputs) if (!identical(sha(file.path(site,path)),input_hashes[[path]]))
     stop('Notebook input changed during execution: ',path)
@@ -115,9 +159,6 @@ if (build_site) {
     if (!file.exists(book_jupyter)) book_jupyter <- jupyter
     run(book_jupyter,c('book','build','--html'),file.path(stage,'site-build.log'))
 }
-setwd(oldwd)
-if (is.na(old_figure_dir)) Sys.unsetenv('P8149_FIGURE_DIR') else
-    Sys.setenv(P8149_FIGURE_DIR=old_figure_dir)
 cat('PASS: ',length(files),' notebooks; ',length(html_files),
     ' standalone HTML exports; hpgR ',version,
     if(build_site)'; local website rebuilt' else '',

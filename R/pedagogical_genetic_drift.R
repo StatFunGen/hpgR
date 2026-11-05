@@ -3,12 +3,12 @@
 #' @rdname models_process_examples
 #' @export
 simulateFrequencyRecords <- function(N=16L, generations=19L, cultures=105L, p0=.5, seed=1956L) {
-    .scalarInteger(N, "N")
-    .scalarInteger(generations, "generations", 0L)
-    .scalarInteger(cultures, "cultures")
-    .scalarInteger(seed, "seed", 0L)
-    .probability(p0, "p0")
-    restore <- .rngRestorer()
+    scalarInteger(N, "N")
+    scalarInteger(generations, "generations", 0L)
+    scalarInteger(cultures, "cultures")
+    scalarInteger(seed, "seed", 0L)
+    probability(p0, "p0")
+    restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     RNGkind("Mersenne-Twister", "Inversion", "Rejection")
     set.seed(seed)
@@ -32,11 +32,11 @@ simulateFrequencyRecords <- function(N=16L, generations=19L, cultures=105L, p0=.
 #' @rdname models_process_examples
 #' @export
 simulateNewMutationPaths <- function(copies=100L, replicates=200L, generations=1000L, seed=8202L) {
-    .scalarInteger(copies, "copies")
-    .scalarInteger(replicates, "replicates")
-    .scalarInteger(generations, "generations")
-    .scalarInteger(seed, "seed", 0L)
-    restore <- .rngRestorer()
+    scalarInteger(copies, "copies")
+    scalarInteger(replicates, "replicates")
+    scalarInteger(generations, "generations")
+    scalarInteger(seed, "seed", 0L)
+    restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     set.seed(seed)
     mutation_copies <- as.integer(copies)
@@ -58,8 +58,8 @@ simulateNewMutationPaths <- function(copies=100L, replicates=200L, generations=1
 #' @rdname models_process_examples
 #' @export
 frequencyCountDistribution <- function(N=16L, generations=19L) {
-    .scalarInteger(N, "N")
-    .scalarInteger(generations, "generations", 0L)
+    scalarInteger(N, "N")
+    scalarInteger(generations, "generations", 0L)
     record_N <- as.integer(N)
     record_generations <- as.integer(generations)
     M <- 2L * record_N
@@ -75,11 +75,11 @@ frequencyCountDistribution <- function(N=16L, generations=19L) {
 #' @rdname models_process_examples
 #' @export
 driftMoments <- function(N, time, p0=.5) {
-    .numericVector(N, "N", minimum = 1)
+    numericVector(N, "N", minimum = 1)
     if (any(N != floor(N))) stop("N must contain integer population sizes", call. = FALSE)
-    .numericVector(time, "time", minimum = 0)
+    numericVector(time, "time", minimum = 0)
     if (any(time != floor(time))) stop("time must contain integer generations", call. = FALSE)
-    .probability(p0, "p0")
+    probability(p0, "p0")
     list(variance=sapply(N, function(n) p0*(1-p0)*(1-(1-1/(2*n))^time)),
          diversity=sapply(N, function(n) 2*p0*(1-p0)*(1-1/(2*n))^time))
 }
@@ -87,9 +87,9 @@ driftMoments <- function(N, time, p0=.5) {
 #' @rdname models_demographic_processes
 #' @export
 zeroCountUpperBound <- function(n, confidence = .95) {
-    .numericVector(n, "n", minimum = 1)
+    numericVector(n, "n", minimum = 1)
     if (any(n != floor(n))) stop("n must contain positive integers", call. = FALSE)
-    .probability(confidence, "confidence")
+    probability(confidence, "confidence")
     if (confidence == 0 || confidence == 1)
         stop("confidence must be strictly between 0 and 1", call. = FALSE)
     -expm1(log1p(-confidence) / n)

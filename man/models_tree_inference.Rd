@@ -2,52 +2,52 @@
 % Please edit documentation in R/pedagogical_genealogy_likelihood.R
 \name{models_tree_inference}
 \alias{models_tree_inference}
-\alias{pti_validate_G}
-\alias{pti_key}
-\alias{pti_polymorphic}
-\alias{pti_rooted_trees}
-\alias{pti_tree_clades}
-\alias{pti_carrier_keys}
-\alias{pti_compatible_trees}
-\alias{pti_consensus}
-\alias{pti_rank_designs}
-\alias{pti_poisson_objective}
-\alias{pti_fit_rank}
-\alias{pti_fit_ages}
-\alias{pti_pair_intervals}
-\alias{pti_clade_interval}
-\alias{pti_linked_constraints}
+\alias{ptiValidateG}
+\alias{ptiKey}
+\alias{ptiPolymorphic}
+\alias{ptiRootedTrees}
+\alias{ptiTreeClades}
+\alias{ptiCarrierKeys}
+\alias{ptiCompatibleTrees}
+\alias{ptiConsensus}
+\alias{ptiRankDesigns}
+\alias{ptiPoissonObjective}
+\alias{ptiFitRank}
+\alias{ptiFitAges}
+\alias{ptiPairIntervals}
+\alias{ptiCladeInterval}
+\alias{ptiLinkedConstraints}
 \title{Sequence constraints and mutation-clock fits for four copies}
 \usage{
-pti_validate_G(G, four = TRUE)
+ptiValidateG(G, four = TRUE)
 
-pti_key(x)
+ptiKey(x)
 
-pti_polymorphic(G)
+ptiPolymorphic(G)
 
-pti_rooted_trees(tips = 1:4)
+ptiRootedTrees(tips = 1:4)
 
-pti_tree_clades(tree, include_tips = TRUE, include_root = TRUE)
+ptiTreeClades(tree, include_tips = TRUE, include_root = TRUE)
 
-pti_carrier_keys(G)
+ptiCarrierKeys(G)
 
-pti_compatible_trees(G)
+ptiCompatibleTrees(G)
 
-pti_consensus(G)
+ptiConsensus(G)
 
-pti_rank_designs(tree)
+ptiRankDesigns(tree)
 
-pti_poisson_objective(theta, A, counts, gradient = FALSE)
+ptiPoissonObjective(theta, A, counts, gradient = FALSE)
 
-pti_fit_rank(design, counts, rate)
+ptiFitRank(design, counts, rate)
 
-pti_fit_ages(G, mu, L, tie_tolerance = 1e-07)
+ptiFitAges(G, mu, L, tie_tolerance = 1e-07)
 
-pti_pair_intervals(G, mu, L, alpha = 0.05)
+ptiPairIntervals(G, mu, L, alpha = 0.05)
 
-pti_clade_interval(pair_result, clade = 1:4)
+ptiCladeInterval(pair_result, clade = 1:4)
 
-pti_linked_constraints(G, positions)
+ptiLinkedConstraints(G, positions)
 }
 \arguments{
 \item{G}{Numeric binary haplotype matrix, sampled copies in rows and polarized sites in columns; zero is ancestral. Most pti_ functions require exactly four rows.}
@@ -66,13 +66,13 @@ pti_linked_constraints(G, positions)
 
 \item{theta}{Nonnegative interval mutation exposures (mutation rate times length times generation durations).}
 
-\item{A}{Numeric edge-by-ranked-interval design matrix from pti_rank_designs.}
+\item{A}{Numeric edge-by-ranked-interval design matrix from ptiRankDesigns.}
 
 \item{counts}{Nonnegative derived-variant counts assigned to the design edges, in matching row order.}
 
 \item{gradient}{Logical; return the objective gradient instead of its scalar value.}
 
-\item{design}{One ranked-tree design returned by pti_rank_designs.}
+\item{design}{One ranked-tree design returned by ptiRankDesigns.}
 
 \item{rate}{Positive mutation rate times analyzed length, per generation.}
 
@@ -84,20 +84,20 @@ pti_linked_constraints(G, positions)
 
 \item{alpha}{Scalar family-wise error probability strictly between zero and one.}
 
-\item{pair_result}{Data frame returned by pti_pair_intervals, including its sampling attributes.}
+\item{pair_result}{Data frame returned by ptiPairIntervals, including its sampling attributes.}
 
 \item{clade}{Distinct one-based sample indices defining a clade.}
 
 \item{positions}{Strictly increasing variant positions in bases, one per G column.}
 }
 \value{
-pti_polymorphic returns variable columns; pti_carrier_keys and pti_key return comma-separated carrier labels. pti_rooted_trees, pti_compatible_trees and pti_tree_clades return lists of nested trees or clades. pti_consensus returns status, compatible_count, supported_clades, trees and a consensus tree. pti_rank_designs returns ranked designs and their edge-duration matrices. pti_fit_rank and pti_fit_ages return likelihood fits, ages, boundaries and optimizer diagnostics. pti_pair_intervals returns pairwise Poisson clock estimates and simultaneous intervals; pti_clade_interval combines these for a clade. pti_linked_constraints returns incompatibility witnesses, minimum_blocks, minimum_changes and cut gaps. pti_poisson_objective returns a scalar negative log likelihood or its gradient; pti_validate_G invisibly returns G.
+ptiPolymorphic returns variable columns; ptiCarrierKeys and ptiKey return comma-separated carrier labels. ptiRootedTrees, ptiCompatibleTrees and ptiTreeClades return lists of nested trees or clades. ptiConsensus returns status, compatible_count, supported_clades, trees and a consensus tree. ptiRankDesigns returns ranked designs and their edge-duration matrices. ptiFitRank and ptiFitAges return likelihood fits, ages, boundaries and optimizer diagnostics. ptiPairIntervals returns pairwise Poisson clock estimates and simultaneous intervals; ptiCladeInterval combines these for a clade. ptiLinkedConstraints returns incompatibility witnesses, minimum_blocks, minimum_changes and cut gaps. ptiPoissonObjective returns a scalar negative log likelihood or its gradient; ptiValidateG invisibly returns G.
 }
 \description{
 An error-free nonrecombining region follows one rooted genealogy with infinite-sites mutation. Shared derived variants constrain clades. Compatible ranked binary trees are fitted by a conditional Poisson likelihood; equal best fits retain unresolved ages. Linked constraints report minimal compatible blocks and possible cut gaps.
 }
 \examples{
 G <- rbind(c(1,1,0), c(1,0,0), c(0,0,1), c(0,0,0))
-pti_consensus(G)$status
-pti_pair_intervals(G, mu=1e-4, L=1000)
+ptiConsensus(G)$status
+ptiPairIntervals(G, mu=1e-4, L=1000)
 }

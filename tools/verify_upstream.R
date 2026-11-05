@@ -31,10 +31,26 @@ for (i in which(manifest$upstream != "simuPOP")) {
 }
 
 wanted <- c(".w_matrix", ".expm1d", ".etjj_constant", ".truncated_sfs")
+packageNames <- c("wMatrix", "expm1d", "etjjConstant", "truncatedSfs")
+renameCalls <- function(x) {
+    if (is.symbol(x)) {
+        name <- as.character(x)
+        return(if (name %in% wanted) as.name(packageNames[match(name, wanted)]) else x)
+    }
+    if (is.call(x) || is.expression(x) || is.pairlist(x)) {
+        for (i in seq_along(x)) {
+            if (is.null(x[[i]]) || identical(x[[i]], quote(expr = ))) next
+            x[[i]] <- renameCalls(x[[i]])
+        }
+    }
+    x
+}
 sfs <- loadFunctions(file.path(root, "demographyTools/R/demography_sfs.R"), wanted)
 for (nm in wanted) {
-    check(identical(body(get(nm, asNamespace("hpgR"))), body(sfs[[nm]])),
-          paste("identical R function body", nm))
+    name <- packageNames[match(nm, wanted)]
+    check(identical(deparse(body(get(name, asNamespace("hpgR"))), width.cutoff = 500L),
+                    deparse(renameCalls(body(sfs[[nm]])), width.cutoff = 500L)),
+          paste("identical R calculation after function renaming", nm))
 }
 for (n in c(2L, 3L, 4L, 8L, 12L, 20L)) {
     reference <- sfs$.truncated_sfs(n, 20000, Inf)[seq.int(2L, n)] * 1e-8 * 10000

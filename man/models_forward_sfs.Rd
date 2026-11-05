@@ -2,11 +2,11 @@
 % Please edit documentation in R/pedagogical_wright_fisher_sfs.R
 \name{models_forward_sfs}
 \alias{models_forward_sfs}
-\alias{pg_forward_exposure}
-\alias{pg_forward_sfs}
+\alias{pgForwardExposure}
+\alias{pgForwardSfs}
 \title{Discrete-copy branch exposure and frequency spectra}
 \usage{
-pg_forward_exposure(
+pgForwardExposure(
   sizes,
   n = 12L,
   ancestry_seed = 814901L,
@@ -14,7 +14,7 @@ pg_forward_exposure(
   sample_indices = seq_len(n)
 )
 
-pg_forward_sfs(
+pgForwardSfs(
   sizes,
   length_bp = 1000,
   n = 12L,
@@ -43,12 +43,12 @@ pg_forward_sfs(
 \item{mutation_seed}{Nonnegative integer seed for conditional mutation draws.}
 }
 \value{
-pg_forward_exposure returns branch_generations, root_age, extension_generations, n and ancestry_seed. pg_forward_sfs adds sfs, expected_sfs, exposure, analyzed_length_bp, mu and mutation_seed.
+pgForwardExposure returns branch_generations, root_age, extension_generations, n and ancestry_seed. pgForwardSfs adds sfs, expected_sfs, exposure, analyzed_length_bp, mu and mutation_seed.
 }
 \description{
 Generate complete forward parent maps, trace a fixed final sample and count branch copy-generations by descendant count. Independent conditional Poisson mutation counts give the infinite-sites spectrum. This preserves discrete mergers.
 }
 \examples{
-x <- pg_forward_sfs(rep(4L,3), n=4, length_bp=100, mu=1e-3, ancestry_seed=42)
+x <- pgForwardSfs(rep(4L,3), n=4, length_bp=100, mu=1e-3, ancestry_seed=42)
 x$sfs
 }

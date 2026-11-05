@@ -29,7 +29,7 @@ rateMap <- function(position, rate) {
 #' @param pos Positions at which to query the map.
 #' @export
 rateAt <- function(x, pos) {
-    .mapPositions(x, pos)
+    mapPositions(x, pos)
     idx <- findInterval(pos, x$position, rightmost.closed = TRUE)
     idx <- pmax(pmin(idx, length(x$rate)), 1L)
     x$rate[idx]
@@ -38,7 +38,7 @@ rateAt <- function(x, pos) {
 #' @rdname rateMap
 #' @export
 cumulativeRate <- function(x, pos) {
-    .mapPositions(x, pos)
+    mapPositions(x, pos)
     widths <- diff(x$position)
     cumulative <- c(0, cumsum(widths * x$rate))
     vapply(pos, function(xi) {
@@ -51,12 +51,12 @@ cumulativeRate <- function(x, pos) {
 #' @rdname rateMap
 #' @export
 meanRate <- function(x) {
-    .mapPositions(x, numeric())
+    mapPositions(x, numeric())
     widths <- diff(x$position)
     sum(widths * x$rate) / utils::tail(x$position, 1L)
 }
 
-.mapPositions <- function(x, pos) {
+mapPositions <- function(x, pos) {
     if (!inherits(x, "hpgRateMap") || !is.numeric(pos) || any(!is.finite(pos)) ||
         any(pos < 0 | pos > utils::tail(x$position, 1L))) {
         stop("pos must lie within the supplied rate map", call. = FALSE)

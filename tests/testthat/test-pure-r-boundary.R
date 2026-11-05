@@ -1,4 +1,4 @@
-.boundaryCallViolations <- function(code) {
+boundaryCallViolations <- function(code) {
     found <- character()
     native <- c(".Call", ".External", ".External2", ".C", ".Fortran",
         "dyn.load", "library.dynam", "system", "system2", "shell", "pipe")
@@ -36,8 +36,8 @@ test_that("the executable namespace contains only self-contained R calculations"
     for (name in ls(ns, all.names = TRUE)) {
         object <- get(name, envir = ns, inherits = FALSE)
         if (is.function(object)) {
-            calls <- unique(c(.boundaryCallViolations(body(object)),
-                .boundaryCallViolations(formals(object))))
+            calls <- unique(c(boundaryCallViolations(body(object)),
+                boundaryCallViolations(formals(object))))
             if (length(calls)) violations <- c(violations, paste(name, calls, sep = ": "))
         } else if (is.character(object) && length(object) &&
             any(grepl("(^|\n)[[:space:]]*(import[[:space:]]+[[:alnum:]_]+|from[[:space:]]+[[:alnum:]_.]+[[:space:]]+import|def[[:space:]]+[[:alnum:]_]+[[:space:]]*\\()",
@@ -125,13 +125,13 @@ test_that("ancestry simulation and mutation return ordinary zero-based R tables"
     expect_equal(zero$nTrees, 1)
     expect_false(any(c("nodes", "edges", "events", "populationSize", "Ne") %in%
         names(zero$observed)))
-    has_external <- function(x) {
+    hasExternal <- function(x) {
         if (typeof(x) %in% c("externalptr", "environment")) return(TRUE)
-        if (is.list(x)) return(any(vapply(x, has_external, logical(1))))
+        if (is.list(x)) return(any(vapply(x, hasExternal, logical(1))))
         FALSE
     }
-    expect_false(has_external(ancestry))
-    expect_false(has_external(zero))
+    expect_false(hasExternal(ancestry))
+    expect_false(hasExternal(zero))
 })
 
 test_that("pure-R ancestry calls are reproducible without changing caller state", {
@@ -147,7 +147,7 @@ test_that("pure-R ancestry calls are reproducible without changing caller state"
     expect_identical(.Random.seed, before)
     expect_identical(m, mutateAncestry(a, .002, seed = 19498L))
     expect_identical(serialize(a, NULL), frozen)
-    replay <- hpgR:::.msprimeAncestry(2L, 20, 50, .001,
+    replay <- hpgR:::msprimeAncestry(2L, 20, 50, .001,
         seed = 19497L, recordFullArg = TRUE, events = a$events)
     expect_identical(replay$nodes, a$nodes)
     expect_identical(replay$edges, a$edges)
@@ -215,7 +215,7 @@ test_that("hand-checked interval trees give the correct mutation carriers and ag
         class = c("hpgR_ancestry", "list"))
     events <- data.frame(edge = c(3L, 7L, 8L),
         position = c(1, 5, 9), time = c(3, 5, 2))
-    m <- hpgR:::.msprimeMutations(a, 0, seed = 19901L, events = events)
+    m <- hpgR:::msprimeMutations(a, 0, seed = 19901L, events = events)
     out <- ancestryData(m)
     expect_identical(out$observed$haplotypes,
         rbind(c(1L, 1L, 0L), c(1L, 0L, 1L), c(0L, 1L, 0L)))
@@ -235,7 +235,7 @@ test_that("suppressing a unary display node preserves mutations on its branch", 
             parent = c(2L, 3L, 3L), child = c(0L, 2L, 1L)),
         sampleIds = 0:1, sequenceLength = 10, timeUnits = "generations"),
         class = c("hpgR_ancestry", "list"))
-    m <- hpgR:::.msprimeMutations(a, 0, seed = 19902L,
+    m <- hpgR:::msprimeMutations(a, 0, seed = 19902L,
         events = data.frame(edge = 2L, position = 2, time = 2))
     out <- ancestryData(m)
     expect_identical(out$observed$haplotypes, matrix(c(1L, 0L), ncol = 1L))

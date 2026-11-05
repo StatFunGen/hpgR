@@ -9,11 +9,11 @@
 # draws all edge counts before positions and times for long discrete records.
 # Both draw orders use the same Poisson exposure and uniform placement laws.
 
-.msprimeMutations <- function(ancestry, mutationRate, seed, events = NULL,
+msprimeMutations <- function(ancestry, mutationRate, seed, events = NULL,
                               batchEdges = FALSE) {
-    .ancestryCheckTables(ancestry)
-    mutationRate <- .positiveScalar(mutationRate, "mutationRate", zero = TRUE)
-    seed <- .scalarInteger(seed, "seed", minimum = 0L)
+    ancestryCheckTables(ancestry)
+    mutationRate <- positiveScalar(mutationRate, "mutationRate", zero = TRUE)
+    seed <- scalarInteger(seed, "seed", minimum = 0L)
     if (!is.logical(batchEdges) || length(batchEdges) != 1L || is.na(batchEdges))
         stop("batchEdges must be TRUE or FALSE", call. = FALSE)
     nodes <- ancestry$nodes
@@ -96,5 +96,5 @@
         out$mutationModel <- "continuous infinite-sites binary mutation; root state zero"
         out
     }
-    .simupopWithSeed(seed, draw)
+    simupopWithSeed(seed, draw)
 }

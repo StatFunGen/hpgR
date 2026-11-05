@@ -11,53 +11,53 @@ check <- function(name, body) {
 }
 fails <- function(expr) stopifnot(inherits(tryCatch({force(expr); NULL}, error = identity),
                                          "error"))
-core <- pg_record_ancestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L)
+core <- pgRecordAncestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L)
 
 check("record/replay/reproducibility", function() {
-    pg_validate_ancestry(core)
-    again <- pg_record_ancestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L)
+    pgValidateAncestry(core)
+    again <- pgRecordAncestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L)
     stopifnot(identical(core, again), length(core$local_trees) == 1L)
-    mutation <- pg_mutate_ancestry(core, 0.0001, 71L)
-    stopifnot(identical(mutation$haplotypes, pg_replay(core, mutation$mutations)))
+    mutation <- pgMutateAncestry(core, 0.0001, 71L)
+    stopifnot(identical(mutation$haplotypes, pgReplay(core, mutation$mutations)))
     changed <- core
     changed$local_trees <- NULL
-    stopifnot(identical(mutation$haplotypes, pg_replay(changed, mutation$mutations)))
+    stopifnot(identical(mutation$haplotypes, pgReplay(changed, mutation$mutations)))
 })
 check("seed is local; mutation leaves ancestry fixed", function() {
     set.seed(135)
     before <- .Random.seed
-    a <- pg_simulate(rep(3L, 4L), 100, 4L, 0, ancestry_seed = 9L)
+    a <- pgSimulate(rep(3L, 4L), 100, 4L, 0, ancestry_seed = 9L)
     stopifnot(identical(before, .Random.seed))
-    b <- pg_simulate(rep(3L, 4L), 100, 4L, .01, ancestry_seed = 9L)
+    b <- pgSimulate(rep(3L, 4L), 100, 4L, .01, ancestry_seed = 9L)
     stopifnot(identical(a$truth$regions[[1]]$ancestry, b$truth$regions[[1]]$ancestry))
     seeds <- unlist(lapply(1:20, function(base)
-        vapply(1:3, function(region) pg_region_seed(base, region), integer(1))))
+        vapply(1:3, function(region) pgRegionSeed(base, region), integer(1))))
     stopifnot(!anyDuplicated(seeds))
 })
 check("empty mutation matrices; smallest population; invalid inputs", function() {
-    d <- pg_simulate(c(1L, 1L), 100, 2L, 0, ancestry_seed = 41L)
-    s <- pg_observed_summaries(d$observed, d$calibration)
+    d <- pgSimulate(c(1L, 1L), 100, 2L, 0, ancestry_seed = 41L)
+    s <- pgObservedSummaries(d$observed, d$calibration)
     stopifnot(identical(dim(d$observed$regions[[1]]$haplotypes), c(2L, 0L)),
               s$regions$S == 0, s$regions$pi_site == 0, sum(s$sfs[[1]]) == 0)
-    fails(pg_record_ancestry(c(0, 3), 100, 2))
-    fails(pg_record_ancestry(c(2.5, 3), 100, 2))
-    fails(pg_record_ancestry(c(2, 3), 100, 7))
-    fails(pg_record_ancestry(c(2, 3), 100, 2, map_length = -1))
-    fails(pg_record_ancestry(c(2, 3), 100, 2, sample_indices = c(1, 1)))
-    fails(pg_mutate_ancestry(core, -1))
+    fails(pgRecordAncestry(c(0, 3), 100, 2))
+    fails(pgRecordAncestry(c(2.5, 3), 100, 2))
+    fails(pgRecordAncestry(c(2, 3), 100, 7))
+    fails(pgRecordAncestry(c(2, 3), 100, 2, map_length = -1))
+    fails(pgRecordAncestry(c(2, 3), 100, 2, sample_indices = c(1, 1)))
+    fails(pgMutateAncestry(core, -1))
 })
 check("root completion preserves sample; truncated forests fail loudly", function() {
-    forest <- pg_record_ancestry(5L, 100, 4L, ancestry_seed = 51L,
+    forest <- pgRecordAncestry(5L, 100, 4L, ancestry_seed = 51L,
                                  complete_roots = FALSE)
-    pg_validate_ancestry(forest, require_complete = FALSE)
-    fails(pg_validate_ancestry(forest))
-    fails(pg_mutate_ancestry(forest, .001))
-    fails(pg_record_ancestry(5L, 100, 4L, ancestry_seed = 51L, max_extension = 0L))
-    whole <- pg_record_ancestry(5L, 100, 4L, ancestry_seed = 51L)
+    pgValidateAncestry(forest, require_complete = FALSE)
+    fails(pgValidateAncestry(forest))
+    fails(pgMutateAncestry(forest, .001))
+    fails(pgRecordAncestry(5L, 100, 4L, ancestry_seed = 51L, max_extension = 0L))
+    whole <- pgRecordAncestry(5L, 100, 4L, ancestry_seed = 51L)
     stopifnot(whole$root_complete, whole$extension_generations > 0,
               identical(whole$sample_nodes, forest$sample_nodes),
               whole$sample_generation == 0, max(whole$nodes$generation) == 0)
-    fixed <- pg_record_ancestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L,
+    fixed <- pgRecordAncestry(rep(5L, 5L), 1000, 6L, ancestry_seed = 31L,
                                 complete_roots = FALSE)
     forward_edges <- core$edges[core$nodes$generation[core$edges$child] > 0, ]
     rownames(forward_edges) <- NULL
@@ -65,11 +65,11 @@ check("root completion preserves sample; truncated forests fail loudly", functio
               identical(core$sample_nodes, fixed$sample_nodes))
 })
 check("linked intervals and replay", function() {
-    linked <- pg_record_ancestry(rep(5L, 8L), 1000, 6L, map_length = .08,
+    linked <- pgRecordAncestry(rep(5L, 8L), 1000, 6L, map_length = .08,
                                  ancestry_seed = 63L)
-    pg_validate_ancestry(linked)
-    mutation <- pg_mutate_ancestry(linked, .0002, 74L)
-    stopifnot(identical(mutation$haplotypes, pg_replay(linked, mutation$mutations)),
+    pgValidateAncestry(linked)
+    mutation <- pgMutateAncestry(linked, .0002, 74L)
+    stopifnot(identical(mutation$haplotypes, pgReplay(linked, mutation$mutations)),
               all(vapply(linked$local_trees, `[[`, logical(1), "complete")))
     bounds <- sort(unique(c(0, linked$edges$left, linked$edges$right, 1000)))
     # Independently check one root at every raw-edge-defined interval, even if
@@ -87,20 +87,20 @@ check("linked intervals and replay", function() {
 check("malformed edges/times/mutations rejected", function() {
     bad <- core
     bad$edges$parent[1] <- nrow(core$nodes) + 1L
-    fails(pg_validate_ancestry(bad))
+    fails(pgValidateAncestry(bad))
     bad <- core
     bad$edges$parent[1] <- bad$edges$child[1]
-    fails(pg_validate_ancestry(bad))
+    fails(pgValidateAncestry(bad))
     bad <- core
     bad$edges$left[1] <- .01
-    fails(pg_validate_ancestry(bad))
+    fails(pgValidateAncestry(bad))
     bad <- core
     bad$edges <- rbind(bad$edges, bad$edges[1, ])
-    fails(pg_validate_ancestry(bad))
-    mutation <- pg_mutate_ancestry(core, .001, 80L)$mutations
+    fails(pgValidateAncestry(bad))
+    mutation <- pgMutateAncestry(core, .001, 80L)$mutations
     stopifnot(nrow(mutation) > 0)
     mutation$time[1] <- -1
-    fails(pg_replay(core, mutation))
+    fails(pgReplay(core, mutation))
 })
 check("observed-only denominator and SFS", function() {
     G <- cbind(c(1L, 0L, 0L, 0L), c(1L, 1L, 0L, 0L))
@@ -109,7 +109,7 @@ check("observed-only denominator and SFS", function() {
         regions = list(list(region_id = "R1", analyzed_length_bp = 100,
                             positions_bp = c(2, 7), haplotypes = G)))
     calibration <- list(mu_per_base_per_generation = 1e-5)
-    s <- pg_observed_summaries(observed, calibration)
+    s <- pgObservedSummaries(observed, calibration)
     stopifnot(s$regions$S == 2, abs(s$regions$pi_region - 7/6) < 1e-12,
               abs(s$regions$pi_site - 7/600) < 1e-12,
               identical(s$sfs[[1]], c(1L, 1L, 0L)))
@@ -117,25 +117,25 @@ check("observed-only denominator and SFS", function() {
     out <- tempfile(fileext = ".rds")
     saveRDS(list(observed = observed, calibration = calibration), out)
     env <- new.env(parent = baseenv())
-    env$pg_observed_summaries <- hpgR::pg_observed_summaries
+    env$pgObservedSummaries <- hpgR::pgObservedSummaries
     env$public <- readRDS(out)
-    result <- evalq(pg_observed_summaries(public$observed, public$calibration), env)
+    result <- evalq(pgObservedSummaries(public$observed, public$calibration), env)
     stopifnot(identical(result, s))
     observed$regions <- list()
-    fails(pg_observed_summaries(observed, calibration))
+    fails(pgObservedSummaries(observed, calibration))
     unlink(out)
 })
 check("one-generation mean variance and parental collision", function() {
-    pg_with_seed(95L, function() {
+    pgWithSeed(95L, function() {
         J <- 30000L
-        parent <- pg_parent_draws(1:40, 20L * J)
+        parent <- pgParentDraws(1:40, 20L * J)
         p_next <- colMeans(matrix(parent <= 12L, 20L, J))
         stopifnot(abs(mean(p_next) - .3) < 6 * sqrt(.3 * .7 / 20 / J),
                   abs(var(p_next) / (.3 * .7 / 20) - 1) < .06)
-        first <- pg_parent_draws(1:40, J)
-        second <- pg_parent_draws(1:40, J)
+        first <- pgParentDraws(1:40, J)
+        second <- pgParentDraws(1:40, J)
         stopifnot(abs(mean(first == second) - 1/40) < 6 * sqrt(.025 * .975 / J))
-        parent4 <- matrix(pg_parent_draws(1:10, 4L * J), 4L, J)
+        parent4 <- matrix(pgParentDraws(1:10, 4L * J), 4L, J)
         all_distinct <- colSums(parent4[c(1, 1, 1, 2, 2, 3), ] ==
                                 parent4[c(2, 3, 4, 3, 4, 4), ]) == 0
         expected <- prod((10 - 0:3) / 10)
@@ -144,7 +144,7 @@ check("one-generation mean variance and parental collision", function() {
 })
 check("conditional mutation count mean and variance", function() {
     means <- vapply(1:160, function(seed)
-        ncol(pg_mutate_ancestry(core, .0001, seed)$haplotypes), integer(1))
+        ncol(pgMutateAncestry(core, .0001, seed)$haplotypes), integer(1))
     edges <- core$local_trees[[1]]$edges
     lambda <- sum((edges$right - edges$left) *
                    (core$nodes$time[edges$parent] - core$nodes$time[edges$child])) * .0001
@@ -153,17 +153,17 @@ check("conditional mutation count mean and variance", function() {
 })
 check("geometric waiting and discrete multifurcations", function() {
     times <- vapply(1:300, function(seed) {
-        record <- pg_record_ancestry(4L, 10, 2L, ancestry_seed = seed)
+        record <- pgRecordAncestry(4L, 10, 2L, ancestry_seed = seed)
         record$local_trees[[1]]$root_age
     }, numeric(1))
     stopifnot(abs(mean(times) - 8) < 6 * sqrt(8 * 7 / length(times)),
               abs(mean(times > 8) - (7/8)^8) < 6 / sqrt(length(times)))
-    fourway <- pg_record_ancestry(2L, 10, 4L, ancestry_seed = 38L)
+    fourway <- pgRecordAncestry(2L, 10, 4L, ancestry_seed = 38L)
     tree <- fourway$local_trees[[1]]
     stopifnot(tree$root_age == 1,
               sum(tree$edges$parent == tree$root) == 4L)
-    pg_with_seed(5L, function() {
-        only_donor <- pg_inheritance(77L, 101:110, 100, .5)
+    pgWithSeed(5L, function() {
+        only_donor <- pgInheritance(77L, 101:110, 100, .5)
         stopifnot(all(only_donor$parent == 77L))
     })
 })
@@ -172,12 +172,12 @@ performance <- list()
 for (seed in c(101L, 202L, 303L)) {
     check(paste0("multi-seed benchmark ", seed), function() {
         gc(reset = TRUE)
-        elapsed <- system.time(result <- pg_simulate(
+        elapsed <- system.time(result <- pgSimulate(
             c(40L, rep(10L, 10L), rep(40L, 10L)), 1000, n = 12L,
             ancestry_seed = seed, mutation_seed = seed + 1000L))["elapsed"]
         region <- result$truth$regions[[1]]
-        pg_check(identical(unname(result$observed$regions[[1]]$haplotypes),
-                           pg_replay(region$ancestry, region$mutations)), "benchmark replay")
+        pgCheck(identical(unname(result$observed$regions[[1]]$haplotypes),
+                           pgReplay(region$ancestry, region$mutations)), "benchmark replay")
         performance[[as.character(seed)]] <<- list(
             elapsed_seconds = unname(elapsed), object_bytes = as.numeric(object.size(result)),
             R_gc_heap_high_water_bound_MiB = sum(gc()[, ncol(gc())]),

@@ -21,3 +21,10 @@ R translation of RandomSelection, CloneGenoTransmitter and ParentsTagger.
 Each row is a haploid individual; a diploid Wright-Fisher copy-pool example
 supplies 2N rows. This model has no mutation, recombination or selection.
 }
+\examples{
+initial <- matrix(c(rep(1L, 3), rep(0L, 7)), ncol = 1L)
+record <- simulateForward(initial, sizes = c(5, 5, 3, 3, 5), seed = 8149L)
+states <- replayCopying(initial, record$parents)
+stopifnot(identical(states, record$states))
+vapply(states, function(G) mean(G[, 1]), numeric(1L))
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "role": "R-generated sequence controls",
+  "files": {
+    "observed.rds": {
+      "md5": "84bce8db7dcec96adcd33d46aa896990",
+      "bytes": 2260
+    },
+    "calibration.rds": {
+      "md5": "edbbda6e807f0ab4d71a08ab6307c86c",
+      "bytes": 395
+    }
+  },
+  "source": {
+    "core": "pedagogical_copy_records.R",
+    "md5": "087688b1a664f02ea0999c90aff39efa",
+    "builder": "generate_pedigree_control.R",
+    "builder_md5": "ed1e8147e500ea708c2c6f7034474fa0"
+  },
+  "package": "hpgR",
+  "package_version": "0.0.3.9000",
+  "language": "R",
+  "R": "R version 4.5.3 (2026-03-11)",
+  "RNG": ["Mersenne-Twister", "Inversion", "Rejection"],
+  "dataset_ids": ["D1", "D2", "D3", "D4"],
+  "truth_stored_separately": true,
+  "generations": "sampling at t=0; true g and node mappings in separate validation record",
+  "design": "three independent-region datasets plus a separate linked-region extension"
+}

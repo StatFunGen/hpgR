@@ -17,17 +17,23 @@
 #' @return Numeric vector for derived counts 1 through n - 1.
 #' @examples
 #' expectedSFS(n = 6, Ne = 10000, mu = 1e-8, length_bp = 10000)
+#' n <- 12L
+#' Ne <- 10000
+#' mu <- 1e-8
+#' L <- 10000
+#' prediction <- expectedSFS(n, Ne, mu, L)
+#' stopifnot(isTRUE(all.equal(prediction, 4 * Ne * mu * L / seq_len(n - 1L))))
 #' @export
 expectedSFS <- function(n, Ne, mu, length_bp) {
-    n <- .scalarInteger(n, "n", 2L)
-    Ne <- .positiveScalar(Ne, "Ne")
-    mu <- .positiveScalar(mu, "mu", zero = TRUE)
-    length_bp <- .positiveScalar(length_bp, "length_bp")
-    expected <- .truncated_sfs(n, 2 * Ne, Inf)
+    n <- scalarInteger(n, "n", 2L)
+    Ne <- positiveScalar(Ne, "Ne")
+    mu <- positiveScalar(mu, "mu", zero = TRUE)
+    length_bp <- positiveScalar(length_bp, "length_bp")
+    expected <- truncatedSfs(n, 2 * Ne, Inf)
     mu * length_bp * expected[seq.int(2L, n)]
 }
 
-.w_matrix <- function(n) {
+wMatrix <- function(n) {
     if (n <= 1L) return(matrix(0, 0L, 0L))
     W <- matrix(0, n - 1L, n - 1L)
     bb <- seq_len(n - 1L)
@@ -49,7 +55,7 @@ expectedSFS <- function(n, Ne, mu, length_bp) {
     t(W)
 }
 
-.expm1d <- function(x) {
+expm1d <- function(x) {
     ifelse(abs(x) < 1e-6, {
         c_n <- 1; ret <- 1
         for (n in 2:10) { c_n <- c_n * x / n; ret <- ret + c_n }
@@ -57,20 +63,20 @@ expectedSFS <- function(n, Ne, mu, length_bp) {
     }, expm1(x) / x)
 }
 
-.etjj_constant <- function(n, Ne, tau) {
+etjjConstant <- function(n, Ne, tau) {
     j <- seq(2L, n)
     coal_rate <- j * (j - 1) / (2 * Ne)
     if (is.infinite(tau)) {
         return(1 / coal_rate)
     }
     scaled_time <- coal_rate * tau
-    tau * .expm1d(-scaled_time)
+    tau * expm1d(-scaled_time)
 }
 
-.truncated_sfs <- function(n, Ne, tau) {
+truncatedSfs <- function(n, Ne, tau) {
     if (n == 0L) return(0)
-    etjj <- .etjj_constant(n, Ne, tau)
-    W <- .w_matrix(n)
+    etjj <- etjjConstant(n, Ne, tau)
+    W <- wMatrix(n)
     sfs_mid <- as.numeric(colSums(etjj * W))
     k <- seq_len(n - 1L)
     before_tmrca <- tau - sum(sfs_mid * k / n)

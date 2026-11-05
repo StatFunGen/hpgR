@@ -5,7 +5,7 @@
 # The transition is max(L[u]*(1-rho+rho/n), rho/n), including its tie rule.
 # Path compression is an optimization, not an additional inferential model.
 
-.tsiMatch <- function(haplotype, reference, nodeIds, recombination, mismatch,
+tsiMatch <- function(haplotype, reference, nodeIds, recombination, mismatch,
                       numNodes) {
     observed <- which(haplotype >= 0L)
     if (!length(observed)) stop("a haplotype must contain observed alleles", call. = FALSE)
@@ -69,7 +69,7 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
                           recombinationProbability = .01,
                           mismatchProbability = 1e-20) {
     G <- as.matrix(haplotypes)
-    sequenceLength <- .positiveScalar(sequenceLength, "sequenceLength")
+    sequenceLength <- positiveScalar(sequenceLength, "sequenceLength")
     if (!is.numeric(G) || nrow(G) < 2L || ncol(G) < 1L ||
         anyNA(G) || any(!G %in% c(0, 1)) ||
         !is.numeric(positions) || length(positions) != ncol(G) ||
@@ -85,16 +85,16 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
         stop("inference positions must be polymorphic; include invariants in sequenceLength",
              call. = FALSE)
     storage.mode(G) <- "integer"
-    ancestors <- .tsiGenerateAncestors(G)
+    ancestors <- tsiGenerateAncestors(G)
     oldest <- max(vapply(ancestors, `[[`, 0, "time"))
     nodes <- data.frame(id = 0:1, time = c(oldest + 2, oldest + 1), flags = 0L)
     edges <- data.frame(left = 0, right = sequenceLength, parent = 0L, child = 1L)
     mutations <- data.frame(site = integer(), node = integer(), derived_state = integer())
     reference <- matrix(0L, 2L, ncol(G))
     records <- list()
-    add_group <- function(jobs) {
+    addGroup <- function(jobs) {
         ids <- which(nodes$time > jobs[[1L]]$time & nodes$id != 0L)
-        fits <- lapply(jobs, function(job) .tsiMatch(job$haplotype,
+        fits <- lapply(jobs, function(job) tsiMatch(job$haplotype,
             reference[ids, , drop = FALSE], nodes$id[ids],
             recombinationProbability, mismatchProbability, nrow(nodes)))
         for (i in seq_along(jobs)) {
@@ -102,7 +102,7 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
             fit <- fits[[i]]
             id <- nrow(nodes)
             nodes <<- rbind(nodes, data.frame(id = id, time = job$time, flags = job$flags))
-            edges <<- rbind(edges, .tsiEdges(fit, id, positions, sequenceLength))
+            edges <<- rbind(edges, tsiEdges(fit, id, positions, sequenceLength))
             changed <- which(job$haplotype >= 0 & job$haplotype != fit$matched)
             if (length(changed)) mutations <<- rbind(mutations,
                 data.frame(site = changed - 1L, node = id,
@@ -123,10 +123,10 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
             a$flags <- 0L
             a
         })
-        add_group(jobs)
+        addGroup(jobs)
     }
     firstSample <- nrow(nodes)
-    add_group(lapply(seq_len(nrow(G)), function(i)
+    addGroup(lapply(seq_len(nrow(G)), function(i)
         list(haplotype = G[i, ], time = 0, flags = 1L)))
     x <- structure(list(nodes = nodes, edges = edges,
         sampleIds = firstSample + seq_len(nrow(G)) - 1L,
@@ -139,9 +139,9 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
             recombinationProbability = recombinationProbability,
             mismatchProbability = mismatchProbability)),
         class = c("hpgR_ancestry", "list"))
-    x <- .tsiSimplify(x)
-    .ancestryCheckTables(x)
-    if (!identical(unname(.ancestryExtract(x)$observed$haplotypes), unname(G)))
+    x <- tsiSimplify(x)
+    ancestryCheckTables(x)
+    if (!identical(unname(ancestryExtract(x)$observed$haplotypes), unname(G)))
         stop("inferred tables failed to reproduce the observed alleles", call. = FALSE)
     x
 }

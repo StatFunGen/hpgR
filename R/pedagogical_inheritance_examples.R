@@ -1,6 +1,6 @@
 #' Finite-copy histories and reproducible sampling examples
 #'
-#' Each new copy samples one parent uniformly with replacement. copy_history uses integer allele labels and gives every mutation a fresh label. Fixed-seed example functions restore the caller random-number state; ordinary unseeded copying consumes the caller stream.
+#' Each new copy samples one parent uniformly with replacement. copyHistory uses integer allele labels and gives every mutation a fresh label. Fixed-seed example functions restore the caller random-number state; ordinary unseeded copying consumes the caller stream.
 #'
 #' @name models_process_examples
 #' @param N Positive integer diploid size; driftMoments accepts a vector of sizes.
@@ -14,13 +14,13 @@
 #' @param copies Positive integer haploid copy-pool size.
 #' @param replicates Positive integer number of paths.
 #' @param time Nonnegative integer vector of generation indices.
-#' @returns copy_history returns sizes, copies, zero-based parent and mutation positions, heterozygosity and allele_counts. samplingExample returns sampled indices and finite-population paths. populationProcessExample returns copying, mutation, ancestry and recombination histories. simulateFrequencyRecords returns counts and generation records. simulateNewMutationPaths returns a time-by-replicate matrix and zero-based introduction times. frequencyCountDistribution returns a count transition matrix and generation-by-count probabilities. driftMoments returns variance and diversity arrays indexed by time and N.
+#' @returns copyHistory returns sizes, copies, zero-based parent and mutation positions, heterozygosity and allele_counts. samplingExample returns sampled indices and finite-population paths. populationProcessExample returns copying, mutation, ancestry and recombination histories. simulateFrequencyRecords returns counts and generation records. simulateNewMutationPaths returns a time-by-replicate matrix and zero-based introduction times. frequencyCountDistribution returns a count transition matrix and generation-by-count probabilities. driftMoments returns variance and diversity arrays indexed by time and N.
 #' @examples
 #' x <- simulateFrequencyRecords(N=8, generations=3, cultures=4)
 #' x$records$frequency
 #' driftMoments(c(10,100), 0:3)
 #' set.seed(42)
-#' copy_history(c(2,2), 1:4)$copies
+#' copyHistory(c(2,2), 1:4)$copies
 NULL
 
 # Sources: Pritchard 2.1/2.3; Gorroochurn 8.2/8.8; Coop Ch.4 and public R examples.
@@ -29,19 +29,19 @@ NULL
 
 #' @rdname models_process_examples
 #' @export
-copy_history <- function(sizes, initial, mu=0) {
-    .numericVector(sizes, "sizes", minimum = 1)
+copyHistory <- function(sizes, initial, mu=0) {
+    numericVector(sizes, "sizes", minimum = 1)
     if (any(sizes != floor(sizes))) stop("sizes must contain integer population sizes", call. = FALSE)
-    .numericVector(initial, "initial", 2 * sizes[1L], minimum = 0)
+    numericVector(initial, "initial", 2 * sizes[1L], minimum = 0)
     if (any(initial != floor(initial))) stop("initial must contain integer allele labels", call. = FALSE)
-    .probability(mu, "mu")
+    probability(mu, "mu")
     copies <- list(as.integer(initial))
     parents <- list()
     mutations <- list()
     next.id <- max(initial)+1L
     for (t in seq_len(length(sizes)-1L)) {
         old <- copies[[t]]
-        draw <- .simupopDrawParents(length(old), 2L*sizes[t+1L])
+        draw <- simupopDrawParents(length(old), 2L*sizes[t+1L])
         new <- old[draw]
         changed <- which(runif(length(new)) < mu)
         if (length(changed)) {
@@ -61,7 +61,7 @@ copy_history <- function(sizes, initial, mu=0) {
 #' @rdname models_process_examples
 #' @export
 samplingExample <- function() {
-    restore <- .rngRestorer()
+    restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     RNGkind("Mersenne-Twister", "Inversion", "Rejection")
     set.seed(8149)
@@ -82,20 +82,20 @@ samplingExample <- function() {
 #' @rdname models_process_examples
 #' @export
 populationProcessExample <- function() {
-    restore <- .rngRestorer()
+    restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     RNGkind("Mersenne-Twister", "Inversion", "Rejection")
     # Coop's single.crash: five large, two small, five large generations.
     set.seed(814901)
-    bottleneck <- copy_history(c(rep(10L,5L),rep(3L,2L),rep(10L,5L)), 1:20)
+    bottleneck <- copyHistory(c(rep(10L,5L),rep(3L,2L),rep(10L,5L)), 1:20)
     
     # Coop Fig.4.7: N=5, locus mutation probability 0.1, initially one allele.
     set.seed(814902)
-    mutation <- copy_history(rep(5L,30L), rep(0L,10L), mu=0.1)
+    mutation <- copyHistory(rep(5L,30L), rep(0L,10L), mu=0.1)
     
     # Coop Fig.4.2: distinct founder labels track descent without mutation.
     set.seed(814903)
-    ancestry <- copy_history(rep(5L,15L), 1:10)
+    ancestry <- copyHistory(rep(5L,15L), 1:10)
     pair <- c(0L,1L) # fixed before looking at the history, not a selected pair
     trace <- list(pair)
     current <- pair

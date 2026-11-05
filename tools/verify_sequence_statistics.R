@@ -76,11 +76,11 @@ reference <- read.delim(text = paste(output, collapse = "\n"), na.strings = c("n
 actual <- vapply(seq_len(nrow(reference)), function(i) {
     r <- reference[i, ]
     switch(r$kind,
-        diversity = hpgR:::.tskitDiversity(r$a, r$n),
-        D = hpgR:::.tskitD(r$a/r$n, (r$a+r$b)/r$n, (r$a+r$c)/r$n),
-        r2 = hpgR:::.tskitR2(r$a/r$n, (r$a+r$b)/r$n, (r$a+r$c)/r$n),
-        polarised = hpgR:::.tskitSfs(r$a, r$n)[r$b],
-        folded = hpgR:::.tskitSfs(r$a, r$n, FALSE)[r$b])
+        diversity = hpgR:::tskitDiversity(r$a, r$n),
+        D = hpgR:::tskitD(r$a/r$n, (r$a+r$b)/r$n, (r$a+r$c)/r$n),
+        r2 = hpgR:::tskitR2(r$a/r$n, (r$a+r$b)/r$n, (r$a+r$c)/r$n),
+        polarised = hpgR:::tskitSfs(r$a, r$n)[r$b],
+        folded = hpgR:::tskitSfs(r$a, r$n, FALSE)[r$b])
 }, numeric(1))
 stopifnot(identical(is.na(actual), is.na(reference$value)))
 error <- max(abs(actual - reference$value), na.rm = TRUE)

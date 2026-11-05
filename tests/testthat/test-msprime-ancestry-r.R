@@ -1,7 +1,7 @@
-.msprimeAncestry <- utils::getFromNamespace(".msprimeAncestry", "hpgR")
+msprimeAncestry <- utils::getFromNamespace("msprimeAncestry", "hpgR")
 
 test_that("the restricted Hudson translation gives a complete zero-recombination tree", {
-    x <- .msprimeAncestry(2L, 100, 10L, 0, 81L, FALSE)
+    x <- msprimeAncestry(2L, 100, 10L, 0, 81L, FALSE)
     expect_s3_class(x, "hpgR_ancestry")
     expect_identical(x$sampleIds, 0:3)
     expect_equal(nrow(x$nodes), 7L)
@@ -14,8 +14,8 @@ test_that("the restricted Hudson translation gives a complete zero-recombination
 })
 
 test_that("Hudson event replay reproduces exact tables without sharing the RNG", {
-    x <- .msprimeAncestry(2L, 100, 100L, 1e-4, 8149L, TRUE)
-    y <- .msprimeAncestry(2L, 100, 100L, 1e-4, 1L, TRUE, events = x$events)
+    x <- msprimeAncestry(2L, 100, 100L, 1e-4, 8149L, TRUE)
+    y <- msprimeAncestry(2L, 100, 100L, 1e-4, 1L, TRUE, events = x$events)
     expect_identical(x$nodes, y$nodes)
     expect_identical(x$edges, y$edges)
     expect_identical(x$eventCounts, y$eventCounts)
@@ -36,7 +36,7 @@ test_that("nonoverlapping common ancestors and full ARG unary edges are retained
         list(type = "recombination", time = 3, lineage = 3L, breakpoint = 4),
         list(type = "common_ancestor", time = 4, lineages = c(1L, 3L)),
         list(type = "common_ancestor", time = 5, lineages = c(4L, 5L)))
-    x <- .msprimeAncestry(1L, 100, 10L, .001, 1L, TRUE, events = events)
+    x <- msprimeAncestry(1L, 100, 10L, .001, 1L, TRUE, events = events)
     expect_identical(x$nodes$id, 0:8)
     expect_equal(x$nodes$time, c(0, 0, 1, 1, 2, 3, 3, 4, 5))
     expect_equal(x$nodes$flags, c(1, 1, 2^17, 2^17, 2^18, 2^17, 2^17, 0, 0))
@@ -66,7 +66,7 @@ test_that("an original msprime full-ARG fixture replays to exact native tables",
         list(type = "common_ancestor", time = t[5L], lineages = c(1L, 5L)),
         list(type = "common_ancestor", time = t[6L], lineages = c(4L, 6L)),
         list(type = "common_ancestor", time = t[7L], lineages = c(2L, 7L)))
-    x <- .msprimeAncestry(1L, 5, 6L, .02, 1L, TRUE, events = events)
+    x <- msprimeAncestry(1L, 5, 6L, .02, 1L, TRUE, events = events)
     nodes <- data.frame(id = 0:11,
         time = c(0, 0, t[1L], t[1L], t[2L], t[2L], t[3L],
                  t[4L], t[4L], t[5L], t[6L], t[7L]),
@@ -84,8 +84,8 @@ test_that("an original msprime full-ARG fixture replays to exact native tables",
 })
 
 test_that("full ARG recording leaves marginal root ages unchanged", {
-    full <- .msprimeAncestry(2L, 100, 100L, 1e-4, 8149L, TRUE)
-    small <- .msprimeAncestry(2L, 100, 100L, 1e-4, 1L, FALSE,
+    full <- msprimeAncestry(2L, 100, 100L, 1e-4, 8149L, TRUE)
+    small <- msprimeAncestry(2L, 100, 100L, 1e-4, 1L, FALSE,
                              events = full$events)
     rootTime <- function(x, position) {
         e <- x$edges[x$edges$left <= position & x$edges$right > position, ]
@@ -107,7 +107,7 @@ test_that("full ARG recording leaves marginal root ages unchanged", {
 
 test_that("the two-copy Hudson clock has mean 2Ne", {
     ages <- vapply(seq_len(1000L), function(seed)
-        max(.msprimeAncestry(1L, 100, 1L, 0, seed, FALSE)$nodes$time), numeric(1L))
+        max(msprimeAncestry(1L, 100, 1L, 0, seed, FALSE)$nodes$time), numeric(1L))
     expect_lt(abs(mean(ages) - 200), 200 * 5 / sqrt(length(ages)))
     expect_lt(abs(mean(ages > 200) - exp(-1)), .06)
 })
@@ -115,13 +115,13 @@ test_that("the two-copy Hudson clock has mean 2Ne", {
 test_that("Hudson simulation preserves the caller RNG and rejects unsupported inputs", {
     set.seed(49L)
     before <- .Random.seed
-    .msprimeAncestry(1L, 100, 1L, 0, 2L, FALSE)
+    msprimeAncestry(1L, 100, 1L, 0, 2L, FALSE)
     expect_identical(.Random.seed, before)
-    expect_error(.msprimeAncestry(1L, 100, 1.5, 0, 2L, FALSE), "sequenceLength")
-    expect_error(.msprimeAncestry(1L, 100, 10L, -1, 2L, FALSE), "recombinationRate")
-    expect_error(.msprimeAncestry(1L, 100, 10L, 0, 2L, FALSE,
+    expect_error(msprimeAncestry(1L, 100, 1.5, 0, 2L, FALSE), "sequenceLength")
+    expect_error(msprimeAncestry(1L, 100, 10L, -1, 2L, FALSE), "recombinationRate")
+    expect_error(msprimeAncestry(1L, 100, 10L, 0, 2L, FALSE,
         events = list()), "ended before")
-    expect_error(.msprimeAncestry(1L, 100, 10L, 0, 2L, FALSE,
+    expect_error(msprimeAncestry(1L, 100, 10L, 0, 2L, FALSE,
         events = list(list(type = "recombination", time = 1,
                            lineage = 0L, breakpoint = 4))), "positive rate")
 })

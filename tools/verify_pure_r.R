@@ -118,7 +118,7 @@ fixture <- structure(list(nodes = data.frame(id = 0:6,
         child = c(0L, 1L, 3L, 2L, 0L, 2L, 5L, 1L)),
     sampleIds = 0:2, sequenceLength = 10, timeUnits = "generations"),
     class = c("hpgR_ancestry", "list"))
-placed <- hpgR:::.msprimeMutations(fixture, 0, 19901L,
+placed <- hpgR:::msprimeMutations(fixture, 0, 19901L,
     events = data.frame(edge = c(3L, 7L, 8L), position = c(1, 5, 9),
         time = c(3, 5, 2)))
 extracted <- ancestryData(placed)

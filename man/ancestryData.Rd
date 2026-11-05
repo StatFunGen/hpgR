@@ -11,8 +11,9 @@ ancestryData(ancestry)
 }
 \value{
 Observed phased haplotypes, ordered positions and analyzed length;
-  local root/pair ages; full node/edge tables and unary-suppressed display
-  trees. Node/sample IDs remain zero based. This is R table traversal, not
+  local root/pair ages; full node/edge tables and unary-suppressed local
+  trees with node, parent, time and is_sample columns. Node/sample IDs remain
+  zero based. This is R table traversal, not
   a port of the complete tskit simplifier or an ancestry-inference method.
 }
 \description{

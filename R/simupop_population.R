@@ -4,7 +4,7 @@
 # simuPOP (Bo Peng and contributors, GPL-3.0-or-later); this file supplies the
 # R matrix representation and result records, not a new reproduction model.
 
-.simupopEngine <- function() {
+simupopEngine <- function() {
     list(implementation = "hpgR neutral diploid simulation",
          version = "0.0.3.9000", language = "R", threads = 1L,
          rng = "R Mersenne-Twister",
@@ -14,7 +14,7 @@
          reproduction = "sex-independent random diploid parents; selfing allowed")
 }
 
-.simupopWithSeed <- function(seed, draw) {
+simupopWithSeed <- function(seed, draw) {
     hadSeed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
     oldSeed <- if (hadSeed) get(".Random.seed", envir = .GlobalEnv) else NULL
     oldKind <- RNGkind()
@@ -29,15 +29,15 @@
     draw()
 }
 
-.simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
+simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
                                 sampleSize, burnin, founderSize, recordEvery,
                                 seed, markers, fractions) {
-    .simupopWithSeed(seed, function() {
+    simupopWithSeed(seed, function() {
         haplotypes <- matrix(0L, nrow = 2L * sizes[1L], ncol = sum(loci))
         nextGeneration <- function(h, size) {
-            h <- .simupopMutate(h, mutationRate, reverseMutationRate)
-            parents <- .simupopParents(nrow(h) %/% 2L, size)
-            .simupopMeiosis(h, parents, loci, fractions)
+            h <- simupopMutate(h, mutationRate, reverseMutationRate)
+            parents <- simupopParents(nrow(h) %/% 2L, size)
+            simupopMeiosis(h, parents, loci, fractions)
         }
         summarize <- function(generation, h, p = colMeans(h)) {
             c(generation = generation, size = nrow(h) / 2L,
@@ -55,7 +55,7 @@
         ancestralFrequency <- colMeans(haplotypes)
         founderIndices <- integer()
         if (!is.null(founderSize)) {
-            founders <- .simupopSample(haplotypes, founderSize)
+            founders <- simupopSample(haplotypes, founderSize)
             haplotypes <- founders$haplotypes
             founderIndices <- founders$indices
         }
@@ -71,7 +71,7 @@
                 frequencies[[length(frequencies) + 1L]] <- p
             }
         }
-        final <- .simupopSample(haplotypes, sampleSize)
+        final <- simupopSample(haplotypes, sampleSize)
         generation <- as.data.frame(do.call(rbind, generationRecords))
         frequencyMatrix <- do.call(rbind, frequencies)
         chromosomeRecords <- do.call(rbind, lapply(seq_along(loci), function(j) {
@@ -99,6 +99,6 @@
                  founder_indices = founderIndices, burnin = burnin, seed = seed,
                  sizes = sizes, ancestralSize = sizes[1L],
                  reproductiveSizes = c(if (is.null(founderSize)) sizes[1L] else
-                     founderSize, sizes[-1L])), engine = .simupopEngine())
+                     founderSize, sizes[-1L])), engine = simupopEngine())
     })
 }

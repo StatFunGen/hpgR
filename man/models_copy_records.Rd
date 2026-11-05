@@ -2,49 +2,49 @@
 % Please edit documentation in R/pedagogical_wright_fisher_genealogies.R
 \name{models_copy_records}
 \alias{models_copy_records}
-\alias{pg_check}
-\alias{pg_integer}
-\alias{pg_with_seed}
-\alias{pg_parent_draws}
-\alias{pg_region_seed}
-\alias{pg_inheritance}
-\alias{pg_edge_index}
-\alias{pg_at_position}
-\alias{pg_walk}
-\alias{pg_local_trees}
-\alias{pg_advance_frontier}
-\alias{pg_record_ancestry}
-\alias{pg_validate_ancestry}
-\alias{pg_mutate_ancestry}
-\alias{pg_validate_mutations}
-\alias{pg_replay}
-\alias{pg_simulate}
-\alias{pg_observed_summaries}
+\alias{pgCheck}
+\alias{pgInteger}
+\alias{pgWithSeed}
+\alias{pgParentDraws}
+\alias{pgRegionSeed}
+\alias{pgInheritance}
+\alias{pgEdgeIndex}
+\alias{pgAtPosition}
+\alias{pgWalk}
+\alias{pgLocalTrees}
+\alias{pgAdvanceFrontier}
+\alias{pgRecordAncestry}
+\alias{pgValidateAncestry}
+\alias{pgMutateAncestry}
+\alias{pgValidateMutations}
+\alias{pgReplay}
+\alias{pgSimulate}
+\alias{pgObservedSummaries}
 \title{Record and replay finite-copy ancestry}
 \usage{
-pg_check(ok, message)
+pgCheck(ok, message)
 
-pg_integer(x, minimum = 0, name = deparse(substitute(x)))
+pgInteger(x, minimum = 0, name = deparse(substitute(x)))
 
-pg_with_seed(seed, draw)
+pgWithSeed(seed, draw)
 
-pg_parent_draws(parent_ids, offspring_copies)
+pgParentDraws(parent_ids, offspring_copies)
 
-pg_region_seed(base_seed, region, mutation = FALSE)
+pgRegionSeed(base_seed, region, mutation = FALSE)
 
-pg_inheritance(parent_ids, child_ids, length_bp, map_length)
+pgInheritance(parent_ids, child_ids, length_bp, map_length)
 
-pg_edge_index(edges, number_nodes)
+pgEdgeIndex(edges, number_nodes)
 
-pg_at_position(index, copies, position)
+pgAtPosition(index, copies, position)
 
-pg_walk(index, sample_nodes, left, right)
+pgWalk(index, sample_nodes, left, right)
 
-pg_local_trees(record)
+pgLocalTrees(record)
 
-pg_advance_frontier(index, frontier)
+pgAdvanceFrontier(index, frontier)
 
-pg_record_ancestry(
+pgRecordAncestry(
   sizes,
   length_bp,
   n,
@@ -55,15 +55,15 @@ pg_record_ancestry(
   sample_indices = seq_len(n)
 )
 
-pg_validate_ancestry(record, require_complete = TRUE)
+pgValidateAncestry(record, require_complete = TRUE)
 
-pg_mutate_ancestry(record, mu, mutation_seed = 814902L)
+pgMutateAncestry(record, mu, mutation_seed = 814902L)
 
-pg_validate_mutations(record, mutations)
+pgValidateMutations(record, mutations)
 
-pg_replay(record, mutations)
+pgReplay(record, mutations)
 
-pg_simulate(
+pgSimulate(
   sizes,
   lengths_bp = rep(1000, 3),
   n = 12L,
@@ -74,7 +74,7 @@ pg_simulate(
   max_extension = 20000L
 )
 
-pg_observed_summaries(observed, calibration)
+pgObservedSummaries(observed, calibration)
 }
 \arguments{
 \item{ok}{Scalar logical assertion.}
@@ -111,7 +111,7 @@ pg_observed_summaries(observed, calibration)
 
 \item{number_nodes}{Positive integer number of nodes in the edge index.}
 
-\item{index}{Child-indexed edge lists from pg_edge_index.}
+\item{index}{Child-indexed edge lists from pgEdgeIndex.}
 
 \item{copies}{Vector of ancestral node IDs for the current sampled copies.}
 
@@ -123,9 +123,9 @@ pg_observed_summaries(observed, calibration)
 
 \item{right}{Right endpoint of the local interval in bases, excluded.}
 
-\item{record}{Finite-copy ancestry record returned by pg_record_ancestry.}
+\item{record}{Finite-copy ancestry record returned by pgRecordAncestry.}
 
-\item{frontier}{List of local interval records returned by pg_local_trees or pg_advance_frontier.}
+\item{frontier}{List of local interval records returned by pgLocalTrees or pgAdvanceFrontier.}
 
 \item{sizes}{Nonempty positive integer diploid sizes in forward generation order, beginning with the ancestral population.}
 
@@ -156,14 +156,14 @@ pg_observed_summaries(observed, calibration)
 \item{calibration}{List containing mu_per_base_per_generation and the declared mutation and sampling models.}
 }
 \value{
-pg_record_ancestry returns nodes, edges, sample_nodes, local_trees, size history and root-completion records. pg_local_trees and pg_walk return local intervals with their used edges and descendant sets. pg_mutate_ancestry returns binary haplotypes, positions and mutation records; pg_replay independently reconstructs that matrix. pg_simulate returns observed, calibration and truth lists; pg_observed_summaries returns per-region diversity and spectra. Validators return invisible TRUE (pg_integer returns invisible NULL); pg_check returns invisible NULL on success. Low-level indexing helpers return parent indices, edge lists or local frontier records. pg_with_seed returns the supplied function result while restoring RNG state; pg_region_seed returns an integer region seed.
+pgRecordAncestry returns nodes, edges, sample_nodes, local_trees, size history and root-completion records. pgLocalTrees and pgWalk return local intervals with their used edges and descendant sets. pgMutateAncestry returns binary haplotypes, positions and mutation records; pgReplay independently reconstructs that matrix. pgSimulate returns observed, calibration and truth lists; pgObservedSummaries returns per-region diversity and spectra. Validators return invisible TRUE (pgInteger returns invisible NULL); pgCheck returns invisible NULL on success. Low-level indexing helpers return parent indices, edge lists or local frontier records. pgWithSeed returns the supplied function result while restoring RNG state; pgRegionSeed returns an integer region seed.
 }
 \description{
 Discrete generations sample pooled parental haploid copies uniformly. At linked regions, two pooled donors alternate at Poisson crossovers. Nodes use one-based IDs; edge intervals are left-closed and right-open in bases. Samples are fixed before optional older parent maps complete their ancestry. This is a pooled-copy model, with separate records for observed DNA and simulation truth.
 }
 \examples{
-record <- pg_record_ancestry(rep(4L,3), length_bp=100, n=4, ancestry_seed=42)
-pg_validate_ancestry(record)
-mutation <- pg_mutate_ancestry(record, 1e-3, 43)
-stopifnot(identical(pg_replay(record,mutation$mutations), mutation$haplotypes))
+record <- pgRecordAncestry(rep(4L,3), length_bp=100, n=4, ancestry_seed=42)
+pgValidateAncestry(record)
+mutation <- pgMutateAncestry(record, 1e-3, 43)
+stopifnot(identical(pgReplay(record,mutation$mutations), mutation$haplotypes))
 }

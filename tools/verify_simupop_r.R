@@ -20,9 +20,9 @@ for (seed in c(1L, 8149L, 1956L)) {
 
 # Each gamete chooses one of the two homologues of an independently selected
 # diploid parent. N=1 is therefore sufficient for a direct selfing test.
-meiosis <- getFromNamespace(".simupopMeiosis", "hpgR")
-parents <- getFromNamespace(".simupopParents", "hpgR")
-mutate <- getFromNamespace(".simupopMutate", "hpgR")
+meiosis <- getFromNamespace("simupopMeiosis", "hpgR")
+parents <- getFromNamespace("simupopParents", "hpgR")
+mutate <- getFromNamespace("simupopMutate", "hpgR")
 set.seed(18301L)
 p <- parents(1L, 20000L)
 h <- meiosis(rbind(rep(0L, 4L), rep(1L, 4L)), p,

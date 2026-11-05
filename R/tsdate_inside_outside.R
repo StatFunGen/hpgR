@@ -9,7 +9,7 @@
 
 .td_GAMMA_PAR <- "gamma_parameter"
 
-.td_node_time_values <- function(num_nodes, nonfixed_nodes, timepoints, fill_value = NaN) {
+tdNodeTimeValues <- function(num_nodes, nonfixed_nodes, timepoints, fill_value = NaN) {
     stopifnot(is.integer(nonfixed_nodes) || is.numeric(nonfixed_nodes))
     nonfixed_nodes <- as.integer(nonfixed_nodes)
     stopifnot(all(nonfixed_nodes >= 0L & nonfixed_nodes < num_nodes))
@@ -42,7 +42,7 @@
     obj
 }
 
-.td_ntv_get <- function(ntv, node_id) {
+tdNtvGet <- function(ntv, node_id) {
     idx <- ntv$row_lookup[node_id + 1L]
     if (idx < 0) {
         ntv$fixed_data[-idx]
@@ -52,7 +52,7 @@
     }
 }
 
-.td_ntv_set <- function(ntv, node_id, value) {
+tdNtvSet <- function(ntv, node_id, value) {
     idx <- ntv$row_lookup[node_id + 1L]
     if (idx < 0) {
         ntv$fixed_data[-idx] <- value
@@ -63,11 +63,11 @@
     ntv
 }
 
-.td_ntv_is_fixed <- function(ntv, node_id) {
+tdNtvIsFixed <- function(ntv, node_id) {
     ntv$row_lookup[node_id + 1L] < 0
 }
 
-.td_ntv_clone <- function(ntv, grid_data = NaN, fixed_data = NULL, probability_space = NULL) {
+tdNtvClone <- function(ntv, grid_data = NaN, fixed_data = NULL, probability_space = NULL) {
     new_ntv <- list(num_nodes = ntv$num_nodes, nonfixed_nodes = ntv$nonfixed_nodes, num_nonfixed = ntv$num_nonfixed, 
         row_lookup = ntv$row_lookup, timepoints = ntv$timepoints, grid_size = ntv$grid_size)
     if (is.matrix(grid_data)) {
@@ -105,7 +105,7 @@
     new_ntv
 }
 
-.td_ntv_force_probability_space <- function(ntv, target_space) {
+tdNtvForceProbabilitySpace <- function(ntv, target_space) {
     if (target_space == .td_LIN_GRID) {
         if (ntv$probability_space == .td_LIN_GRID) {
             return(ntv)
@@ -136,7 +136,7 @@
     stop(sprintf("Cannot force %s probabilities into %s space", ntv$probability_space, target_space))
 }
 
-.td_ntv_standardize <- function(ntv) {
+tdNtvStandardize <- function(ntv) {
     if (ncol(ntv$grid_data) > 1) {
         rowmax <- apply(ntv$grid_data[, -1, drop = FALSE], 1, max)
     }
@@ -155,23 +155,23 @@
     ntv
 }
 
-.td_ntv_to_probabilities <- function(ntv) {
+tdNtvToProbabilities <- function(ntv) {
     stopifnot(ntv$probability_space == .td_LIN_GRID)
     row_sums <- rowSums(ntv$grid_data)
     ntv$grid_data <- ntv$grid_data/row_sums
     ntv
 }
 
-.td_discrete_likelihoods <- function(ts, timepoints, mutation_rate = NULL, eps = 0, fixed_node_set = NULL, 
+tdDiscreteLikelihoods <- function(ts, timepoints, mutation_rate = NULL, eps = 0, fixed_node_set = NULL, 
     standardize = FALSE, log_space = FALSE) {
-    stopifnot(.td_is(ts, "TreeSequence"))
+    stopifnot(tdIs(ts, "TreeSequence"))
     timepoints <- as.numeric(timepoints)
     grid_size <- length(timepoints)
     if (is.null(fixed_node_set)) {
-        fixed_node_set <- as.integer(.td_samples(ts))
+        fixed_node_set <- as.integer(tdSamples(ts))
     }
     fixed_set <- as.integer(fixed_node_set)
-    mut_edges <- .td_count_edge_mutations(ts)
+    mut_edges <- tdCountEdgeMutations(ts)
     if (log_space) {
         identity_constant <- 0
         null_constant <- -Inf
@@ -204,11 +204,11 @@
         as.integer((nn * (nn - 1))/2 + t)
     })
     reorder_indices <- unlist(row_indices_for_reorder)
-    tc <- .td_tables(ts)
-    et <- .td_edges(tc)
+    tc <- tdTables(ts)
+    et <- tdEdges(tc)
     edge_spans <- et$right - et$left
     edge_children <- et$child
-    num_edges <- .td_num_rows(et)
+    num_edges <- tdNumRows(et)
     obj <- list(ts = ts, timepoints = timepoints, grid_size = grid_size, tri_size = tri_size, fixed_set = fixed_set, 
         mut_rate = mutation_rate, mut_edges = mut_edges, standardize = standardize, log_space = log_space, 
         identity_constant = identity_constant, null_constant = null_constant, probability_space = probability_space, 
@@ -224,12 +224,12 @@
     obj
 }
 
-.td_lik_precalculate <- function(lik) {
+tdLikPrecalculate <- function(lik) {
     if (is.null(lik$mut_rate)) {
         stop("Cannot calculate mutation likelihoods with no mutation_rate set")
     }
     is_fixed_child <- lik$edge_children %in% lik$fixed_set
-    result <- .td_tsdate_precalc_mutation_liks(as.integer(lik$mut_edges), as.numeric(lik$edge_spans), 
+    result <- tdTsdatePrecalcMutationLiks(as.integer(lik$mut_edges), as.numeric(lik$edge_spans), 
         as.logical(is_fixed_child), as.numeric(lik$timediff_lower_tri), as.numeric(lik$mut_rate), as.logical(lik$log_space), 
         as.logical(lik$standardize))
     lik$unfixed_lik_cache <- result$cache
@@ -237,57 +237,57 @@
     lik
 }
 
-.td_lik_get_mut_lower_tri <- function(lik, edge_id) {
+tdLikGetMutLowerTri <- function(lik, edge_id) {
     cache_idx <- lik$edge_cache_idx[edge_id + 1L]
     stopifnot(cache_idx >= 0)
     lik$unfixed_lik_cache[cache_idx + 1L, ]
 }
 
-.td_lik_get_mut_upper_tri <- function(lik, edge_id) {
-    lower <- .td_lik_get_mut_lower_tri(lik, edge_id)
+tdLikGetMutUpperTri <- function(lik, edge_id) {
+    lower <- tdLikGetMutLowerTri(lik, edge_id)
     lower[lik$reorder_indices]
 }
 
-.td_lik_get_mut_fixed <- function(lik, edge_id) {
+tdLikGetMutFixed <- function(lik, edge_id) {
     muts <- lik$mut_edges[edge_id + 1L]
     span <- lik$edge_spans[edge_id + 1L]
-    .td_tsdate_mutation_lik_fixed(as.integer(muts), as.numeric(span), as.numeric(lik$timediff), as.numeric(lik$mut_rate), 
+    tdTsdateMutationLikFixed(as.integer(muts), as.numeric(span), as.numeric(lik$timediff), as.numeric(lik$mut_rate), 
         as.logical(lik$log_space), as.logical(lik$standardize))
 }
 
-.td_lik_make_lower_tri <- function(lik, arr) {
+tdLikMakeLowerTri <- function(lik, arr) {
     arr[lik$to_lower_tri]
 }
 
-.td_lik_make_upper_tri <- function(lik, arr) {
+tdLikMakeUpperTri <- function(lik, arr) {
     arr[lik$to_upper_tri]
 }
 
-.td_lik_rowsum_lower_tri <- function(lik, arr) {
+tdLikRowsumLowerTri <- function(lik, arr) {
     if (lik$log_space) {
-        .td_tsdate_rowsum_lower_tri_log(as.numeric(arr), as.integer(lik$row_indices_starts))
+        tdTsdateRowsumLowerTriLog(as.numeric(arr), as.integer(lik$row_indices_starts))
     }
     else {
-        .td_tsdate_rowsum_lower_tri_lin(as.numeric(arr), as.integer(lik$row_indices_starts))
+        tdTsdateRowsumLowerTriLin(as.numeric(arr), as.integer(lik$row_indices_starts))
     }
 }
 
-.td_lik_rowsum_upper_tri <- function(lik, arr) {
+tdLikRowsumUpperTri <- function(lik, arr) {
     if (lik$log_space) {
-        .td_tsdate_rowsum_upper_tri_log(as.numeric(arr), as.integer(lik$col_indices))
+        tdTsdateRowsumUpperTriLog(as.numeric(arr), as.integer(lik$col_indices))
     }
     else {
-        .td_tsdate_rowsum_upper_tri_lin(as.numeric(arr), as.integer(lik$col_indices))
+        tdTsdateRowsumUpperTriLin(as.numeric(arr), as.integer(lik$col_indices))
     }
 }
 
-.td_lik_combine <- function(lik, a, b) {
+tdLikCombine <- function(lik, a, b) {
     if (lik$log_space) 
         a + b
     else a * b
 }
 
-.td_lik_ratio <- function(lik, a, b, div_0_null = FALSE) {
+tdLikRatio <- function(lik, a, b, div_0_null = FALSE) {
     if (lik$log_space) {
         ret <- a - b
     }
@@ -300,16 +300,16 @@
     ret
 }
 
-.td_lik_marginalize <- function(lik, arr) {
+tdLikMarginalize <- function(lik, arr) {
     if (lik$log_space) {
-        .td_tsdate_logsumexp(as.numeric(arr))
+        tdTsdateLogsumexp(as.numeric(arr))
     }
     else {
         sum(arr)
     }
 }
 
-.td_lik_scale_geometric <- function(lik, fraction, value) {
+tdLikScaleGeometric <- function(lik, fraction, value) {
     if (lik$log_space) {
         fraction * value
     }
@@ -318,64 +318,64 @@
     }
 }
 
-.td_lik_get_inside <- function(lik, arr, edge_id) {
+tdLikGetInside <- function(lik, arr, edge_id) {
     liks <- lik$identity_constant
     if (!is.null(lik$mut_rate)) {
-        mut_lik <- .td_lik_get_mut_lower_tri(lik, edge_id)
-        liks <- .td_lik_combine(lik, liks, mut_lik)
+        mut_lik <- tdLikGetMutLowerTri(lik, edge_id)
+        liks <- tdLikCombine(lik, liks, mut_lik)
     }
-    .td_lik_rowsum_lower_tri(lik, .td_lik_combine(lik, arr, liks))
+    tdLikRowsumLowerTri(lik, tdLikCombine(lik, arr, liks))
 }
 
-.td_lik_get_outside <- function(lik, arr, edge_id) {
+tdLikGetOutside <- function(lik, arr, edge_id) {
     liks <- lik$identity_constant
     if (!is.null(lik$mut_rate)) {
-        mut_lik <- .td_lik_get_mut_upper_tri(lik, edge_id)
-        liks <- .td_lik_combine(lik, liks, mut_lik)
+        mut_lik <- tdLikGetMutUpperTri(lik, edge_id)
+        liks <- tdLikCombine(lik, liks, mut_lik)
     }
-    .td_lik_rowsum_upper_tri(lik, .td_lik_combine(lik, arr, liks))
+    tdLikRowsumUpperTri(lik, tdLikCombine(lik, arr, liks))
 }
 
-.td_lik_get_fixed <- function(lik, arr, edge_id) {
+tdLikGetFixed <- function(lik, arr, edge_id) {
     liks <- lik$identity_constant
     if (!is.null(lik$mut_rate)) {
-        mut_lik <- .td_lik_get_mut_fixed(lik, edge_id)
-        liks <- .td_lik_combine(lik, liks, mut_lik)
+        mut_lik <- tdLikGetMutFixed(lik, edge_id)
+        liks <- tdLikCombine(lik, liks, mut_lik)
     }
-    .td_lik_combine(lik, arr, liks)
+    tdLikCombine(lik, arr, liks)
 }
 
-.td_belief_propagation <- function(priors, lik) {
+tdBeliefPropagation <- function(priors, lik) {
     nonfixed <- priors$nonfixed_nodes
     fixed <- lik$fixed_set
     overlap <- intersect(nonfixed, fixed)
     if (length(overlap) > 0) {
         stop("Prior and likelihood objects disagree on which nodes are fixed")
     }
-    if (length(fixed) + length(nonfixed) != .td_num_nodes(lik$ts)) {
+    if (length(fixed) + length(nonfixed) != tdNumNodes(lik$ts)) {
         stop("Prior and likelihood objects disagree on which nodes are fixed")
     }
-    priors <- .td_ntv_force_probability_space(priors, lik$probability_space)
-    tc <- .td_tables(lik$ts)
-    et <- .td_edges(tc)
+    priors <- tdNtvForceProbabilitySpace(priors, lik$probability_space)
+    tc <- tdTables(lik$ts)
+    et <- tdEdges(tc)
     edge_children <- et$child
     edge_parents <- et$parent
     edge_lefts <- et$left
     edge_rights <- et$right
-    edge_ids <- seq(0L, .td_num_rows(et) - 1L)
+    edge_ids <- seq(0L, tdNumRows(et) - 1L)
     edge_spans <- edge_rights - edge_lefts
-    num_nodes <- .td_num_nodes(lik$ts)
+    num_nodes <- tdNumNodes(lik$ts)
     spans <- numeric(num_nodes)
     for (i in seq_along(edge_children)) {
         spans[edge_children[i] + 1L] <- spans[edge_children[i] + 1L] + edge_spans[i]
     }
     root_spans <- list()
-    tr <- .td_tree(lik$ts)
-    .td_first(tr)
+    tr <- tdTree(lik$ts)
+    tdFirst(tr)
     repeat {
-        iv <- .td_interval(tr)
+        iv <- tdInterval(tr)
         span <- iv[2] - iv[1]
-        r <- .td_roots(tr)
+        r <- tdRoots(tr)
         if (length(r) == 1L) {
             key <- as.character(r)
             prev <- root_spans[[key]]
@@ -383,7 +383,7 @@
                 prev <- 0
             root_spans[[key]] <- prev + span
         }
-        if (!.td_next_tree(tr)) 
+        if (!tdNextTree(tr)) 
             break
     }
     for (key in names(root_spans)) {
@@ -399,7 +399,7 @@
     obj
 }
 
-.td_edges_by_parent_asc <- function(bp) {
+tdEdgesByParentAsc <- function(bp) {
     parents <- bp$edge_parents
     unique_parents <- unique(parents)
     groups <- list()
@@ -407,19 +407,19 @@
         mask <- which(parents == p)
         groups[[as.character(p)]] <- list(parent = p, edge_indices = mask - 1L)
     }
-    tc <- .td_tables(bp$ts)
-    nt <- .td_nodes(tc)
+    tc <- tdTables(bp$ts)
+    nt <- tdNodes(tc)
     node_times <- nt$time
     parent_times <- node_times[unique_parents + 1L]
     ord <- order(parent_times)
     groups[as.character(unique_parents[ord])]
 }
 
-.td_edges_by_child_desc <- function(bp) {
+tdEdgesByChildDesc <- function(bp) {
     children <- bp$edge_children
     unique_children <- unique(children)
-    tc <- .td_tables(bp$ts)
-    nt <- .td_nodes(tc)
+    tc <- tdTables(bp$ts)
+    nt <- tdNodes(tc)
     node_times <- nt$time
     groups <- list()
     for (c_node in unique_children) {
@@ -431,11 +431,11 @@
     groups[as.character(unique_children[ord])]
 }
 
-.td_edges_by_child_then_parent_desc <- function(bp) {
+tdEdgesByChildThenParentDesc <- function(bp) {
     children <- bp$edge_children
     parents <- bp$edge_parents
-    tc <- .td_tables(bp$ts)
-    nt <- .td_nodes(tc)
+    tc <- tdTables(bp$ts)
+    nt <- tdNodes(tc)
     node_times <- nt$time
     unique_children <- unique(children)
     groups <- list()
@@ -450,39 +450,39 @@
     groups[as.character(unique_children[ord])]
 }
 
-.td_bp_inside_pass <- function(bp, standardize = TRUE, cache_inside = FALSE) {
+tdBpInsidePass <- function(bp, standardize = TRUE, cache_inside = FALSE) {
     lik <- bp$lik
-    inside <- .td_ntv_clone(bp$priors, grid_data = NaN, fixed_data = lik$identity_constant)
+    inside <- tdNtvClone(bp$priors, grid_data = NaN, fixed_data = lik$identity_constant)
     num_edges <- bp$num_edges
     if (cache_inside) {
         g_i <- matrix(lik$identity_constant, nrow = num_edges, ncol = lik$grid_size)
     }
-    denominator <- rep(NaN, .td_num_nodes(bp$ts))
+    denominator <- rep(NaN, tdNumNodes(bp$ts))
     marginal_lik <- lik$identity_constant
-    parent_groups <- .td_edges_by_parent_asc(bp)
+    parent_groups <- tdEdgesByParentAsc(bp)
     for (group in parent_groups) {
         parent <- group$parent
         edge_indices <- group$edge_indices
         if (parent %in% bp$fixed_set) 
             next
-        val <- .td_ntv_get(bp$priors, parent)
+        val <- tdNtvGet(bp$priors, parent)
         for (ei in edge_indices) {
             child <- bp$edge_children[ei + 1L]
             span <- bp$edge_spans[ei + 1L]
             spanfrac <- span/bp$spans[child + 1L]
             if (child %in% bp$fixed_set) {
-                daughter_val <- .td_lik_scale_geometric(lik, spanfrac, .td_ntv_get(inside, child))
-                edge_lik <- .td_lik_get_fixed(lik, daughter_val, ei)
+                daughter_val <- tdLikScaleGeometric(lik, spanfrac, tdNtvGet(inside, child))
+                edge_lik <- tdLikGetFixed(lik, daughter_val, ei)
             }
             else {
-                inside_child <- .td_ntv_get(inside, child)
+                inside_child <- tdNtvGet(inside, child)
                 if (all(is.nan(inside_child))) {
                   stop("The input tree sequence includes dangling nodes: ", "please simplify it")
                 }
-                daughter_val <- .td_lik_scale_geometric(lik, spanfrac, .td_lik_make_lower_tri(lik, inside_child))
-                edge_lik <- .td_lik_get_inside(lik, daughter_val, ei)
+                daughter_val <- tdLikScaleGeometric(lik, spanfrac, tdLikMakeLowerTri(lik, inside_child))
+                edge_lik <- tdLikGetInside(lik, daughter_val, ei)
             }
-            val <- .td_lik_combine(lik, val, edge_lik)
+            val <- tdLikCombine(lik, val, edge_lik)
             if (cache_inside) {
                 g_i[ei + 1L, ] <- edge_lik
             }
@@ -490,17 +490,17 @@
         denominator[parent + 1L] <- if (standardize) 
             max(val)
         else lik$identity_constant
-        inside <- .td_ntv_set(inside, parent, .td_lik_ratio(lik, val, denominator[parent + 1L]))
+        inside <- tdNtvSet(inside, parent, tdLikRatio(lik, val, denominator[parent + 1L]))
         if (standardize) {
-            marginal_lik <- .td_lik_combine(lik, marginal_lik, denominator[parent + 1L])
+            marginal_lik <- tdLikCombine(lik, marginal_lik, denominator[parent + 1L])
         }
     }
     for (key in names(bp$root_spans)) {
         root <- as.integer(key)
         span_when_root <- bp$root_spans[[key]]
         spanfrac <- span_when_root/bp$spans[root + 1L]
-        root_val <- .td_lik_scale_geometric(lik, spanfrac, .td_ntv_get(inside, root))
-        marginal_lik <- .td_lik_combine(lik, marginal_lik, .td_lik_marginalize(lik, root_val))
+        root_val <- tdLikScaleGeometric(lik, spanfrac, tdNtvGet(inside, root))
+        marginal_lik <- tdLikCombine(lik, marginal_lik, tdLikMarginalize(lik, root_val))
     }
     bp$inside <- inside
     bp$denominator <- denominator
@@ -514,20 +514,20 @@
     bp
 }
 
-.td_bp_outside_pass <- function(bp, standardize = FALSE, ignore_oldest_root = FALSE) {
+tdBpOutsidePass <- function(bp, standardize = FALSE, ignore_oldest_root = FALSE) {
     if (is.null(bp$inside)) {
         stop("You have not yet run the inside algorithm")
     }
     lik <- bp$lik
-    outside <- .td_ntv_clone(bp$inside, grid_data = 0, probability_space = .td_LIN_GRID)
+    outside <- tdNtvClone(bp$inside, grid_data = 0, probability_space = .td_LIN_GRID)
     for (key in names(bp$root_spans)) {
         root <- as.integer(key)
         span_when_root <- bp$root_spans[[key]]
-        outside <- .td_ntv_set(outside, root, span_when_root/bp$spans[root + 1L])
+        outside <- tdNtvSet(outside, root, span_when_root/bp$spans[root + 1L])
     }
-    outside <- .td_ntv_force_probability_space(outside, bp$inside$probability_space)
-    num_nodes <- .td_num_nodes(bp$ts)
-    child_groups <- .td_edges_by_child_desc(bp)
+    outside <- tdNtvForceProbabilitySpace(outside, bp$inside$probability_space)
+    num_nodes <- tdNumNodes(bp$ts)
+    child_groups <- tdEdgesByChildDesc(bp)
     for (group in child_groups) {
         child <- group$child
         edge_indices <- group$edge_indices
@@ -544,50 +544,50 @@
             span <- bp$edge_spans[ei + 1L]
             spanfrac <- span/bp$spans[child + 1L]
             if (!is.null(bp$g_i)) {
-                inside_div_gi <- .td_lik_ratio(lik, .td_ntv_get(bp$inside, parent), bp$g_i[ei + 1L, ], 
+                inside_div_gi <- tdLikRatio(lik, tdNtvGet(bp$inside, parent), bp$g_i[ei + 1L, ], 
                   div_0_null = TRUE)
             }
             else {
-                daughter_val <- .td_lik_scale_geometric(lik, spanfrac, .td_lik_make_lower_tri(lik, .td_ntv_get(bp$inside, 
+                daughter_val <- tdLikScaleGeometric(lik, spanfrac, tdLikMakeLowerTri(lik, tdNtvGet(bp$inside, 
                   child)))
-                edge_lik <- .td_lik_get_inside(lik, daughter_val, ei)
-                cur_g_i <- .td_lik_ratio(lik, edge_lik, bp$denominator[child + 1L])
-                inside_div_gi <- .td_lik_ratio(lik, .td_ntv_get(bp$inside, parent), cur_g_i, div_0_null = TRUE)
+                edge_lik <- tdLikGetInside(lik, daughter_val, ei)
+                cur_g_i <- tdLikRatio(lik, edge_lik, bp$denominator[child + 1L])
+                inside_div_gi <- tdLikRatio(lik, tdNtvGet(bp$inside, parent), cur_g_i, div_0_null = TRUE)
             }
-            parent_val <- .td_lik_scale_geometric(lik, spanfrac, .td_lik_make_upper_tri(lik, .td_lik_combine(lik, 
-                .td_ntv_get(outside, parent), inside_div_gi)))
+            parent_val <- tdLikScaleGeometric(lik, spanfrac, tdLikMakeUpperTri(lik, tdLikCombine(lik, 
+                tdNtvGet(outside, parent), inside_div_gi)))
             if (standardize) {
-                parent_val <- .td_lik_ratio(lik, parent_val, max(parent_val))
+                parent_val <- tdLikRatio(lik, parent_val, max(parent_val))
             }
-            edge_lik <- .td_lik_get_outside(lik, parent_val, ei)
-            val <- .td_lik_combine(lik, val, edge_lik)
+            edge_lik <- tdLikGetOutside(lik, parent_val, ei)
+            val <- tdLikCombine(lik, val, edge_lik)
         }
-        outside <- .td_ntv_set(outside, child, .td_lik_ratio(lik, val, bp$denominator[child + 1L]))
+        outside <- tdNtvSet(outside, child, tdLikRatio(lik, val, bp$denominator[child + 1L]))
         if (standardize) {
-            outside <- .td_ntv_set(outside, child, .td_lik_ratio(lik, val, max(val)))
+            outside <- tdNtvSet(outside, child, tdLikRatio(lik, val, max(val)))
         }
     }
     bp$outside <- outside
-    bp$posterior_grid <- .td_ntv_clone(outside, grid_data = .td_lik_combine(lik, bp$inside$grid_data, 
+    bp$posterior_grid <- tdNtvClone(outside, grid_data = tdLikCombine(lik, bp$inside$grid_data, 
         outside$grid_data), fixed_data = NaN)
     bp
 }
 
-.td_bp_outside_maximization <- function(bp, eps = 1e-06) {
+tdBpOutsideMaximization <- function(bp, eps = 1e-06) {
     if (is.null(bp$inside)) {
         stop("You have not yet run the inside algorithm")
     }
     lik <- bp$lik
-    num_nodes <- .td_num_nodes(bp$ts)
+    num_nodes <- tdNumNodes(bp$ts)
     maximized_node_times <- integer(num_nodes)
     all_children <- unique(bp$edge_children)
     mrcas <- setdiff(seq(0L, num_nodes - 1L), all_children)
     for (i in mrcas) {
         if (!(i %in% bp$fixed_set)) {
-            maximized_node_times[i + 1L] <- which.max(.td_ntv_get(bp$inside, i)) - 1L
+            maximized_node_times[i + 1L] <- which.max(tdNtvGet(bp$inside, i)) - 1L
         }
     }
-    child_groups <- .td_edges_by_child_then_parent_desc(bp)
+    child_groups <- tdEdgesByChildThenParentDesc(bp)
     for (group in child_groups) {
         child <- group$child
         edge_indices <- group$edge_indices
@@ -628,7 +628,7 @@
                 if (lik$log_space) {
                   ll_mut <- dpois(muts, lambda, log = TRUE)
                   ll_norm <- ll_mut - max(ll_mut)
-                  result[seq_len(youngest_par_index + 1L)] <- .td_lik_combine(lik, ll_norm, result[seq_len(youngest_par_index + 
+                  result[seq_len(youngest_par_index + 1L)] <- tdLikCombine(lik, ll_norm, result[seq_len(youngest_par_index + 
                     1L)])
                 }
                 else {
@@ -637,13 +637,13 @@
                   ll_norm <- if (mx > 0) 
                     ll_mut/mx
                   else ll_mut
-                  result[seq_len(youngest_par_index + 1L)] <- .td_lik_combine(lik, ll_norm, result[seq_len(youngest_par_index + 
+                  result[seq_len(youngest_par_index + 1L)] <- tdLikCombine(lik, ll_norm, result[seq_len(youngest_par_index + 
                     1L)])
                 }
             }
         }
-        inside_val <- .td_ntv_get(bp$inside, child)[seq_len(youngest_par_index + 1L)]
-        combined <- .td_lik_combine(lik, result[seq_len(youngest_par_index + 1L)], inside_val)
+        inside_val <- tdNtvGet(bp$inside, child)[seq_len(youngest_par_index + 1L)]
+        combined <- tdLikCombine(lik, result[seq_len(youngest_par_index + 1L)], inside_val)
         maximized_node_times[child + 1L] <- which.max(combined) - 1L
     }
     bp$posterior_mean <- lik$timepoints[maximized_node_times + 1L]

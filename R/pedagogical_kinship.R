@@ -19,7 +19,7 @@ NULL
 #' @rdname models_kinship
 #' @export
 ibsExpectation <- function(p) {
-  .probability(p, "p", length = NULL)
+  probability(p, "p", length = NULL)
   r <- 1 - p
   rbind(
     IBS0 = c(mean(2 * p^2 * r^2), 0, 0),
@@ -31,10 +31,10 @@ ibsExpectation <- function(p) {
 #' @rdname models_kinship
 #' @export
 plinkKinship <- function(genotype_i, genotype_j, frequency) {
-  .dosageVector(genotype_i, "genotype_i")
-  .dosageVector(genotype_j, "genotype_j")
-  .sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
-  .probability(frequency, "frequency", length(genotype_i))
+  dosageVector(genotype_i, "genotype_i")
+  dosageVector(genotype_j, "genotype_j")
+  sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
+  probability(frequency, "frequency", length(genotype_i))
   if (!any(frequency > 0 & frequency < 1))
     stop("frequency must include polymorphic markers", call. = FALSE)
   ibs <- ifelse(genotype_i == genotype_j, 2L,
@@ -48,10 +48,10 @@ plinkKinship <- function(genotype_i, genotype_j, frequency) {
 #' @rdname models_kinship
 #' @export
 frequencyKinship <- function(genotype_i, genotype_j, frequency) {
-  .dosageVector(genotype_i, "genotype_i")
-  .dosageVector(genotype_j, "genotype_j")
-  .sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
-  .probability(frequency, "frequency", length(genotype_i))
+  dosageVector(genotype_i, "genotype_i")
+  dosageVector(genotype_j, "genotype_j")
+  sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
+  probability(frequency, "frequency", length(genotype_i))
   if (sum(frequency * (1 - frequency)) == 0)
     stop("frequency must include polymorphic markers", call. = FALSE)
   0.5 - sum((genotype_i - genotype_j)^2) /
@@ -61,9 +61,9 @@ frequencyKinship <- function(genotype_i, genotype_j, frequency) {
 #' @rdname models_kinship
 #' @export
 kingKinship <- function(genotype_i, genotype_j) {
-  .dosageVector(genotype_i, "genotype_i")
-  .dosageVector(genotype_j, "genotype_j")
-  .sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
+  dosageVector(genotype_i, "genotype_i")
+  dosageVector(genotype_j, "genotype_j")
+  sameLength(genotype_i, genotype_j, "genotype_i and genotype_j")
   heterozygotes <- sum(genotype_i == 1L) + sum(genotype_j == 1L)
   if (heterozygotes == 0) return(NA_real_)
   0.5 - sum((genotype_i - genotype_j)^2) / (2 * heterozygotes)
@@ -72,7 +72,7 @@ kingKinship <- function(genotype_i, genotype_j) {
 #' @rdname models_kinship
 #' @export
 compareKinship <- function(pair, frequency) {
-  .dosageMatrix(pair, "pair")
+  dosageMatrix(pair, "pair")
   if (ncol(pair) != 2L) stop("pair must have two columns", call. = FALSE)
   genotype_i <- pair[, 1]
   genotype_j <- pair[, 2]
@@ -90,7 +90,7 @@ compareKinship <- function(pair, frequency) {
 #' @rdname models_kinship
 #' @export
 simulateUnrelatedPair <- function(frequency) {
-  .probability(frequency, "frequency", length = NULL)
+  probability(frequency, "frequency", length = NULL)
   cbind(
     rbinom(length(frequency), 2, frequency),
     rbinom(length(frequency), 2, frequency)
@@ -100,7 +100,7 @@ simulateUnrelatedPair <- function(frequency) {
 #' @rdname models_kinship
 #' @export
 simulateSiblingPair <- function(frequency) {
-  .probability(frequency, "frequency", length = NULL)
+  probability(frequency, "frequency", length = NULL)
   n <- length(frequency)
   father <- cbind(rbinom(n, 1, frequency), rbinom(n, 1, frequency))
   mother <- cbind(rbinom(n, 1, frequency), rbinom(n, 1, frequency))

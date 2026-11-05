@@ -4,13 +4,13 @@
 # sourceProvenance(); tested scope is recorded in inst/VALIDATION.md.
 # Random operations use R with recorded seeds and parent indices.
 
-.simupopDrawParents <- function(parentCopies, offspringCopies) {
+simupopDrawParents <- function(parentCopies, offspringCopies) {
     sample.int(parentCopies, offspringCopies, replace = TRUE)
 }
 
-.simupopParentMaps <- function(sizes) {
+simupopParentMaps <- function(sizes) {
     lapply(seq_len(length(sizes) - 1L), function(g)
-        .simupopDrawParents(2 * sizes[g], 2 * sizes[g + 1L]))
+        simupopDrawParents(2 * sizes[g], 2 * sizes[g + 1L]))
 }
 
 #' Copy recorded parental genotypes
@@ -19,7 +19,7 @@
 #' @return Integer matrix of offspring genotypes.
 #' @export
 copyGenotypes <- function(genotypes, parents) {
-    genotypes <- .genotypeMatrix(genotypes)
+    genotypes <- genotypeMatrix(genotypes)
     if (!is.numeric(parents) || !length(parents) || any(!is.finite(parents)) ||
         any(parents < 1 | parents > nrow(genotypes) | parents != floor(parents))) {
         stop("parents must index parental genotype rows", call. = FALSE)
@@ -33,7 +33,7 @@ copyGenotypes <- function(genotypes, parents) {
 #' @return List of integer genotype matrices, including the initial state.
 #' @export
 replayCopying <- function(initial, parents) {
-    initial <- unname(.genotypeMatrix(initial))
+    initial <- unname(genotypeMatrix(initial))
     if (!is.list(parents)) stop("parents must be a list", call. = FALSE)
     states <- vector("list", length(parents) + 1L)
     states[[1L]] <- initial
@@ -52,18 +52,24 @@ replayCopying <- function(initial, parents) {
 #' @param sizes Diploid copy-pool sizes including generation zero.
 #' @param seed Positive integer R seed. The caller's RNG state is restored.
 #' @return List with complete states, one-based parent indices, seed and engine version.
+#' @examples
+#' initial <- matrix(c(rep(1L, 3), rep(0L, 7)), ncol = 1L)
+#' record <- simulateForward(initial, sizes = c(5, 5, 3, 3, 5), seed = 8149L)
+#' states <- replayCopying(initial, record$parents)
+#' stopifnot(identical(states, record$states))
+#' vapply(states, function(G) mean(G[, 1]), numeric(1L))
 #' @export
 simulateForward <- function(initial, sizes, seed = 8149L) {
-    initial <- unname(.genotypeMatrix(initial))
+    initial <- unname(genotypeMatrix(initial))
     if (!is.numeric(sizes) || !length(sizes) || any(!is.finite(sizes)) ||
         any(sizes < 1 | sizes != floor(sizes)) ||
         any(sizes > .Machine$integer.max / 2) || nrow(initial) != 2 * sizes[1L]) {
         stop("sizes must give diploid copy-pool sizes; initial must have 2*sizes[1] rows",
              call. = FALSE)
     }
-    seed <- .scalarInteger(seed, "seed")
-    .simupopWithSeed(seed, function() {
-        parents <- .simupopParentMaps(sizes)
+    seed <- scalarInteger(seed, "seed")
+    simupopWithSeed(seed, function() {
+        parents <- simupopParentMaps(sizes)
         states <- replayCopying(initial, parents)
         list(states = states, parents = parents, sizes = as.integer(sizes),
              seed = seed, version = "0.0.3.9000", threads = 1L,
@@ -136,18 +142,18 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
     }
     sizes <- as.integer(sizes)
     loci <- as.integer(loci)
-    mutationRate <- .positiveScalar(mutationRate, "mutationRate", zero = TRUE)
-    reverseMutationRate <- .positiveScalar(reverseMutationRate,
+    mutationRate <- positiveScalar(mutationRate, "mutationRate", zero = TRUE)
+    reverseMutationRate <- positiveScalar(reverseMutationRate,
                                             "reverseMutationRate", zero = TRUE)
     if (mutationRate > 1 || reverseMutationRate > 1) {
         stop("mutation probabilities must be between zero and one", call. = FALSE)
     }
-    sampleSize <- .scalarInteger(sampleSize, "sampleSize")
-    burnin <- .scalarInteger(burnin, "burnin", minimum = 0L)
-    recordEvery <- .scalarInteger(recordEvery, "recordEvery")
-    seed <- .scalarInteger(seed, "seed")
+    sampleSize <- scalarInteger(sampleSize, "sampleSize")
+    burnin <- scalarInteger(burnin, "burnin", minimum = 0L)
+    recordEvery <- scalarInteger(recordEvery, "recordEvery")
+    seed <- scalarInteger(seed, "seed")
     if (!is.null(founderSize)) {
-        founderSize <- .scalarInteger(founderSize, "founderSize")
+        founderSize <- scalarInteger(founderSize, "founderSize")
         if (founderSize > sizes[1L]) {
             stop("founderSize cannot exceed the ancestral population", call. = FALSE)
         }
@@ -177,6 +183,6 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
         position = unlist(positions, use.names = FALSE),
         genetic_position = unlist(geneticPositions, use.names = FALSE))
     markers$site <- seq_len(nrow(markers))
-    .simupopPopulation(sizes, loci, mutationRate, reverseMutationRate,
+    simupopPopulation(sizes, loci, mutationRate, reverseMutationRate,
         sampleSize, burnin, founderSize, recordEvery, seed, markers, fractions)
 }

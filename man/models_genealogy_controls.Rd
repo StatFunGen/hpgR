@@ -3,10 +3,10 @@
 %   R/pedagogical_genealogy.R, R/pedagogical_genealogy_examples.R
 \name{terminalSpectrumFit}
 \alias{terminalSpectrumFit}
-\alias{recorded_subset}
+\alias{recordedSubset}
 \alias{sfs}
 \alias{models_genealogy_controls}
-\alias{matched_draws}
+\alias{matchedDraws}
 \alias{founderDiversityExample}
 \alias{terminalExtensionExample}
 \alias{specifiedLocalTreeExample}
@@ -14,11 +14,11 @@
 \usage{
 terminalSpectrumFit(spectra, mutationRate, sequenceLength)
 
-recorded_subset(tree, selected = 1:4)
+recordedSubset(tree, selected = 1:4)
 
 sfs(G)
 
-matched_draws(N, mu, replicates = 600L, base_seed)
+matchedDraws(N, mu, replicates = 600L, base_seed)
 
 founderDiversityExample(
   N = 40L,
@@ -76,7 +76,7 @@ specifiedLocalTreeExample(seed = 814905L)
 \item{bootstrap}{Integer number of region-resampling bootstrap replicates, at least two.}
 }
 \value{
-matched_draws returns replicate results and spectra. recorded_subset returns a nested tree and ages. sfs returns counts for derived-copy classes 1 through n-1. founderDiversityExample returns replicate nonIBD and diversityRatio arrays, their summary and truth. terminalSpectrumFit returns estimate, expected, constantNe, constantExpected and observed. terminalExtensionExample returns observed regions, spectra, fit, bootstrap intervals and truth. specifiedLocalTreeExample returns observed, calibration and truth with two specified local genealogies.
+matchedDraws returns replicate results and spectra. recordedSubset returns a nested tree and ages. sfs returns counts for derived-copy classes 1 through n-1. founderDiversityExample returns replicate nonIBD and diversityRatio arrays, their summary and truth. terminalSpectrumFit returns estimate, expected, constantNe, constantExpected and observed. terminalExtensionExample returns observed regions, spectra, fit, bootstrap intervals and truth. specifiedLocalTreeExample returns observed, calibration and truth with two specified local genealogies.
 }
 \description{
 These recipes call shared ancestry and mutation functions with explicit experimental designs. Simulation truth is stored separately from observations. The terminal-extension model adds a fixed duration to terminal branches and fits its spectrum by a Poisson composite likelihood.

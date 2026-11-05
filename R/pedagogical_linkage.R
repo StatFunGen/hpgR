@@ -28,10 +28,10 @@ siblingSharingTest <- function(counts) {
 #' @rdname models_linkage
 #' @export
 linkageLOD <- function(theta, nonrecombinant, recombinant) {
-  .probability(theta, "theta")
+  probability(theta, "theta")
   if (theta > 0.5) stop("theta must be between 0 and 0.5", call. = FALSE)
-  nonrecombinant <- .scalarInteger(nonrecombinant, "nonrecombinant", 0L)
-  recombinant <- .scalarInteger(recombinant, "recombinant", 0L)
+  nonrecombinant <- scalarInteger(nonrecombinant, "nonrecombinant", 0L)
+  recombinant <- scalarInteger(recombinant, "recombinant", 0L)
   n <- nonrecombinant + recombinant
   (dbinom(recombinant, n, theta, log = TRUE) -
      dbinom(recombinant, n, 0.5, log = TRUE)) / log(10)
@@ -40,8 +40,8 @@ linkageLOD <- function(theta, nonrecombinant, recombinant) {
 #' @rdname models_linkage
 #' @export
 fitLinkage <- function(nonrecombinant, recombinant) {
-  nonrecombinant <- .scalarInteger(nonrecombinant, "nonrecombinant", 0L)
-  recombinant <- .scalarInteger(recombinant, "recombinant", 0L)
+  nonrecombinant <- scalarInteger(nonrecombinant, "nonrecombinant", 0L)
+  recombinant <- scalarInteger(recombinant, "recombinant", 0L)
   n <- nonrecombinant + recombinant
   if (n == 0L) stop("at least one informative meiosis is required", call. = FALSE)
   theta_hat <- min(recombinant / n, 0.5)

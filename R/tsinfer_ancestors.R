@@ -4,7 +4,7 @@
 # compute_between_focal_sites, compute_ancestral_states, make_ancestor.
 # Matrices replace the C bit-packed genotype store. Indices here are one based.
 
-.tsiDescriptors <- function(G, times) {
+tsiDescriptors <- function(G, times) {
     descriptors <- list()
     for (age in sort(unique(times), decreasing = TRUE)) {
         sites <- which(times == age)
@@ -34,7 +34,7 @@
     descriptors
 }
 
-.tsiMakeAncestor <- function(G, times, focal) {
+tsiMakeAncestor <- function(G, times, focal) {
     ancestor <- rep(-1L, ncol(G))
     carriers <- which(G[, focal[1L]] == 1L)
     age <- times[focal[1L]]
@@ -84,8 +84,8 @@
          focal = focal, time = age)
 }
 
-.tsiGenerateAncestors <- function(G) {
+tsiGenerateAncestors <- function(G) {
     times <- colSums(G == 1L) / nrow(G)
-    descriptors <- .tsiDescriptors(G, times)
-    lapply(descriptors, function(d) .tsiMakeAncestor(G, times, d$focal))
+    descriptors <- tsiDescriptors(G, times)
+    lapply(descriptors, function(d) tsiMakeAncestor(G, times, d$focal))
 }

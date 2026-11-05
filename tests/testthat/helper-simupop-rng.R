@@ -65,7 +65,7 @@ simupopTestParents <- function(seed, sizes) {
 }
 
 simupopTestRng <- function(fixture) {
-    getFromNamespace(".simupopWithSeed", "hpgR")(1L, function() {
+    getFromNamespace("simupopWithSeed", "hpgR")(1L, function() {
         rows <- lapply(fixture$results, function(d) {
             simupopTestSeed(d$seed)
             uniforms <- simupopTestUniform(length(d$uniform))

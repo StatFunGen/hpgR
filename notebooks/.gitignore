@@ -1,0 +1,12 @@
+_build/
+.pixi/
+.jupyter_cache/
+.ipynb_checkpoints/
+.virtual_documents/
+.Rhistory
+.RData
+.DS_Store
+
+# Generated exports and duplicate download archives
+/*.html
+/data/*.zip

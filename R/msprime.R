@@ -25,17 +25,17 @@
 simulateAncestry <- function(samples, populationSize, sequenceLength,
                              recombinationRate = 0, seed = 8149L,
                              recordFullArg = FALSE) {
-    samples <- .scalarInteger(samples, "samples")
-    populationSize <- .positiveScalar(populationSize, "populationSize")
-    sequenceLength <- .positiveScalar(sequenceLength, "sequenceLength")
+    samples <- scalarInteger(samples, "samples")
+    populationSize <- positiveScalar(populationSize, "populationSize")
+    sequenceLength <- positiveScalar(sequenceLength, "sequenceLength")
     if (sequenceLength != floor(sequenceLength))
         stop("sequenceLength must be an integer for discrete ancestral breakpoints",
              call. = FALSE)
-    recombinationRate <- .positiveScalar(recombinationRate, "recombinationRate", TRUE)
-    seed <- .scalarInteger(seed, "seed")
+    recombinationRate <- positiveScalar(recombinationRate, "recombinationRate", TRUE)
+    seed <- scalarInteger(seed, "seed")
     if (!is.logical(recordFullArg) || length(recordFullArg) != 1L || is.na(recordFullArg))
         stop("recordFullArg must be TRUE or FALSE", call. = FALSE)
-    .msprimeAncestry(samples, populationSize, sequenceLength,
+    msprimeAncestry(samples, populationSize, sequenceLength,
         recombinationRate, seed, recordFullArg)
 }
 
@@ -51,7 +51,7 @@ simulateAncestry <- function(samples, populationSize, sequenceLength,
 #'   mutations are replaced. The input ancestry is unchanged.
 #' @export
 mutateAncestry <- function(ancestry, mutationRate, seed = 8150L) {
-    mutationRate <- .positiveScalar(mutationRate, "mutationRate", TRUE)
-    seed <- .scalarInteger(seed, "seed")
-    .msprimeMutations(ancestry, mutationRate, seed)
+    mutationRate <- positiveScalar(mutationRate, "mutationRate", TRUE)
+    seed <- scalarInteger(seed, "seed")
+    msprimeMutations(ancestry, mutationRate, seed)
 }

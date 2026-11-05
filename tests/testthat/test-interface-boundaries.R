@@ -12,7 +12,7 @@ test_that('classroom interfaces reject invalid values and length recycling', {
     expect_error(selectedFrequency(.5, c(0,0,0)), 'positive fitness')
     expect_error(selectedFrequency(1, c(0,1,1)), 'mean fitness')
     expect_error(simulateFrequencyRecords(N=1.5), 'integer')
-    expect_error(copy_history(c(2,2), 1:3), 'length 4')
+    expect_error(copyHistory(c(2,2), 1:3), 'length 4')
 })
 
 test_that('single-person and single-marker simulations retain matrix dimensions', {
@@ -50,7 +50,7 @@ test_that('returned marker effects generate the returned genetic values', {
 })
 
 test_that('seeded demonstrations restore the caller RNG and generator kind', {
-    restore <- hpgR:::.rngRestorer()
+    restore <- hpgR:::rngRestorer()
     on.exit(restore(), add=TRUE)
     RNGkind('L\'Ecuyer-CMRG')
     set.seed(73)
@@ -66,7 +66,7 @@ test_that('seeded demonstrations restore the caller RNG and generator kind', {
     rm('.Random.seed', envir=.GlobalEnv)
     invisible(samplingExample())
     expect_false(exists('.Random.seed', envir=.GlobalEnv, inherits=FALSE))
-    expect_error(hpgR:::pg_with_seed(1, function() stop('draw failed')), 'draw failed')
+    expect_error(hpgR:::pgWithSeed(1, function() stop('draw failed')), 'draw failed')
     expect_false(exists('.Random.seed', envir=.GlobalEnv, inherits=FALSE))
 })
 

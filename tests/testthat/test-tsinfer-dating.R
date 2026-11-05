@@ -1,7 +1,7 @@
 test_that("ancestor construction reproduces the original C implementation", {
     cases <- readRDS(test_path("fixtures", "tsinfer-ancestors.rds"))
     for (fixture in cases) {
-        actual <- hpgR:::.tsiGenerateAncestors(fixture$G)
+        actual <- hpgR:::tsiGenerateAncestors(fixture$G)
         expected <- fixture$ancestors
         for (j in seq_along(expected))
             expect_equal(actual[[j]][names(expected[[j]])], expected[[j]], tolerance = 1e-14)
@@ -12,7 +12,7 @@ test_that("dense copying HMM retains original C optimal path scores", {
     cases <- readRDS(test_path("fixtures", "tsinfer-matching.rds"))
     for (fixture in cases) {
         with(fixture, {
-            fit <- hpgR:::.tsiMatch(haplotype, reference, nodeIds, rho, mu, numNodes)
+            fit <- hpgR:::tsiMatch(haplotype, reference, nodeIds, rho, mu, numNodes)
             use <- fit$start:fit$end
             rows <- match(fit$parent, nodeIds)
             agree <- reference[cbind(rows, use)] == haplotype[use]
@@ -59,20 +59,20 @@ test_that("dating uses topological order, not initial numeric ancestor ages", {
 
 test_that("coalescent prior moments include every ancestral waiting interval", {
     for (n in 2:20) {
-        variance <- hpgR:::.td_tsdate_conditional_coalescent_variance(n)
+        variance <- hpgR:::tdTsdateConditionalCoalescentVariance(n)
         expected <- sum(4 / ((2:n)^2 * (1:(n - 1L))^2))
         expect_equal(variance[n + 1L], expected, tolerance = 1e-12)
     }
-    expect_equal(hpgR:::.td_tsdate_conditional_coalescent_variance(3)[4], 10/9)
+    expect_equal(hpgR:::tdTsdateConditionalCoalescentVariance(3)[4], 10/9)
 })
 
 test_that("two-copy inside-outside posterior agrees with direct enumeration", {
     G <- rbind(c(1L, 1L, 0L), c(0L, 0L, 1L))
     x <- inferAncestry(G, c(10, 20, 30), 1000)
     dated <- dateAncestry(x, .00001, 100, timepoints = 80L)
-    prior <- hpgR:::.td_build_prior_grid(x, 100, timepoints = 80L)
+    prior <- hpgR:::tdBuildPriorGrid(x, 100, timepoints = 80L)
     root <- setdiff(x$nodes$id, x$sampleIds)
-    logWeight <- log(hpgR:::.td_ntv_get(prior, root)) +
+    logWeight <- log(hpgR:::tdNtvGet(prior, root)) +
         dpois(3L, 2 * .00001 * 1000 * (prior$timepoints + 1e-8), log = TRUE)
     weight <- exp(logWeight - max(logWeight))
     weight <- weight / sum(weight)

@@ -7,7 +7,7 @@
 \alias{frequencyCountDistribution}
 \alias{driftMoments}
 \alias{models_process_examples}
-\alias{copy_history}
+\alias{copyHistory}
 \alias{samplingExample}
 \alias{populationProcessExample}
 \title{Finite-copy histories and reproducible sampling examples}
@@ -31,7 +31,7 @@ frequencyCountDistribution(N = 16L, generations = 19L)
 
 driftMoments(N, time, p0 = 0.5)
 
-copy_history(sizes, initial, mu = 0)
+copyHistory(sizes, initial, mu = 0)
 
 samplingExample()
 
@@ -61,15 +61,15 @@ populationProcessExample()
 \item{mu}{Scalar probability of a fresh allele label per copied allele.}
 }
 \value{
-copy_history returns sizes, copies, zero-based parent and mutation positions, heterozygosity and allele_counts. samplingExample returns sampled indices and finite-population paths. populationProcessExample returns copying, mutation, ancestry and recombination histories. simulateFrequencyRecords returns counts and generation records. simulateNewMutationPaths returns a time-by-replicate matrix and zero-based introduction times. frequencyCountDistribution returns a count transition matrix and generation-by-count probabilities. driftMoments returns variance and diversity arrays indexed by time and N.
+copyHistory returns sizes, copies, zero-based parent and mutation positions, heterozygosity and allele_counts. samplingExample returns sampled indices and finite-population paths. populationProcessExample returns copying, mutation, ancestry and recombination histories. simulateFrequencyRecords returns counts and generation records. simulateNewMutationPaths returns a time-by-replicate matrix and zero-based introduction times. frequencyCountDistribution returns a count transition matrix and generation-by-count probabilities. driftMoments returns variance and diversity arrays indexed by time and N.
 }
 \description{
-Each new copy samples one parent uniformly with replacement. copy_history uses integer allele labels and gives every mutation a fresh label. Fixed-seed example functions restore the caller random-number state; ordinary unseeded copying consumes the caller stream.
+Each new copy samples one parent uniformly with replacement. copyHistory uses integer allele labels and gives every mutation a fresh label. Fixed-seed example functions restore the caller random-number state; ordinary unseeded copying consumes the caller stream.
 }
 \examples{
 x <- simulateFrequencyRecords(N=8, generations=3, cultures=4)
 x$records$frequency
 driftMoments(c(10,100), 0:3)
 set.seed(42)
-copy_history(c(2,2), 1:4)$copies
+copyHistory(c(2,2), 1:4)$copies
 }

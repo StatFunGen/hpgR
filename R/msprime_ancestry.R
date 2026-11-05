@@ -28,12 +28,12 @@
 # conversion, pedigree, DTWF, SMC, selection, rate maps and initial ancestry.
 # R Mersenne-Twister supplies random draws. Recorded event replay is deterministic.
 
-.msprimeEmptySegments <- function() {
+msprimeEmptySegments <- function() {
     matrix(numeric(), nrow = 0L, ncol = 3L,
            dimnames = list(NULL, c("left", "right", "node")))
 }
 
-.msprimeCompressSegments <- function(x) {
+msprimeCompressSegments <- function(x) {
     if (nrow(x) < 2L) return(x)
     out <- x[1L, , drop = FALSE]
     for (j in seq.int(2L, nrow(x))) {
@@ -47,14 +47,14 @@
     out
 }
 
-.msprimeStoreNode <- function(state, flags = 0L) {
+msprimeStoreNode <- function(state, flags = 0L) {
     id <- length(state$time)
     state$time <- c(state$time, state$currentTime)
     state$flags <- c(state$flags, as.integer(flags))
     as.integer(id)
 }
 
-.msprimeStoreEdge <- function(state, left, right, parent, child) {
+msprimeStoreEdge <- function(state, left, right, parent, child) {
     if (left >= right || parent == child ||
         state$time[parent + 1L] <= state$time[child + 1L]) {
         stop("Invalid Hudson edge: positive span and increasing parent time required",
@@ -64,18 +64,18 @@
     invisible(NULL)
 }
 
-.msprimeStoreArgEdges <- function(state, segments, node) {
+msprimeStoreArgEdges <- function(state, segments, node) {
     for (j in seq_len(nrow(segments))) {
         if (segments[j, "node"] != node) {
-            .msprimeStoreEdge(state, segments[j, "left"], segments[j, "right"],
+            msprimeStoreEdge(state, segments[j, "left"], segments[j, "right"],
                               node, segments[j, "node"])
             segments[j, "node"] <- node
         }
     }
-    .msprimeCompressSegments(segments)
+    msprimeCompressSegments(segments)
 }
 
-.msprimeSplitOverlap <- function(state, points) {
+msprimeSplitOverlap <- function(state, points) {
     old <- state$overlap
     breaks <- sort(unique(c(old[, "left"], tail(old[, "right"], 1L), points)))
     left <- head(breaks, -1L)
@@ -85,7 +85,7 @@
     invisible(NULL)
 }
 
-.msprimeCompressOverlap <- function(state) {
+msprimeCompressOverlap <- function(state) {
     x <- state$overlap
     if (nrow(x) < 2L) return(invisible(NULL))
     begins <- c(1L, which(diff(x[, "count"]) != 0L) + 1L)
@@ -95,7 +95,7 @@
     invisible(NULL)
 }
 
-.msprimeCover <- function(segments, left) {
+msprimeCover <- function(segments, left) {
     idx <- findInterval(left, segments[, "left"])
     nodes <- rep(NA_integer_, length(left))
     possible <- which(idx > 0L)
@@ -106,14 +106,14 @@
 
 # R interval representation of msp_merge_two_ancestors. Splitting at the
 # overlap ledger's boundaries is the source's copy_overlap_count operation.
-.msprimeMergeAncestors <- function(state, first, second) {
+msprimeMergeAncestors <- function(state, first, second) {
     a <- state$lineages[[as.character(first)]]
     b <- state$lineages[[as.character(second)]]
     if (is.null(a) || is.null(b) || first == second) {
         stop("A common-ancestor event must select two distinct live lineages",
              call. = FALSE)
     }
-    .msprimeSplitOverlap(state, c(a[, "left"], a[, "right"],
+    msprimeSplitOverlap(state, c(a[, "left"], a[, "right"],
                                    b[, "left"], b[, "right"]))
     lo <- min(a[1L, "left"], b[1L, "left"])
     hi <- max(tail(a[, "right"], 1L), tail(b[, "right"], 1L))
@@ -121,20 +121,20 @@
                   state$overlap[, "right"] <= hi)
     left <- state$overlap[take, "left"]
     right <- state$overlap[take, "right"]
-    nodeA <- .msprimeCover(a, left)
-    nodeB <- .msprimeCover(b, left)
+    nodeA <- msprimeCover(a, left)
+    nodeB <- msprimeCover(b, left)
     both <- !is.na(nodeA) & !is.na(nodeB)
     coalescence <- any(both)
-    newNode <- if (coalescence) .msprimeStoreNode(state, 0L) else
-        if (state$fullArg) .msprimeStoreNode(state, 2^18) else NA_integer_
-    result <- .msprimeEmptySegments()
+    newNode <- if (coalescence) msprimeStoreNode(state, 0L) else
+        if (state$fullArg) msprimeStoreNode(state, 2^18) else NA_integer_
+    result <- msprimeEmptySegments()
     for (j in seq_along(left)) {
         value <- NA_integer_
         if (both[j]) {
             count <- state$overlap[take[j], "count"]
             if (count < 2L) stop("Inconsistent Hudson overlap count", call. = FALSE)
-            .msprimeStoreEdge(state, left[j], right[j], newNode, nodeA[j])
-            .msprimeStoreEdge(state, left[j], right[j], newNode, nodeB[j])
+            msprimeStoreEdge(state, left[j], right[j], newNode, nodeA[j])
+            msprimeStoreEdge(state, left[j], right[j], newNode, nodeB[j])
             if (count == 2L) {
                 state$overlap[take[j], "count"] <- 0L
             } else {
@@ -148,9 +148,9 @@
         }
     }
     if (state$fullArg && nrow(result)) {
-        result <- .msprimeStoreArgEdges(state, result, newNode)
-    } else result <- .msprimeCompressSegments(result)
-    .msprimeCompressOverlap(state)
+        result <- msprimeStoreArgEdges(state, result, newNode)
+    } else result <- msprimeCompressSegments(result)
+    msprimeCompressOverlap(state)
     state$lineages[[as.character(first)]] <- NULL
     state$lineages[[as.character(second)]] <- NULL
     id <- state$nextLineage
@@ -163,7 +163,7 @@
 
 # msp_recombination_event, including a breakpoint in a gap between two carried
 # segments. The left lineage persists; the right chain receives a new lineage.
-.msprimeRecombination <- function(state, lineage, breakpoint) {
+msprimeRecombination <- function(state, lineage, breakpoint) {
     x <- state$lineages[[as.character(lineage)]]
     if (is.null(x) || length(breakpoint) != 1L || !is.finite(breakpoint) ||
         breakpoint != floor(breakpoint) || breakpoint <= x[1L, "left"] ||
@@ -177,10 +177,10 @@
     right[, "left"] <- pmax(right[, "left"], breakpoint)
     inSegment <- any(x[, "left"] < breakpoint & x[, "right"] > breakpoint)
     if (state$fullArg) {
-        leftNode <- .msprimeStoreNode(state, 2^17)
-        left <- .msprimeStoreArgEdges(state, left, leftNode)
-        rightNode <- .msprimeStoreNode(state, 2^17)
-        right <- .msprimeStoreArgEdges(state, right, rightNode)
+        leftNode <- msprimeStoreNode(state, 2^17)
+        left <- msprimeStoreArgEdges(state, left, leftNode)
+        rightNode <- msprimeStoreNode(state, 2^17)
+        right <- msprimeStoreArgEdges(state, right, rightNode)
     }
     id <- state$nextLineage
     state$nextLineage <- id + 1L
@@ -191,7 +191,7 @@
     invisible(id)
 }
 
-.msprimeFinishEdges <- function(state) {
+msprimeFinishEdges <- function(state) {
     if (!length(state$edges)) {
         return(data.frame(left = numeric(), right = numeric(),
                           parent = integer(), child = integer()))
@@ -215,32 +215,32 @@
     out
 }
 
-.msprimeAncestry <- function(samples, populationSize, sequenceLength,
+msprimeAncestry <- function(samples, populationSize, sequenceLength,
                               recombinationRate = 0, seed = 8149L,
                               recordFullArg = FALSE, events = NULL) {
-    samples <- .scalarInteger(samples, "samples")
+    samples <- scalarInteger(samples, "samples")
     if (samples > .Machine$integer.max / 2L) stop("Too many sample copies", call. = FALSE)
-    .msprimeAncestryCopies(2L * samples, populationSize, sequenceLength,
+    msprimeAncestryCopies(2L * samples, populationSize, sequenceLength,
                            recombinationRate, seed, recordFullArg, events)
 }
 
 # The source event kernel operates on sampled copies. Diploid sample grouping
 # is an interface convention; an odd number of sampled copies uses this same
 # kernel with the same diploid Ne and pair-merger rate 1/(2Ne).
-.msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
+msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                                     recombinationRate = 0, seed = 8149L,
                                     recordFullArg = FALSE, events = NULL) {
-    copies <- .scalarInteger(copies, "copies", minimum = 2L)
-    populationSize <- .positiveScalar(populationSize, "populationSize")
-    sequenceLength <- .scalarInteger(sequenceLength, "sequenceLength")
-    recombinationRate <- .positiveScalar(recombinationRate, "recombinationRate", TRUE)
-    seed <- .scalarInteger(seed, "seed", minimum = 0L)
+    copies <- scalarInteger(copies, "copies", minimum = 2L)
+    populationSize <- positiveScalar(populationSize, "populationSize")
+    sequenceLength <- scalarInteger(sequenceLength, "sequenceLength")
+    recombinationRate <- positiveScalar(recombinationRate, "recombinationRate", TRUE)
+    seed <- scalarInteger(seed, "seed", minimum = 0L)
     if (!is.logical(recordFullArg) || length(recordFullArg) != 1L ||
         is.na(recordFullArg)) stop("recordFullArg must be TRUE or FALSE", call. = FALSE)
     if (!is.null(events) && !is.list(events)) {
         stop("events must be a recorded Hudson event list", call. = FALSE)
     }
-    .simupopWithSeed(seed, function() {
+    simupopWithSeed(seed, function() {
         state <- new.env(parent = emptyenv())
         state$lineages <- lapply(seq_len(copies), function(j)
             matrix(c(0, sequenceLength, j - 1L), nrow = 1L,
@@ -321,7 +321,7 @@
                     stop("Recombination replay must select a live lineage at positive rate",
                          call. = FALSE)
                 }
-                .msprimeRecombination(state, event$lineage, event$breakpoint)
+                msprimeRecombination(state, event$lineage, event$breakpoint)
             } else if (event$type == "common_ancestor") {
                 if (!is.numeric(event$lineages) || length(event$lineages) != 2L ||
                     any(!event$lineages %in% ids) ||
@@ -329,7 +329,7 @@
                     stop("Common-ancestor replay must select two live lineages",
                          call. = FALSE)
                 }
-                .msprimeMergeAncestors(state, event$lineages[1L], event$lineages[2L])
+                msprimeMergeAncestors(state, event$lineages[1L], event$lineages[2L])
             } else stop("Unknown Hudson event type", call. = FALSE)
             recorded[[step]] <- event
         }
@@ -342,7 +342,7 @@
         }
         structure(list(nodes = data.frame(id = seq_along(state$time) - 1L,
             time = state$time, flags = state$flags),
-            edges = .msprimeFinishEdges(state), sampleIds = seq_len(copies) - 1L,
+            edges = msprimeFinishEdges(state), sampleIds = seq_len(copies) - 1L,
             sequenceLength = as.numeric(sequenceLength), timeUnits = "generations",
             events = recorded,
             eventCounts = c(common_ancestor = state$commonAncestorEvents,

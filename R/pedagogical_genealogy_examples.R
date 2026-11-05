@@ -20,7 +20,7 @@
 #' @param bootstrap Integer number of region-resampling bootstrap replicates, at least two.
 #' @param generations Nonnegative integer number of forward reproductive updates.
 #' @param G Binary haplotype matrix: sampled copies in rows, derived variants in columns.
-#' @returns matched_draws returns replicate results and spectra. recorded_subset returns a nested tree and ages. sfs returns counts for derived-copy classes 1 through n-1. founderDiversityExample returns replicate nonIBD and diversityRatio arrays, their summary and truth. terminalSpectrumFit returns estimate, expected, constantNe, constantExpected and observed. terminalExtensionExample returns observed regions, spectra, fit, bootstrap intervals and truth. specifiedLocalTreeExample returns observed, calibration and truth with two specified local genealogies.
+#' @returns matchedDraws returns replicate results and spectra. recordedSubset returns a nested tree and ages. sfs returns counts for derived-copy classes 1 through n-1. founderDiversityExample returns replicate nonIBD and diversityRatio arrays, their summary and truth. terminalSpectrumFit returns estimate, expected, constantNe, constantExpected and observed. terminalExtensionExample returns observed regions, spectra, fit, bootstrap intervals and truth. specifiedLocalTreeExample returns observed, calibration and truth with two specified local genealogies.
 #' @examples
 #' founderDiversityExample(N=4, generations=2, replicates=2, seed=42)$summary
 #' sfs(rbind(c(0,1),c(1,1),c(0,0)))
@@ -30,15 +30,15 @@ NULL
 
 #' @rdname models_genealogy_controls
 #' @export
-matched_draws <- function(N, mu, replicates = 600L, base_seed) {
+matchedDraws <- function(N, mu, replicates = 600L, base_seed) {
     rows <- list(); spectra <- matrix(0, 2 * replicates, 11)
     for (model in 1:2) for (i in seq_len(replicates)) {
-        a <- pg_region_seed(base_seed + model * 10000L, i)
-        m <- pg_region_seed(base_seed + model * 10000L + 500000L, i, mutation = TRUE)
-        genealogy <- if (model == 1L) pg_discrete_genealogy(rep(N, 61L), ancestry_seed = a)
-                     else pg_kingman_tree(N, ancestry_seed = a)
-        summary <- pg_tree_summaries(genealogy)
-        mutations <- pg_mutate_tree(genealogy, 1000, mu, mutation_seed = m)
+        a <- pgRegionSeed(base_seed + model * 10000L, i)
+        m <- pgRegionSeed(base_seed + model * 10000L + 500000L, i, mutation = TRUE)
+        genealogy <- if (model == 1L) pgDiscreteGenealogy(rep(N, 61L), ancestry_seed = a)
+                     else pgKingmanTree(N, ancestry_seed = a)
+        summary <- pgTreeSummaries(genealogy)
+        mutations <- pgMutateTree(genealogy, 1000, mu, mutation_seed = m)
         row <- (model - 1L) * replicates + i
         spectra[row, ] <- mutations$sfs
         weights <- 2 * (1:11) * (12 - (1:11)) / (12 * 11)
@@ -62,10 +62,10 @@ matched_draws <- function(N, mu, replicates = 600L, base_seed) {
 #' @export
 founderDiversityExample <- function(N = 40L, generations = 60L,
                                     replicates = 200L, seed = 814906L) {
-    N <- .scalarInteger(N, "N")
-    generations <- .scalarInteger(generations, "generations", 0L)
-    replicates <- .scalarInteger(replicates, "replicates", 2L)
-    seed <- .scalarInteger(seed, "seed")
+    N <- scalarInteger(N, "N")
+    generations <- scalarInteger(generations, "generations", 0L)
+    replicates <- scalarInteger(replicates, "replicates", 2L)
+    seed <- scalarInteger(seed, "seed")
     copies <- 2L * N
     initial <- cbind(seq_len(copies), rep(0:1, each = N))
     H0 <- 2 * N^2 / (copies * (copies - 1))
@@ -89,30 +89,30 @@ founderDiversityExample <- function(N = 40L, generations = 60L,
 }
 
 # Complete small example. Existing source-derived Kingman and mutation
-# functions supply trees and sequences; pg_make_tree adds the stated tip time.
+# functions supply trees and sequences; pgMakeTree adds the stated tip time.
 #' @rdname models_genealogy_controls
 #' @export
 terminalExtensionExample <- function(Ne = 80, n = 12L, mutationRate = 2e-5,
                                      sequenceLength = 1000, extension = 40,
                                      regions = 48L, bootstrap = 120L, seed = 814903L) {
-    n <- .scalarInteger(n, "n", 3L)
-    regions <- .scalarInteger(regions, "regions", 2L)
-    bootstrap <- .scalarInteger(bootstrap, "bootstrap", 2L)
-    seed <- .scalarInteger(seed, "seed")
-    extension <- .positiveScalar(extension, "extension", zero = TRUE)
+    n <- scalarInteger(n, "n", 3L)
+    regions <- scalarInteger(regions, "regions", 2L)
+    bootstrap <- scalarInteger(bootstrap, "bootstrap", 2L)
+    seed <- scalarInteger(seed, "seed")
+    extension <- positiveScalar(extension, "extension", zero = TRUE)
     trees <- lapply(seq_len(regions), function(j) {
-        tree <- pg_kingman_tree(Ne, n, pg_region_seed(seed, j))
+        tree <- pgKingmanTree(Ne, n, pgRegionSeed(seed, j))
         nodes <- tree$nodes[c("id", "time")]
         internal <- !nodes$id %in% tree$sample_nodes
         nodes$time[internal] <- nodes$time[internal] + extension
-        pg_make_tree(nodes, tree$edges[c("parent", "child")], tree$sample_nodes,
+        pgMakeTree(nodes, tree$edges[c("parent", "child")], tree$sample_nodes,
                      tree$sample_ids, "specified terminal extension")
     })
-    observed <- lapply(seq_along(trees), function(j) pg_mutate_tree(trees[[j]],
-        sequenceLength, mutationRate, pg_region_seed(seed + 100000L, j, TRUE)))
+    observed <- lapply(seq_along(trees), function(j) pgMutateTree(trees[[j]],
+        sequenceLength, mutationRate, pgRegionSeed(seed + 100000L, j, TRUE)))
     spectra <- t(vapply(observed, function(x) sfs(x$haplotypes), integer(n - 1L)))
     fit <- terminalSpectrumFit(spectra, mutationRate, sequenceLength)
-    draws <- pg_with_seed(seed + 1L, function() t(replicate(bootstrap, {
+    draws <- pgWithSeed(seed + 1L, function() t(replicate(bootstrap, {
         rows <- sample.int(regions, regions, replace = TRUE)
         terminalSpectrumFit(spectra[rows, , drop = FALSE], mutationRate, sequenceLength)$estimate
     })))
@@ -128,17 +128,17 @@ terminalExtensionExample <- function(Ne = 80, n = 12L, mutationRate = 2e-5,
 #' @rdname models_genealogy_controls
 #' @export
 specifiedLocalTreeExample <- function(seed = 814905L) {
-    seed <- .scalarInteger(seed, "seed")
+    seed <- scalarInteger(seed, "seed")
     make <- function(pair, time) {
         other <- setdiff(1:3, pair)
-        pg_make_tree(data.frame(id = 1:7, time = c(rep(0, 4), time, 400, 800)),
+        pgMakeTree(data.frame(id = 1:7, time = c(rep(0, 4), time, 400, 800)),
             data.frame(parent = c(5L, 5L, 6L, 7L, 6L, 7L),
                        child = c(pair, other, 4L, 5L, 6L)),
             1:4, paste0("S", 1:4), "specified local genealogy")
     }
     trees <- list(left = make(1:2, 120), right = make(c(1L, 3L), 180))
     data <- lapply(seq_along(trees), function(i)
-        pg_mutate_tree(trees[[i]], 50000, 1e-6, mutation_seed = seed + i - 1L))
+        pgMutateTree(trees[[i]], 50000, 1e-6, mutation_seed = seed + i - 1L))
     position <- c(data[[1L]]$positions_bp, data[[2L]]$positions_bp + 50000)
     order <- order(position)
     observed <- list(haplotypes = cbind(data[[1L]]$haplotypes,

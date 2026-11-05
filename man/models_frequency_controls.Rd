@@ -2,13 +2,13 @@
 % Please edit documentation in R/pedagogical_effective_size.R
 \name{models_frequency_controls}
 \alias{models_frequency_controls}
-\alias{LD}
-\alias{estimate_from_generations}
+\alias{ld}
+\alias{estimateFromGenerations}
 \title{Two-locus LD and temporal drift inversion}
 \usage{
-LD(f)
+ld(f)
 
-estimate_from_generations(parent_frequency, offspring_frequency)
+estimateFromGenerations(parent_frequency, offspring_frequency)
 }
 \arguments{
 \item{f}{Four haplotype frequencies ordered AB, Ab, aB, ab.}
@@ -18,12 +18,12 @@ estimate_from_generations(parent_frequency, offspring_frequency)
 \item{offspring_frequency}{Matching offspring frequencies, one per transition.}
 }
 \value{
-LD returns scalar D. estimate_from_generations returns parental_p, transitions, variance, c_V and Ne_V; offspring records must have positive variance.
+ld returns scalar D. estimateFromGenerations returns parental_p, transitions, variance, c_V and Ne_V; offspring records must have positive variance.
 }
 \description{
 LD is f_AB - p_A p_B. Temporal inversion pools replicate frequency changes that share the same initial p, then equates their variance to p(1-p)/(2Ne).
 }
 \examples{
-LD(c(.3,.2,.2,.3))
-estimate_from_generations(rep(.5,4), c(.4,.5,.6,.5))
+ld(c(.3,.2,.2,.3))
+estimateFromGenerations(rep(.5,4), c(.4,.5,.6,.5))
 }

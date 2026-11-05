@@ -1,9 +1,9 @@
 # Classroom comparisons of inferred and recorded R node/edge tables.
 # Recorded ancestry supplies the truth for evaluating inference results.
 
-.ancestryClades <- function(x, position) {
-    parent <- .ancestryParent(x, position)
-    paths <- lapply(x$sampleIds, .ancestryPath, parent = parent)
+ancestryClades <- function(x, position) {
+    parent <- ancestryParent(x, position)
+    paths <- lapply(x$sampleIds, ancestryPath, parent = parent)
     nodes <- unique(unlist(paths))
     clades <- vapply(nodes, function(u) {
         descendants <- which(vapply(paths, function(p) u %in% p, logical(1)))
@@ -25,8 +25,8 @@
 #'   the full-sample root. Pair errors average over all sampled-copy pairs.
 #' @export
 compareAncestry <- function(estimate, truth) {
-    .ancestryCheckTables(estimate)
-    .ancestryCheckTables(truth)
+    ancestryCheckTables(estimate)
+    ancestryCheckTables(truth)
     if (length(estimate$sampleIds) != length(truth$sampleIds) ||
         estimate$sequenceLength != truth$sequenceLength)
         stop("ancestry objects must describe the same ordered sample and region", call. = FALSE)
@@ -34,8 +34,8 @@ compareAncestry <- function(estimate, truth) {
         estimate$edges$right, truth$edges$left, truth$edges$right)))
     pairs <- utils::combn(seq_along(truth$sampleIds), 2L)
     ages <- function(x, position) {
-        parent <- .ancestryParent(x, position)
-        paths <- lapply(x$sampleIds, .ancestryPath, parent = parent)
+        parent <- ancestryParent(x, position)
+        paths <- lapply(x$sampleIds, ancestryPath, parent = parent)
         time <- stats::setNames(x$nodes$time, x$nodes$id)
         vapply(seq_len(ncol(pairs)), function(j) {
             a <- paths[[pairs[1L, j]]]; b <- paths[[pairs[2L, j]]]
@@ -45,8 +45,8 @@ compareAncestry <- function(estimate, truth) {
     }
     result <- lapply(seq_len(length(cuts) - 1L), function(j) {
         pos <- mean(cuts[c(j, j + 1L)])
-        a <- .ancestryClades(estimate, pos)
-        b <- .ancestryClades(truth, pos)
+        a <- ancestryClades(estimate, pos)
+        b <- ancestryClades(truth, pos)
         shared <- length(intersect(a, b))
         timesA <- ages(estimate, pos)
         timesB <- ages(truth, pos)

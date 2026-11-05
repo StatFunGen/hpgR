@@ -3,30 +3,30 @@
 # Mechanical adaptation: private .td_ names and R-list table accessors.
 # The inside/outside recurrences and conditional coalescent priors are retained.
 
-.td_lognorm_approx <- function(mean, var) {
+tdLognormApprox <- function(mean, var) {
     beta <- log(var/mean^2 + 1)
     alpha <- log(mean) - 0.5 * beta
     c(alpha, beta)
 }
 
-.td_gamma_approx <- function(mean, variance) {
+tdGammaApprox <- function(mean, variance) {
     c(mean^2/variance, mean/variance)
 }
 
-.td_tau_expect <- function(i, n) {
+tdTauExpect <- function(i, n) {
     ifelse(i == n, 2 * (1 - 1/n), (i - 1)/n)
 }
 
-.td_tau_var_mrca <- function(n) {
+tdTauVarMrca <- function(n) {
     v <- seq(2, n)
     var_val <- sum(1/(v^2 * (v - 1)^2))
     abs(4 * var_val)
 }
 
-.td_compute_conditional_prior <- function(total_tips, prior_distr = "lognorm", approx_priors = NULL) {
+tdComputeConditionalPrior <- function(total_tips, prior_distr = "lognorm", approx_priors = NULL) {
     func_approx <- if (prior_distr == "lognorm") 
-        .td_lognorm_approx
-    else .td_gamma_approx
+        tdLognormApprox
+    else tdGammaApprox
     priors <- matrix(NA_real_, nrow = total_tips + 1L, ncol = 4L)
     colnames(priors) <- c("alpha", "beta", "mean", "var")
     if (prior_distr == "lognorm") {
@@ -38,15 +38,15 @@
     all_tips <- seq(2L, total_tips)
     if (!is.null(approx_priors)) {
         variances <- approx(approx_priors[, 1], approx_priors[, 2], xout = all_tips/total_tips, rule = 2)$y
-        variances[all_tips == total_tips] <- .td_tau_var_mrca(total_tips)
+        variances[all_tips == total_tips] <- tdTauVarMrca(total_tips)
     }
     else {
-        var_all <- .td_tsdate_conditional_coalescent_variance(total_tips)
+        var_all <- tdTsdateConditionalCoalescentVariance(total_tips)
         variances <- var_all[all_tips + 1L]
     }
     for (idx in seq_along(all_tips)) {
         tips <- all_tips[idx]
-        expectation <- .td_tau_expect(tips, total_tips)
+        expectation <- tdTauExpect(tips, total_tips)
         var_val <- variances[idx]
         if (is.na(var_val) || var_val <= 0 || expectation <= 0) {
             next
@@ -57,34 +57,34 @@
     priors
 }
 
-.td_spans_by_samples <- function(ts) {
-    samples <- .td_samples(ts)
-    num_nodes <- .td_num_nodes(ts)
+tdSpansBySamples <- function(ts) {
+    samples <- tdSamples(ts)
+    num_nodes <- tdNumNodes(ts)
     sample_set <- samples
     spans <- list()
     node_spans <- numeric(num_nodes)
-    tree_obj <- .td_tree(ts)
-    .td_first(tree_obj)
-    n_tips_per_tree <- integer(.td_num_trees(ts))
+    tree_obj <- tdTree(ts)
+    tdFirst(tree_obj)
+    n_tips_per_tree <- integer(tdNumTrees(ts))
     tree_idx <- 1L
     repeat {
-        interval <- .td_interval(tree_obj)
+        interval <- tdInterval(tree_obj)
         span <- interval[2] - interval[1]
         n_samples <- 0L
-        roots <- .td_roots(tree_obj)
+        roots <- tdRoots(tree_obj)
         for (s in sample_set) {
-            if (.td_parent_node(tree_obj, s) != -1L || s %in% roots) {
+            if (tdParentNode(tree_obj, s) != -1L || s %in% roots) {
                 n_samples <- n_samples + 1L
             }
         }
         n_tips_per_tree[tree_idx] <- n_samples
-        all_nodes <- .td_preorder(tree_obj)
+        all_nodes <- tdPreorder(tree_obj)
         for (node in all_nodes) {
             if (node %in% sample_set) {
                 node_spans[node + 1L] <- node_spans[node + 1L] + span
                 next
             }
-            n_desc <- .td_num_samples_node(tree_obj, node)
+            n_desc <- tdNumSamplesNode(tree_obj, node)
             if (n_desc > 0L) {
                 node_spans[node + 1L] <- node_spans[node + 1L] + span
                 node_key <- as.character(node)
@@ -103,7 +103,7 @@
             }
         }
         tree_idx <- tree_idx + 1L
-        if (!.td_next_tree(tree_obj)) 
+        if (!tdNextTree(tree_obj)) 
             break
     }
     nodes_to_date <- as.integer(names(spans))
@@ -123,7 +123,7 @@
     list(node_span_data = node_span_data, nodes_to_date = nodes_to_date, node_spans = node_spans, total_fixed_at_0_counts = total_fixed_at_0_counts)
 }
 
-.td_mixture_expect_and_var <- function(mixture, prior_store) {
+tdMixtureExpectAndVar <- function(mixture, prior_store) {
     expectation <- 0
     first <- 0
     secnd <- 0
@@ -146,7 +146,7 @@
     c(mean_out, var_out)
 }
 
-.td_create_timepoints <- function(prior_params, n_points = 21L, prior_distr = "lognorm") {
+tdCreateTimepoints <- function(prior_params, n_points = 21L, prior_distr = "lognorm") {
     if (prior_distr == "lognorm") {
         ppf <- function(p, alpha, beta) {
             qlnorm(p, meanlog = alpha, sdlog = sqrt(beta))
@@ -188,16 +188,16 @@
     c(0, t_set)
 }
 
-.td_fill_priors <- function(prior_params, timepoints, ts, pop_hist, prior_distr = "lognorm") {
-    samps <- .td_samples(ts)
-    n_nodes <- .td_num_nodes(ts)
+tdFillPriors <- function(prior_params, timepoints, ts, pop_hist, prior_distr = "lognorm") {
+    samps <- tdSamples(ts)
+    n_nodes <- tdNumNodes(ts)
     datable_nodes <- setdiff(seq(0L, n_nodes - 1L), samps)
-    tc <- .td_tables(ts)
-    nt <- .td_nodes(tc)
+    tc <- tdTables(ts)
+    nt <- tdNodes(tc)
     node_times <- nt$time
     datable_sorted <- datable_nodes[order(node_times[datable_nodes + 1L])]
-    tp_natural <- .td_to_natural_timescale(pop_hist, timepoints)
-    ntv <- .td_node_time_values(n_nodes, as.integer(datable_sorted), tp_natural)
+    tp_natural <- tdToNaturalTimescale(pop_hist, timepoints)
+    ntv <- tdNodeTimeValues(n_nodes, as.integer(datable_sorted), tp_natural)
     for (node in datable_sorted) {
         alpha <- prior_params[node + 1L, 1]
         beta <- prior_params[node + 1L, 2]
@@ -214,47 +214,47 @@
             prior_node <- prior_node/max_val
         }
         prior_diff <- c(0, diff(prior_node))
-        ntv <- .td_ntv_set(ntv, node, prior_diff)
+        ntv <- tdNtvSet(ntv, node, prior_diff)
     }
-    ntv <- .td_ntv_standardize(ntv)
+    ntv <- tdNtvStandardize(ntv)
     ntv
 }
 
-.td_build_prior_grid <- function(ts, population_size, timepoints = 20L, approximate_priors = FALSE, approx_prior_size = NULL, 
+tdBuildPriorGrid <- function(ts, population_size, timepoints = 20L, approximate_priors = FALSE, approx_prior_size = NULL, 
     prior_distribution = "lognorm") {
-    if (is.numeric(population_size) && !.td_is(population_size, "PopulationSizeHistory")) {
-        pop_hist <- .td_population_size_history(population_size)
+    if (is.numeric(population_size) && !tdIs(population_size, "PopulationSizeHistory")) {
+        pop_hist <- tdPopulationSizeHistory(population_size)
     }
     else {
         pop_hist <- population_size
     }
-    span_data <- .td_spans_by_samples(ts)
+    span_data <- tdSpansBySamples(ts)
     total_counts <- span_data$total_fixed_at_0_counts
-    n_samples <- length(.td_samples(ts))
+    n_samples <- length(tdSamples(ts))
     all_counts <- unique(c(n_samples, total_counts))
     all_counts <- all_counts[all_counts > 0]
     prior_store <- list()
     for (n in all_counts) {
         approx_table <- if (approximate_priors && !is.null(approx_prior_size)) {
-            var_exact <- .td_tsdate_conditional_coalescent_variance(approx_prior_size + 1L)
+            var_exact <- tdTsdateConditionalCoalescentVariance(approx_prior_size + 1L)
             all_t <- seq(2, approx_prior_size)
             cbind(all_t/approx_prior_size, var_exact[all_t + 1L])
         }
         else {
             NULL
         }
-        prior_store[[as.character(n)]] <- .td_compute_conditional_prior(n, prior_distribution, approx_table)
+        prior_store[[as.character(n)]] <- tdComputeConditionalPrior(n, prior_distribution, approx_table)
     }
     func_approx <- if (prior_distribution == "lognorm") 
-        .td_lognorm_approx
-    else .td_gamma_approx
-    n_nodes <- .td_num_nodes(ts)
+        tdLognormApprox
+    else tdGammaApprox
+    n_nodes <- tdNumNodes(ts)
     prior_params <- matrix(NA_real_, nrow = n_nodes, ncol = 4L)
     colnames(prior_params) <- c("alpha", "beta", "mean", "var")
     for (node_key in names(span_data$node_span_data)) {
         node <- as.integer(node_key)
         mixture <- span_data$node_span_data[[node_key]]
-        mv <- .td_mixture_expect_and_var(mixture, prior_store)
+        mv <- tdMixtureExpectAndVar(mixture, prior_store)
         if (mv[1] > 0 && mv[2] > 0) {
             params <- func_approx(mv[1], mv[2])
             prior_params[node + 1L, ] <- c(params[1], params[2], mv[1], mv[2])
@@ -263,18 +263,18 @@
     if (is.numeric(timepoints) && length(timepoints) == 1 && timepoints == as.integer(timepoints)) {
         max_n <- max(all_counts)
         base_prior <- prior_store[[as.character(max_n)]]
-        tp <- .td_create_timepoints(base_prior, as.integer(timepoints) + 1L, prior_distribution)
+        tp <- tdCreateTimepoints(base_prior, as.integer(timepoints) + 1L, prior_distribution)
     }
     else {
         tp <- sort(as.numeric(timepoints))
-        tp <- .td_to_coalescent_timescale(pop_hist, tp)
+        tp <- tdToCoalescentTimescale(pop_hist, tp)
     }
-    .td_fill_priors(prior_params, tp, ts, pop_hist, prior_distribution)
+    tdFillPriors(prior_params, tp, ts, pop_hist, prior_distribution)
 }
 
 # Conditional coalescent moments from the supplied tsdate_prior.cpp.
 
-.td_marginalize_over_ancestors <- function(val) {
+tdMarginalizeOverAncestors <- function(val) {
     n <- nrow(val)
     out <- matrix(0, n + 1L, ncol(val))
     logProbability <- c(NaN, NaN, 0)
@@ -291,7 +291,7 @@
     out[n + 1L, ] <- val[2L, ]
     out
 }
-.td_tsdate_conditional_coalescent_variance <- function(num_tips) {
+tdTsdateConditionalCoalescentVariance <- function(num_tips) {
     rates <- c(0, 2 / ((2:num_tips) * (1:(num_tips - 1L))))
     # Hypoexponential moments sum every wait, including the final array entry.
     # The supplied C++ reverse loop skips the penultimate entry. This boundary
@@ -299,6 +299,6 @@
     # for three tips, and the source tsdate cumulative-sum definition.
     mean <- rev(cumsum(rev(rates)))
     variance <- rev(cumsum(rev(rates^2)))
-    moments <- .td_marginalize_over_ancestors(cbind(mean, variance + mean^2))
+    moments <- tdMarginalizeOverAncestors(cbind(mean, variance + mean^2))
     moments[, 2L] - moments[, 1L]^2
 }

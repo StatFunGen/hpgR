@@ -13,7 +13,6 @@ License: GPL (>= 3)
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Imports: stats, utils, parallel
-Suggests: testthat (>= 3.0.0), knitr, rmarkdown, jsonlite
-VignetteBuilder: knitr
+Suggests: testthat (>= 3.0.0), jsonlite
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

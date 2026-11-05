@@ -25,7 +25,7 @@ test_that("forward simulation restores the caller's random generator", {
 
 test_that("a simulation does not leave an RNG state when the caller had none", {
     # Observe entry and exit before returning to the test reporter.
-    inspect_absent_seed <- function(draw) {
+    inspectAbsentSeed <- function(draw) {
         old <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
             get(".Random.seed", envir = .GlobalEnv) else NULL
         on.exit(if (is.null(old)) {
@@ -39,9 +39,9 @@ test_that("a simulation does not leave an RNG state when the caller had none", {
         after <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
         c(before = before, after = after)
     }
-    forward <- inspect_absent_seed(function()
+    forward <- inspectAbsentSeed(function()
         simulateForward(matrix(0:1, ncol = 1L), c(1, 2), 91L))
-    population <- inspect_absent_seed(function()
+    population <- inspectAbsentSeed(function()
         simulatePopulation(c(4, 3), 2, .1, 2, seed = 91L))
     expect_identical(forward, c(before = FALSE, after = FALSE))
     expect_identical(population, c(before = FALSE, after = FALSE))
@@ -112,7 +112,7 @@ test_that("zero-generation sampling and founder selection do not copy an individ
 })
 
 test_that("binary mutation replays recorded events simultaneously", {
-    mutate <- getFromNamespace(".simupopMutate", "hpgR")
+    mutate <- getFromNamespace("simupopMutate", "hpgR")
     h <- matrix(rep(0:1, 6L), nrow = 4L)
     expected <- h
     changed <- c(1L, 4L, 7L, 12L)
@@ -127,7 +127,7 @@ test_that("binary mutation replays recorded events simultaneously", {
 })
 
 test_that("specified gamete starts and crossover switches give exact mosaics", {
-    meiosis <- getFromNamespace(".simupopMeiosis", "hpgR")
+    meiosis <- getFromNamespace("simupopMeiosis", "hpgR")
     h <- rbind(0:5, 10:15, 20:25, 30:35)
     events <- list(starts = matrix(c(0L, 1L, 1L, 0L, 0L, 0L, 1L, 1L),
             nrow = 4L, byrow = TRUE),
@@ -148,8 +148,8 @@ test_that("specified gamete starts and crossover switches give exact mosaics", {
 })
 
 test_that("gametes choose parental homologues independently including selfing", {
-    meiosis <- getFromNamespace(".simupopMeiosis", "hpgR")
-    choose <- getFromNamespace(".simupopParents", "hpgR")
+    meiosis <- getFromNamespace("simupopMeiosis", "hpgR")
+    choose <- getFromNamespace("simupopParents", "hpgR")
     set.seed(393L)
     p <- choose(1L, 10000L)
     expect_identical(p, rep(1L, 20000L))
@@ -166,7 +166,7 @@ test_that("gametes choose parental homologues independently including selfing", 
 })
 
 test_that("chromosomes assort independently and adjacent switches use supplied rates", {
-    meiosis <- getFromNamespace(".simupopMeiosis", "hpgR")
+    meiosis <- getFromNamespace("simupopMeiosis", "hpgR")
     h <- rbind(rep(0L, 4L), rep(1L, 4L))
     parents <- rep(1L, 20000L)
     set.seed(394L)
@@ -181,8 +181,8 @@ test_that("chromosomes assort independently and adjacent switches use supplied r
 })
 
 test_that("supplied parent and individual-sampling records replay exactly", {
-    choose <- getFromNamespace(".simupopParents", "hpgR")
-    sample_individuals <- getFromNamespace(".simupopSample", "hpgR")
+    choose <- getFromNamespace("simupopParents", "hpgR")
+    sample_individuals <- getFromNamespace("simupopSample", "hpgR")
     expect_identical(choose(4L, 2L, parents = c(1L, 1L, 3L, 4L)),
         c(1L, 1L, 3L, 4L))
     h <- matrix(seq_len(32L), nrow = 8L)

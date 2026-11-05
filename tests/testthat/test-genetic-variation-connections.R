@@ -18,15 +18,15 @@ test_that("founder IBD and diversity have the same expected copying decay", {
 
 test_that("a supplied terminal extension adds singleton branch exposure", {
     # Pritchard's rapid-growth approximation adds time before any sample merger.
-    tree <- pg_kingman_tree(80, n = 12L, ancestry_seed = 814903L)
+    tree <- pgKingmanTree(80, n = 12L, ancestry_seed = 814903L)
     nodes <- tree$nodes[c("id", "time")]
     extension <- 40
     internal <- !nodes$id %in% tree$sample_nodes
     nodes$time[internal] <- nodes$time[internal] + extension
-    extended <- pg_make_tree(nodes, tree$edges[c("parent", "child")],
+    extended <- pgMakeTree(nodes, tree$edges[c("parent", "child")],
         tree$sample_nodes, tree$sample_ids, "specified terminal extension")
-    base <- pg_tree_summaries(tree)
-    altered <- pg_tree_summaries(extended)
+    base <- pgTreeSummaries(tree)
+    altered <- pgTreeSummaries(extended)
     added <- c(tree$n * extension, rep(0, tree$n - 2L))
     expect_equal(altered$branch_generations - base$branch_generations, added,
                  tolerance = 1e-11)
@@ -80,11 +80,11 @@ test_that("founder summaries reproduce their source copying records", {
 
 test_that("terminal-extension examples reuse source trees and mutation draws", {
     x <- terminalExtensionExample(regions = 4L, bootstrap = 3L)
-    original <- pg_kingman_tree(80, 12L, pg_region_seed(814903L, 1L))
-    expect_equal(pg_tree_summaries(x$truth$trees[[1L]])$TMRCA,
-                 pg_tree_summaries(original)$TMRCA + 40)
-    reference <- pg_mutate_tree(x$truth$trees[[1L]], 1000, 2e-5,
-        pg_region_seed(914903L, 1L, TRUE))
+    original <- pgKingmanTree(80, 12L, pgRegionSeed(814903L, 1L))
+    expect_equal(pgTreeSummaries(x$truth$trees[[1L]])$TMRCA,
+                 pgTreeSummaries(original)$TMRCA + 40)
+    reference <- pgMutateTree(x$truth$trees[[1L]], 1000, 2e-5,
+        pgRegionSeed(914903L, 1L, TRUE))
     expect_identical(x$observed[[1L]], reference)
     expect_equal(x$spectra[1L, ], sfs(reference$haplotypes), ignore_attr = TRUE)
     expect_identical(x$fit, terminalSpectrumFit(x$spectra, 2e-5, 1000))
@@ -97,7 +97,7 @@ test_that("specified local trees generate compatible windows and one change", {
     x <- specifiedLocalTreeExample()
     expect_identical(x, specifiedLocalTreeExample())
     observed <- x$observed
-    constraints <- pti_linked_constraints(observed$haplotypes, observed$positions)
+    constraints <- ptiLinkedConstraints(observed$haplotypes, observed$positions)
     expect_identical(constraints$minimum_changes, 1L)
     expect_lt(max(constraints$witnesses$left), x$truth$breakpoint)
     expect_gt(min(constraints$witnesses$right), x$truth$breakpoint)
@@ -105,7 +105,7 @@ test_that("specified local trees generate compatible windows and one change", {
         limits <- if (j == 1) c(0, 25000) else c(75000, 100000)
         take <- observed$positions >= limits[1L] & observed$positions < limits[2L]
         G <- observed$haplotypes[, take, drop = FALSE]
-        fit <- pti_fit_ages(G, x$calibration$mutationRate, diff(limits))
+        fit <- ptiFitAges(G, x$calibration$mutationRate, diff(limits))
         expect_identical(fit$consensus$compatible_count, 1L)
         expect_true(is.finite(fit$best_loglik))
     }

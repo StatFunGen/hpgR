@@ -53,8 +53,8 @@ populationSampleFeatures <- function(observed, design, chromosomes) {
       stats::setNames(ld$bins$meanRho2, paste0("ld_", seq_len(nrow(ld$bins)))))
 }
 
-.examplePopulationPredictions <- function(candidates, design, banks, workers = 1L) {
-    workers <- .scalarInteger(workers, "workers")
+examplePopulationPredictions <- function(candidates, design, banks, workers = 1L) {
+    workers <- scalarInteger(workers, "workers")
     jobs <- unlist(lapply(names(candidates), function(id) {
         seeds <- c(banks[[id]]$training_seeds, banks[[id]]$calibration_seeds)
         lapply(seq_along(seeds), function(j) list(id = id, index = j, seed = seeds[j]))
@@ -136,9 +136,9 @@ populationHistoryPredictions <- function(predictionData = populationHistoryDesig
         stop("predictionData must contain design, candidates, labels and banks",
              call. = FALSE)
     result <- predictionData[required]
-    result$banks <- .examplePopulationPredictions(result$candidates,
+    result$banks <- examplePopulationPredictions(result$candidates,
         result$design, result$banks, workers)
-    result$engine <- .simupopEngine()
+    result$engine <- simupopEngine()
     result$seed_ledger <- unlist(lapply(result$banks, function(bank)
         c(bank$training_seeds, bank$calibration_seeds)), use.names = TRUE)
     result
@@ -209,7 +209,7 @@ populationHistoryExample <- function(observed, calibration, predictionData,
         }
     }
     if (regeneratePredictions) {
-        banks <- .examplePopulationPredictions(candidates, design, banks)
+        banks <- examplePopulationPredictions(candidates, design, banks)
     }
     dna_summary <- summarizePopulationSample(observed$haplotypes,
         chromosome = observed$markers$chromosome)

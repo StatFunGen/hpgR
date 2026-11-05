@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "notebooks": [
+    {
+      "file": "P8149_Homework_1.ipynb",
+      "lecture": 1,
+      "role": "student_assignment",
+      "website": false
+    },
+    {
+      "file": "P8149_Homework_10.ipynb",
+      "lecture": 10,
+      "role": "student_assignment",
+      "website": false
+    },
+    {
+      "file": "P8149_Homework_11.ipynb",
+      "lecture": 11,
+      "role": "student_assignment",
+      "website": false
+    },
+    {
+      "file": "P8149_Homework_2.ipynb",
+      "lecture": 2,
+      "role": "student_assignment",
+      "website": true
+    },
+    {
+      "file": "P8149_Homework_3.ipynb",
+      "lecture": 3,
+      "role": "student_assignment",
+      "website": true
+    },
+    {
+      "file": "P8149_Homework_4.ipynb",
+      "lecture": 4,
+      "role": "student_assignment",
+      "website": false
+    },
+    {
+      "file": "P8149_Homework_6.ipynb",
+      "lecture": 6,
+      "role": "student_assignment",
+      "website": false
+    },
+    {
+      "file": "P8149_Homework_8.ipynb",
+      "lecture": 8,
+      "role": "student_assignment",
+      "website": true
+    },
+    {
+      "file": "P8149_Homework_9.ipynb",
+      "lecture": 9,
+      "role": "student_assignment",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_10_Differentiation_Is_Not_History.ipynb",
+      "lecture": 10,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_10_Migration_and_Wahlund.ipynb",
+      "lecture": 10,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_10_Split_Drift_Migration.ipynb",
+      "lecture": 10,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_10_Wahlund_Effect.ipynb",
+      "lecture": 10,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_11_Favored_Allele.ipynb",
+      "lecture": 11,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_11_Protection_and_Fitness.ipynb",
+      "lecture": 11,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_11_Sickle_Cell_Trait.ipynb",
+      "lecture": 11,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_12_Ancient_Dogs_Uncertainty.ipynb",
+      "lecture": 12,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_2_EM_Basics.ipynb",
+      "lecture": 2,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_2_HMM_Basics.ipynb",
+      "lecture": 2,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_2_Li_Stephens_HMM.ipynb",
+      "lecture": 2,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_2_MAF_MLE_EM.ipynb",
+      "lecture": 2,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_3_Affected_Sibling_Linkage.ipynb",
+      "lecture": 3,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_3_Genome_Wide_Kinship.ipynb",
+      "lecture": 3,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_3_Linkage_LOD.ipynb",
+      "lecture": 3,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_3_Local_IBD.ipynb",
+      "lecture": 3,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_4_Family_Heritability.ipynb",
+      "lecture": 4,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_4_Height_and_Heritability.ipynb",
+      "lecture": 4,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_4_SNP_Heritability.ipynb",
+      "lecture": 4,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_5_Ancestry_Proportions.ipynb",
+      "lecture": 5,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_5_Homework_5_Starter.ipynb",
+      "lecture": 5,
+      "role": "student_assignment",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_5_Population_Structure_PCA.ipynb",
+      "lecture": 5,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_6_Admixture_Mapping.ipynb",
+      "lecture": 6,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_6_Local_Ancestry_HMM.ipynb",
+      "lecture": 6,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_8_Effective_Size_Generation_Records.ipynb",
+      "lecture": 8,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
+      "lecture": 8,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_9_Ancestral_Graphs.ipynb",
+      "lecture": 9,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_9_Effective_Size_and_History.ipynb",
+      "lecture": 9,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_9_Mutations_on_a_Tree.ipynb",
+      "lecture": 9,
+      "role": "teaching_demonstration",
+      "website": true
+    },
+    {
+      "file": "P8149_Lecture_9_Two_DNA_Copies.ipynb",
+      "lecture": 9,
+      "role": "teaching_demonstration",
+      "website": true
+    }
+  ]
+}

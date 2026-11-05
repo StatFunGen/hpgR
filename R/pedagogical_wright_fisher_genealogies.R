@@ -3,16 +3,16 @@
 #' Discrete generations sample pooled parental haploid copies uniformly. At linked regions, two pooled donors alternate at Poisson crossovers. Nodes use one-based IDs; edge intervals are left-closed and right-open in bases. Samples are fixed before optional older parent maps complete their ancestry. This is a pooled-copy model, with separate records for observed DNA and simulation truth.
 #'
 #' @name models_copy_records
-#' @param index Child-indexed edge lists from pg_edge_index.
+#' @param index Child-indexed edge lists from pgEdgeIndex.
 #' @param sample_nodes Distinct one-based IDs of sampled nodes.
 #' @param left Left endpoint of the local interval in bases, included.
 #' @param right Right endpoint of the local interval in bases, excluded.
 #' @param edges Edge data frame with parent and child IDs; copy records also use left and right interval coordinates in bases.
 #' @param number_nodes Positive integer number of nodes in the edge index.
-#' @param record Finite-copy ancestry record returned by pg_record_ancestry.
+#' @param record Finite-copy ancestry record returned by pgRecordAncestry.
 #' @param mutations Mutation data frame with position in bases, child node, time in generations and derived_state.
 #' @param require_complete Logical; require complete sample roots when validating.
-#' @param frontier List of local interval records returned by pg_local_trees or pg_advance_frontier.
+#' @param frontier List of local interval records returned by pgLocalTrees or pgAdvanceFrontier.
 #' @param sizes Nonempty positive integer diploid sizes in forward generation order, beginning with the ancestral population.
 #' @param length_bp Positive analyzed region length in bases.
 #' @param n Integer number of sampled haploid copies, at least two.
@@ -42,12 +42,12 @@
 #' @param calibration List containing mu_per_base_per_generation and the declared mutation and sampling models.
 #' @param seed Nonnegative integer random seed.
 #' @param draw Zero-argument function to evaluate with the supplied seed.
-#' @returns pg_record_ancestry returns nodes, edges, sample_nodes, local_trees, size history and root-completion records. pg_local_trees and pg_walk return local intervals with their used edges and descendant sets. pg_mutate_ancestry returns binary haplotypes, positions and mutation records; pg_replay independently reconstructs that matrix. pg_simulate returns observed, calibration and truth lists; pg_observed_summaries returns per-region diversity and spectra. Validators return invisible TRUE (pg_integer returns invisible NULL); pg_check returns invisible NULL on success. Low-level indexing helpers return parent indices, edge lists or local frontier records. pg_with_seed returns the supplied function result while restoring RNG state; pg_region_seed returns an integer region seed.
+#' @returns pgRecordAncestry returns nodes, edges, sample_nodes, local_trees, size history and root-completion records. pgLocalTrees and pgWalk return local intervals with their used edges and descendant sets. pgMutateAncestry returns binary haplotypes, positions and mutation records; pgReplay independently reconstructs that matrix. pgSimulate returns observed, calibration and truth lists; pgObservedSummaries returns per-region diversity and spectra. Validators return invisible TRUE (pgInteger returns invisible NULL); pgCheck returns invisible NULL on success. Low-level indexing helpers return parent indices, edge lists or local frontier records. pgWithSeed returns the supplied function result while restoring RNG state; pgRegionSeed returns an integer region seed.
 #' @examples
-#' record <- pg_record_ancestry(rep(4L,3), length_bp=100, n=4, ancestry_seed=42)
-#' pg_validate_ancestry(record)
-#' mutation <- pg_mutate_ancestry(record, 1e-3, 43)
-#' stopifnot(identical(pg_replay(record,mutation$mutations), mutation$haplotypes))
+#' record <- pgRecordAncestry(rep(4L,3), length_bp=100, n=4, ancestry_seed=42)
+#' pgValidateAncestry(record)
+#' mutation <- pgMutateAncestry(record, 1e-3, 43)
+#' stopifnot(identical(pgReplay(record,mutation$mutations), mutation$haplotypes))
 NULL
 
 # g increases forward; t = g_sample - g.
@@ -59,39 +59,39 @@ NULL
 
 #' @rdname models_copy_records
 #' @export
-pg_check <- function(ok, message) {
+pgCheck <- function(ok, message) {
     if (!isTRUE(ok)) stop(message, call. = FALSE)
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_integer <- function(x, minimum = 0, name = deparse(substitute(x))) {
-    pg_check(is.numeric(x) && length(x) > 0L && all(is.finite(x)) &&
+pgInteger <- function(x, minimum = 0, name = deparse(substitute(x))) {
+    pgCheck(is.numeric(x) && length(x) > 0L && all(is.finite(x)) &&
                  all(x == floor(x)) && all(x >= minimum),
              paste(name, "must contain finite integers >=", minimum))
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_with_seed <- function(seed, draw) {
-    pg_integer(seed, 0, "seed")
-    pg_check(length(seed) == 1L && seed <= .Machine$integer.max, "invalid seed")
-    .simupopWithSeed(seed, draw)
+pgWithSeed <- function(seed, draw) {
+    pgInteger(seed, 0, "seed")
+    pgCheck(length(seed) == 1L && seed <= .Machine$integer.max, "invalid seed")
+    simupopWithSeed(seed, draw)
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_parent_draws <- function(parent_ids, offspring_copies) {
+pgParentDraws <- function(parent_ids, offspring_copies) {
     # Index with sample.int: sample(a_single_large_ID, ...) has another R meaning.
-    parent_ids[.simupopDrawParents(length(parent_ids), offspring_copies)]
+    parent_ids[simupopDrawParents(length(parent_ids), offspring_copies)]
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_region_seed <- function(base_seed, region, mutation = FALSE) {
-    pg_integer(base_seed, 0, "base_seed")
-    pg_integer(region, 1, "region")
-    pg_check(length(base_seed) == 1L && base_seed <= .Machine$integer.max &&
+pgRegionSeed <- function(base_seed, region, mutation = FALSE) {
+    pgInteger(base_seed, 0, "base_seed")
+    pgInteger(region, 1, "region")
+    pgCheck(length(base_seed) == 1L && base_seed <= .Machine$integer.max &&
                  length(region) == 1L, "invalid seed/region identifier")
     # Avoid adjacent replicate base seeds reusing a previous replicate's region2.
     # These are reproducible distinct seed assignments, not a formal parallel-RNG
@@ -102,17 +102,17 @@ pg_region_seed <- function(base_seed, region, mutation = FALSE) {
 
 #' @rdname models_copy_records
 #' @export
-pg_inheritance <- function(parent_ids, child_ids, length_bp, map_length) {
-    first <- pg_parent_draws(parent_ids, length(child_ids))
+pgInheritance <- function(parent_ids, child_ids, length_bp, map_length) {
+    first <- pgParentDraws(parent_ids, length(child_ids))
     if (map_length == 0) {
         return(data.frame(left = 0, right = length_bp, parent = first, child = child_ids))
     }
     crossovers <- rpois(length(child_ids), map_length)
     rows <- lapply(seq_along(child_ids), function(i) {
         k <- crossovers[i]
-        second <- if (k) pg_parent_draws(parent_ids, 1L) else first[i]
+        second <- if (k) pgParentDraws(parent_ids, 1L) else first[i]
         cuts <- c(0, sort(runif(k, 0, length_bp)), length_bp)
-        pg_check(all(diff(cuts) > 0), "crossover positions must be distinct and internal")
+        pgCheck(all(diff(cuts) > 0), "crossover positions must be distinct and internal")
         donor <- ifelse(seq_len(k + 1L) %% 2L == 1L, first[i], second)
         data.frame(left = head(cuts, -1L), right = tail(cuts, -1L),
                    parent = donor, child = child_ids[i])
@@ -122,7 +122,7 @@ pg_inheritance <- function(parent_ids, child_ids, length_bp, map_length) {
 
 #' @rdname models_copy_records
 #' @export
-pg_edge_index <- function(edges, number_nodes) {
+pgEdgeIndex <- function(edges, number_nodes) {
     index <- vector("list", number_nodes)
     parts <- split(edges, edges$child)
     if (length(parts)) index[as.integer(names(parts))] <- unname(parts)
@@ -131,17 +131,17 @@ pg_edge_index <- function(edges, number_nodes) {
 
 #' @rdname models_copy_records
 #' @export
-pg_at_position <- function(index, copies, position) {
+pgAtPosition <- function(index, copies, position) {
     unique_copies <- unique(copies)
     rows <- lapply(unique_copies, function(id) {
         part <- index[[id]]
         if (is.null(part) || !nrow(part)) return(NULL)
         selected <- which(part$left <= position & position < part$right)
-        pg_check(length(selected) == 1L, "ancestry has a gap or overlapping parents")
+        pgCheck(length(selected) == 1L, "ancestry has a gap or overlapping parents")
         part[selected, , drop = FALSE]
     })
     if (all(vapply(rows, is.null, logical(1)))) return(NULL)
-    pg_check(!any(vapply(rows, is.null, logical(1))), "mixed recording horizons")
+    pgCheck(!any(vapply(rows, is.null, logical(1))), "mixed recording horizons")
     selected <- do.call(rbind, rows)
     list(copies = selected$parent[match(copies, selected$child)],
          right = min(selected$right), edges = selected)
@@ -149,15 +149,15 @@ pg_at_position <- function(index, copies, position) {
 
 #' @rdname models_copy_records
 #' @export
-pg_walk <- function(index, sample_nodes, left, right) {
+pgWalk <- function(index, sample_nodes, left, right) {
     copies <- sample_nodes
     used <- descendants <- list()
     steps <- 0L
     while (length(unique(copies)) > 1L) {
-        step <- pg_at_position(index, copies, left)
+        step <- pgAtPosition(index, copies, left)
         if (is.null(step)) break
         steps <- steps + 1L
-        pg_check(steps <= length(index), "ancestry cycle")
+        pgCheck(steps <= length(index), "ancestry cycle")
         right <- min(right, step$right)
         used[[steps]] <- step$edges
         descendants[[steps]] <- lapply(step$edges$child, function(id) which(copies == id))
@@ -170,13 +170,13 @@ pg_walk <- function(index, sample_nodes, left, right) {
 
 #' @rdname models_copy_records
 #' @export
-pg_local_trees <- function(record) {
-    index <- pg_edge_index(record$edges, nrow(record$nodes))
+pgLocalTrees <- function(record) {
+    index <- pgEdgeIndex(record$edges, nrow(record$nodes))
     left <- 0
     trees <- list()
     while (left < record$length_bp) {
-        tree <- pg_walk(index, record$sample_nodes, left, record$length_bp)
-        pg_check(tree$right > left, "local ancestry did not advance along the region")
+        tree <- pgWalk(index, record$sample_nodes, left, record$length_bp)
+        pgCheck(tree$right > left, "local ancestry did not advance along the region")
         if (!is.null(tree$edges)) {
             tree$edges$left <- left
             tree$edges$right <- tree$right
@@ -191,7 +191,7 @@ pg_local_trees <- function(record) {
 
 #' @rdname models_copy_records
 #' @export
-pg_advance_frontier <- function(index, frontier) {
+pgAdvanceFrontier <- function(index, frontier) {
     result <- list()
     for (block in frontier) {
         if (block$complete) {
@@ -200,8 +200,8 @@ pg_advance_frontier <- function(index, frontier) {
         }
         left <- block$left
         while (left < block$right) {
-            step <- pg_at_position(index, block$copies, left)
-            pg_check(!is.null(step), "missing ancestral-completion parent map")
+            step <- pgAtPosition(index, block$copies, left)
+            pgCheck(!is.null(step), "missing ancestral-completion parent map")
             right <- min(block$right, step$right)
             result[[length(result) + 1L]] <- list(
                 left = left, right = right, copies = step$copies,
@@ -214,29 +214,29 @@ pg_advance_frontier <- function(index, frontier) {
 
 #' @rdname models_copy_records
 #' @export
-pg_record_ancestry <- function(sizes, length_bp, n, map_length = 0,
+pgRecordAncestry <- function(sizes, length_bp, n, map_length = 0,
                                ancestry_seed = 814901L, complete_roots = TRUE,
                                max_extension = 20000L, sample_indices = seq_len(n)) {
-    pg_integer(sizes, 1, "sizes")
-    pg_integer(n, 2, "n")
-    pg_integer(max_extension, 0, "max_extension")
-    pg_check(length(n) == 1L && n <= 2 * tail(sizes, 1L), "n exceeds final copy pool")
-    pg_check(length(max_extension) == 1L, "max_extension must be scalar")
-    pg_check(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
+    pgInteger(sizes, 1, "sizes")
+    pgInteger(n, 2, "n")
+    pgInteger(max_extension, 0, "max_extension")
+    pgCheck(length(n) == 1L && n <= 2 * tail(sizes, 1L), "n exceeds final copy pool")
+    pgCheck(length(max_extension) == 1L, "max_extension must be scalar")
+    pgCheck(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
              "length_bp must be positive")
-    pg_check(length(map_length) == 1L && is.finite(map_length) && map_length >= 0,
+    pgCheck(length(map_length) == 1L && is.finite(map_length) && map_length >= 0,
              "map_length must be nonnegative Morgans")
-    pg_integer(sample_indices, 1, "sample_indices")
-    pg_check(length(sample_indices) == n && !anyDuplicated(sample_indices) &&
+    pgInteger(sample_indices, 1, "sample_indices")
+    pgCheck(length(sample_indices) == n && !anyDuplicated(sample_indices) &&
                  all(sample_indices <= 2 * tail(sizes, 1L)), "invalid fixed sample indices")
-    pg_check(is.logical(complete_roots) && length(complete_roots) == 1L &&
+    pgCheck(is.logical(complete_roots) && length(complete_roots) == 1L &&
                  !is.na(complete_roots), "complete_roots must be TRUE or FALSE")
-    pg_with_seed(ancestry_seed, function() {
+    pgWithSeed(ancestry_seed, function() {
         generation <- rep(seq_along(sizes) - 1L, 2L * sizes)
         pools <- split(seq_along(generation), generation)
         edge_blocks <- vector("list", length(sizes) - 1L)
         for (i in seq_len(length(sizes) - 1L)) {
-            edge_blocks[[i]] <- pg_inheritance(pools[[i]], pools[[i + 1L]],
+            edge_blocks[[i]] <- pgInheritance(pools[[i]], pools[[i + 1L]],
                                                length_bp, map_length)
         }
         empty_edges <- data.frame(left = numeric(), right = numeric(),
@@ -247,22 +247,22 @@ pg_record_ancestry <- function(sizes, length_bp, n, map_length = 0,
         sample_nodes <- tail(pools, 1L)[[1]][sample_indices]
         record <- list(nodes = nodes, edges = edges, length_bp = length_bp,
                        sample_nodes = sample_nodes)
-        frontier <- pg_local_trees(record)
-        index <- pg_edge_index(edges, nrow(nodes))
+        frontier <- pgLocalTrees(record)
+        index <- pgEdgeIndex(edges, nrow(nodes))
         oldest_pool <- pools[[1]]
         extension <- 0L
         while (complete_roots && !all(vapply(frontier, `[[`, logical(1), "complete"))) {
-            pg_check(extension < max_extension,
+            pgCheck(extension < max_extension,
                      paste("root completion limit reached; retain failed seed", ancestry_seed))
             extension <- extension + 1L
             older_pool <- length(generation) + seq_len(2L * sizes[1])
-            older_edges <- pg_inheritance(older_pool, oldest_pool, length_bp, map_length)
+            older_edges <- pgInheritance(older_pool, oldest_pool, length_bp, map_length)
             length(index) <- max(older_pool)
             parts <- split(older_edges, older_edges$child)
             index[as.integer(names(parts))] <- unname(parts)
             edge_blocks[[length(edge_blocks) + 1L]] <- older_edges
             generation <- c(generation, rep(-extension, length(older_pool)))
-            frontier <- pg_advance_frontier(index, frontier)
+            frontier <- pgAdvanceFrontier(index, frontier)
             oldest_pool <- older_pool
         }
         nodes <- data.frame(id = seq_along(generation), generation = generation,
@@ -271,7 +271,7 @@ pg_record_ancestry <- function(sizes, length_bp, n, map_length = 0,
         rownames(edges) <- NULL
         record$nodes <- nodes
         record$edges <- edges
-        record$local_trees <- pg_local_trees(record)
+        record$local_trees <- pgLocalTrees(record)
         record$sample_indices <- sample_indices
         record$sample_generation <- length(sizes) - 1L
         record$size_history <- data.frame(generation = seq_along(sizes) - 1L, N = sizes)
@@ -290,48 +290,48 @@ pg_record_ancestry <- function(sizes, length_bp, n, map_length = 0,
 
 #' @rdname models_copy_records
 #' @export
-pg_validate_ancestry <- function(record, require_complete = TRUE) {
+pgValidateAncestry <- function(record, require_complete = TRUE) {
     nodes <- record$nodes
     edges <- record$edges
-    pg_check(identical(nodes$id, seq_len(nrow(nodes))), "node IDs must be consecutive rows")
-    pg_check(all(is.finite(nodes$generation)) &&
+    pgCheck(identical(nodes$id, seq_len(nrow(nodes))), "node IDs must be consecutive rows")
+    pgCheck(all(is.finite(nodes$generation)) &&
                  all(nodes$time == record$sample_generation - nodes$generation),
              "node time/generation inconsistency")
-    pg_check(all(record$sample_nodes %in% nodes$id) && !anyDuplicated(record$sample_nodes),
+    pgCheck(all(record$sample_nodes %in% nodes$id) && !anyDuplicated(record$sample_nodes),
              "invalid sample node IDs")
-    pg_check(all(nodes$time[record$sample_nodes] == 0), "terminal sample changed")
-    pg_check(all(edges$parent %in% nodes$id) && all(edges$child %in% nodes$id),
+    pgCheck(all(nodes$time[record$sample_nodes] == 0), "terminal sample changed")
+    pgCheck(all(edges$parent %in% nodes$id) && all(edges$child %in% nodes$id),
              "unknown parent/child ID")
-    pg_check(all(is.finite(edges$left)) && all(is.finite(edges$right)) &&
+    pgCheck(all(is.finite(edges$left)) && all(is.finite(edges$right)) &&
                  all(edges$left >= 0 & edges$right <= record$length_bp &
                      edges$left < edges$right), "invalid edge intervals")
-    pg_check(all(nodes$generation[edges$parent] == nodes$generation[edges$child] - 1L),
+    pgCheck(all(nodes$generation[edges$parent] == nodes$generation[edges$child] - 1L),
              "parent must be exactly one generation older")
     ordered <- edges[order(edges$child, edges$left), , drop = FALSE]
     first <- !duplicated(ordered$child)
     last <- !duplicated(ordered$child, fromLast = TRUE)
-    pg_check(all(ordered$left[first] == 0) &&
+    pgCheck(all(ordered$left[first] == 0) &&
                  all(ordered$right[last] == record$length_bp) &&
                  all(ordered$left[!first] == ordered$right[!last]),
              "child inheritance intervals have a gap or overlap")
     roots <- setdiff(nodes$id, edges$child)
-    pg_check(all(nodes$generation[roots] == min(nodes$generation)),
+    pgCheck(all(nodes$generation[roots] == min(nodes$generation)),
              "record contains roots at different generations")
-    trees <- pg_local_trees(record)
+    trees <- pgLocalTrees(record)
     complete <- all(vapply(trees, `[[`, logical(1), "complete"))
-    pg_check(identical(record$root_complete, complete), "incorrect root-complete flag")
-    if (require_complete) pg_check(complete, "sample ancestry is an incomplete forest")
+    pgCheck(identical(record$root_complete, complete), "incorrect root-complete flag")
+    if (require_complete) pgCheck(complete, "sample ancestry is an incomplete forest")
     invisible(TRUE)
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_mutate_ancestry <- function(record, mu, mutation_seed = 814902L) {
-    pg_check(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
-    pg_validate_ancestry(record)
+pgMutateAncestry <- function(record, mu, mutation_seed = 814902L) {
+    pgCheck(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
+    pgValidateAncestry(record)
     # Retain only sample ancestral edges BELOW each local MRCA. Ancestors above
     # it would add sample-fixed states, not segregating sites or pair differences.
-    trees <- pg_local_trees(record)
+    trees <- pgLocalTrees(record)
     edges <- do.call(rbind, lapply(trees, `[[`, "edges"))
     carriers <- unlist(lapply(trees, `[[`, "descendants"), recursive = FALSE)
     duration <- record$nodes$time[edges$parent] - record$nodes$time[edges$child]
@@ -342,10 +342,10 @@ pg_mutate_ancestry <- function(record, mu, mutation_seed = 814902L) {
                            parent = edges$parent - 1L, child = edges$child - 1L),
         sampleIds = record$sample_nodes - 1L, sequenceLength = record$length_bp,
         timeUnits = "generations"), class = c("hpgR_ancestry", "list"))
-    mutation <- .msprimeMutations(ancestry, mu, mutation_seed, batchEdges = TRUE)$mutations
+    mutation <- msprimeMutations(ancestry, mu, mutation_seed, batchEdges = TRUE)$mutations
     G <- matrix(0L, length(record$sample_nodes), nrow(mutation))
     for (j in seq_len(nrow(mutation))) G[carriers[[mutation$edge[j] + 1L]], j] <- 1L
-    pg_check(!ncol(G) || all(colSums(G) > 0 & colSums(G) < nrow(G)),
+    pgCheck(!ncol(G) || all(colSums(G) > 0 & colSums(G) < nrow(G)),
              "mutation is not on a segregating sample branch")
     list(haplotypes = G, positions_bp = mutation$position,
          mutations = data.frame(position = mutation$position, child = mutation$node + 1L,
@@ -355,21 +355,21 @@ pg_mutate_ancestry <- function(record, mu, mutation_seed = 814902L) {
 
 #' @rdname models_copy_records
 #' @export
-pg_validate_mutations <- function(record, mutations) {
-    pg_check(!anyDuplicated(mutations$position) &&
+pgValidateMutations <- function(record, mutations) {
+    pgCheck(!anyDuplicated(mutations$position) &&
                  all(diff(mutations$position) > 0), "invalid mutation positions/order")
-    pg_check(all(mutations$child %in% record$nodes$id), "unknown mutation child")
-    pg_check(all(mutations$position >= 0 & mutations$position < record$length_bp),
+    pgCheck(all(mutations$child %in% record$nodes$id), "unknown mutation child")
+    pgCheck(all(mutations$position >= 0 & mutations$position < record$length_bp),
              "mutation position outside region")
-    pg_check(all(mutations$derived_state == 1L), "invalid infinite-sites derived state")
-    index <- pg_edge_index(record$edges, nrow(record$nodes))
+    pgCheck(all(mutations$derived_state == 1L), "invalid infinite-sites derived state")
+    index <- pgEdgeIndex(record$edges, nrow(record$nodes))
     for (j in seq_len(nrow(mutations))) {
         mutation <- mutations[j, ]
-        part <- pg_at_position(index, mutation$child, mutation$position)
-        pg_check(!is.null(part), "mutation assigned to a root")
+        part <- pgAtPosition(index, mutation$child, mutation$position)
+        pgCheck(!is.null(part), "mutation assigned to a root")
         upper <- record$nodes$time[part$copies]
         lower <- record$nodes$time[mutation$child]
-        pg_check(is.finite(mutation$time) && lower < mutation$time && mutation$time < upper,
+        pgCheck(is.finite(mutation$time) && lower < mutation$time && mutation$time < upper,
                  "mutation time outside its branch")
     }
     invisible(TRUE)
@@ -377,11 +377,11 @@ pg_validate_mutations <- function(record, mutations) {
 
 #' @rdname models_copy_records
 #' @export
-pg_replay <- function(record, mutations) {
+pgReplay <- function(record, mutations) {
     # Independent carrier reconstruction: trace the parent map at each site.
     # Do not use cached local trees, descendant lists or the observed matrix.
-    pg_validate_ancestry(record)
-    pg_validate_mutations(record, mutations)
+    pgValidateAncestry(record)
+    pgValidateMutations(record, mutations)
     G <- matrix(0L, length(record$sample_nodes), nrow(mutations))
     edges <- record$edges
     for (j in seq_len(nrow(mutations))) {
@@ -393,33 +393,33 @@ pg_replay <- function(record, mutations) {
         target_generation <- record$nodes$generation[mutations$child[j]]
         while (record$nodes$generation[copies[1]] > target_generation) {
             copies <- parent[copies]
-            pg_check(all(copies > 0), "replay reaches an unrecorded parent")
+            pgCheck(all(copies > 0), "replay reaches an unrecorded parent")
         }
         G[, j] <- as.integer(copies == mutations$child[j])
     }
-    pg_check(!ncol(G) || all(colSums(G) > 0 & colSums(G) < nrow(G)),
+    pgCheck(!ncol(G) || all(colSums(G) > 0 & colSums(G) < nrow(G)),
              "replayed mutation is outside segregating sample ancestry")
     G
 }
 
 #' @rdname models_copy_records
 #' @export
-pg_simulate <- function(sizes, lengths_bp = rep(1000, 3), n = 12L, mu = 2e-5,
+pgSimulate <- function(sizes, lengths_bp = rep(1000, 3), n = 12L, mu = 2e-5,
                          map_lengths = rep(0, length(lengths_bp)),
                          ancestry_seed = 814901L, mutation_seed = 914901L,
                          max_extension = 20000L) {
-    pg_check(length(lengths_bp) > 0L && length(map_lengths) == length(lengths_bp),
+    pgCheck(length(lengths_bp) > 0L && length(map_lengths) == length(lengths_bp),
              "one map length is needed per region")
     sample_ids <- paste0("S", seq_len(n))
     observed <- list(sample_ids = sample_ids, sampling_time = 0, regions = list())
     truth <- list(regions = list())
     for (i in seq_along(lengths_bp)) {
-        record <- pg_record_ancestry(sizes, lengths_bp[i], n, map_lengths[i],
-                                    pg_region_seed(ancestry_seed, i),
+        record <- pgRecordAncestry(sizes, lengths_bp[i], n, map_lengths[i],
+                                    pgRegionSeed(ancestry_seed, i),
                                     max_extension = max_extension)
-        pg_validate_ancestry(record)
-        mutation <- pg_mutate_ancestry(record, mu,
-                                      pg_region_seed(mutation_seed, i, mutation = TRUE))
+        pgValidateAncestry(record)
+        mutation <- pgMutateAncestry(record, mu,
+                                      pgRegionSeed(mutation_seed, i, mutation = TRUE))
         G <- mutation$haplotypes
         variant_ids <- if (ncol(G)) paste0("v", seq_len(ncol(G))) else character()
         dimnames(G) <- list(sample_ids, variant_ids)
@@ -441,33 +441,33 @@ pg_simulate <- function(sizes, lengths_bp = rep(1000, 3), n = 12L, mu = 2e-5,
 
 #' @rdname models_copy_records
 #' @export
-pg_observed_summaries <- function(observed, calibration) {
+pgObservedSummaries <- function(observed, calibration) {
     # Deliberately accepts no truth argument and performs no ancestor lookup.
-    pg_check(length(observed$sample_ids) >= 2L && !anyDuplicated(observed$sample_ids),
+    pgCheck(length(observed$sample_ids) >= 2L && !anyDuplicated(observed$sample_ids),
              "invalid observed sample labels")
-    pg_check(is.finite(calibration$mu_per_base_per_generation) &&
+    pgCheck(is.finite(calibration$mu_per_base_per_generation) &&
                  calibration$mu_per_base_per_generation >= 0, "invalid supplied mutation rate")
     n <- length(observed$sample_ids)
-    pg_check(length(observed$regions) > 0L, "observed dataset has no analyzed regions")
+    pgCheck(length(observed$regions) > 0L, "observed dataset has no analyzed regions")
     rows <- spectra <- list()
     for (i in seq_along(observed$regions)) {
         region <- observed$regions[[i]]
         G <- region$haplotypes
-        pg_check(is.matrix(G) && nrow(G) == n && all(G %in% 0:1), "invalid binary matrix")
-        pg_check(identical(rownames(G), observed$sample_ids), "sample rows do not match labels")
-        pg_check(length(region$positions_bp) == ncol(G) &&
+        pgCheck(is.matrix(G) && nrow(G) == n && all(G %in% 0:1), "invalid binary matrix")
+        pgCheck(identical(rownames(G), observed$sample_ids), "sample rows do not match labels")
+        pgCheck(length(region$positions_bp) == ncol(G) &&
                      !anyDuplicated(region$positions_bp) &&
                      all(diff(region$positions_bp) > 0), "invalid observed positions")
         L <- region$analyzed_length_bp
-        pg_check(is.finite(L) && L > 0 &&
+        pgCheck(is.finite(L) && L > 0 &&
                      all(region$positions_bp >= 0 & region$positions_bp < L),
                  "invalid analyzed length or position")
         count <- colSums(G)
-        pg_check(all(count > 0 & count < n), "store variable columns only")
-        pi_region <- sum(.tskitDiversity(count, n))
+        pgCheck(all(count > 0 & count < n), "store variable columns only")
+        pi_region <- sum(tskitDiversity(count, n))
         rows[[i]] <- data.frame(region = region$region_id, n = n, length_bp = L,
                                 S = ncol(G), pi_region = pi_region, pi_site = pi_region / L)
-        spectra[[i]] <- .tskitSfs(count, n)
+        spectra[[i]] <- tskitSfs(count, n)
     }
     list(regions = do.call(rbind, rows), sfs = spectra)
 }

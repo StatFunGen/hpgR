@@ -1,9 +1,9 @@
-# Classroom R representation, traversal and display of ancestry tables.
+# R representation and traversal of ancestry tables.
 # Half-open edge intervals and zero-based node IDs follow the source table
-# conventions. Display trees suppress unary nodes; recorded tables retain
+# conventions. Local trees suppress unary nodes; recorded tables retain
 # their mutation-bearing branches. These helpers use explicit R traversals.
 
-.ancestryCheckTables <- function(x) {
+ancestryCheckTables <- function(x) {
     if (!inherits(x, "hpgR_ancestry") || !is.data.frame(x$nodes) ||
         !all(c("id", "time", "flags") %in% names(x$nodes)) ||
         !is.data.frame(x$edges) ||
@@ -30,7 +30,7 @@
     invisible(x)
 }
 
-.ancestryParent <- function(ancestry, position) {
+ancestryParent <- function(ancestry, position) {
     edges <- ancestry$edges
     rows <- which(edges$left <= position & position < edges$right)
     if (anyDuplicated(edges$child[rows])) {
@@ -41,7 +41,7 @@
     parent
 }
 
-.ancestryPath <- function(node, parent) {
+ancestryPath <- function(node, parent) {
     path <- integer()
     while (node != -1L) {
         if (node %in% path || !as.character(node) %in% names(parent)) {
@@ -53,10 +53,10 @@
     path
 }
 
-.ancestryMarginal <- function(ancestry, position) {
-    parent <- .ancestryParent(ancestry, position)
+ancestryMarginal <- function(ancestry, position) {
+    parent <- ancestryParent(ancestry, position)
     samples <- ancestry$sampleIds
-    paths <- lapply(samples, .ancestryPath, parent = parent)
+    paths <- lapply(samples, ancestryPath, parent = parent)
     present <- unique(unlist(paths, use.names = FALSE))
     childCounts <- tabulate(match(unname(parent[as.character(present)]), present),
                             nbins = length(present))
@@ -65,14 +65,14 @@
     list(parent = parent, paths = paths, keep = keep)
 }
 
-.ancestryLocal <- function(ancestry, left, right) {
-    marginal <- .ancestryMarginal(ancestry, (left + right) / 2)
+ancestryLocal <- function(ancestry, left, right) {
+    marginal <- ancestryMarginal(ancestry, (left + right) / 2)
     parent <- marginal$parent
     paths <- marginal$paths
     keep <- marginal$keep
     samples <- ancestry$sampleIds
     displayParent <- vapply(keep, function(node) {
-        path <- .ancestryPath(node, parent)[-1L]
+        path <- ancestryPath(node, parent)[-1L]
         above <- path[path %in% keep]
         if (length(above)) above[1L] else -1L
     }, integer(1))
@@ -81,20 +81,8 @@
     pairNode <- if (length(shared)) shared[1L] else NA_integer_
     roots <- keep[displayParent == -1L]
     ages <- stats::setNames(ancestry$nodes$time, ancestry$nodes$id)
-    descends <- function(sample, node) node %in% paths[[match(sample, samples)]]
-    # Order tips by a depth-first traversal, so each clade is contiguous.
-    tipOrder <- integer()
-    visit <- function(node) {
-        if (node %in% samples) tipOrder <<- c(tipOrder, node)
-        for (child in keep[displayParent == node]) visit(child)
-    }
-    for (root in roots) visit(root)
-    x <- vapply(keep, function(node) {
-        children <- tipOrder[vapply(tipOrder, descends, logical(1), node = node)]
-        mean(range(match(children, tipOrder)))
-    }, numeric(1))
     tree <- data.frame(node = as.integer(keep), parent = displayParent,
-        time = unname(ages[as.character(keep)]), x = x,
+        time = unname(ages[as.character(keep)]),
         is_sample = keep %in% samples, row.names = NULL)
     list(tree = tree, root_node = if (length(roots) == 1L) as.integer(roots) else NA_integer_,
         pair_node = as.integer(pairNode), tmrca = if (length(roots) == 1L)
@@ -102,12 +90,12 @@
         pair_time = if (!is.na(pairNode)) unname(ages[as.character(pairNode)]) else NaN)
 }
 
-.ancestryExtract <- function(ancestry) {
-    .ancestryCheckTables(ancestry)
+ancestryExtract <- function(ancestry) {
+    ancestryCheckTables(ancestry)
     edges <- ancestry$edges
     cuts <- sort(unique(c(0, ancestry$sequenceLength, edges$left, edges$right)))
     local <- lapply(seq_len(length(cuts) - 1L), function(j)
-        .ancestryLocal(ancestry, cuts[j], cuts[j + 1L]))
+        ancestryLocal(ancestry, cuts[j], cuts[j + 1L]))
     # Distinct recorded boundaries can describe the same unary-suppressed tree.
     signatures <- vapply(local, function(x)
         paste(x$tree$node, x$tree$parent, sep = ":", collapse = ","), character(1))
@@ -126,7 +114,7 @@
                  call. = FALSE)
         }
         for (j in seq_along(positions)) {
-            parent <- .ancestryParent(ancestry, positions[j])
+            parent <- ancestryParent(ancestry, positions[j])
             rows <- which(ancestry$mutations$site == ancestry$sites$id[j])
             origin <- ancestry$mutations$node[rows]
             state <- if ("derived_state" %in% names(ancestry$mutations))
@@ -134,7 +122,7 @@
             rootState <- if ("ancestral_state" %in% names(ancestry$sites))
                 as.integer(ancestry$sites$ancestral_state[j]) else 0L
             haplotypes[, j] <- vapply(ancestry$sampleIds, function(sample) {
-                path <- .ancestryPath(sample, parent)
+                path <- ancestryPath(sample, parent)
                 affected <- which(origin %in% path)
                 if (!length(affected)) return(rootState)
                 depth <- match(origin[affected], path)
@@ -158,14 +146,15 @@
 #' Inspect R ancestry tables and observed sequences
 #' @param ancestry An hpgR_ancestry R object.
 #' @return Observed phased haplotypes, ordered positions and analyzed length;
-#'   local root/pair ages; full node/edge tables and unary-suppressed display
-#'   trees. Node/sample IDs remain zero based. This is R table traversal, not
+#'   local root/pair ages; full node/edge tables and unary-suppressed local
+#'   trees with node, parent, time and is_sample columns. Node/sample IDs remain
+#'   zero based. This is R table traversal, not
 #'   a port of the complete tskit simplifier or an ancestry-inference method.
 #' @export
-ancestryData <- function(ancestry) .ancestryExtract(ancestry)
+ancestryData <- function(ancestry) ancestryExtract(ancestry)
 
 # Convert copying paths and reduce marginal tables for classroom inspection.
-.tsiEdges <- function(match, child, positions, sequenceLength) {
+tsiEdges <- function(match, child, positions, sequenceLength) {
     parent <- match$parent
     a <- c(1L, which(diff(parent) != 0L) + 1L)
     b <- c(a[-1L] - 1L, length(parent))
@@ -175,7 +164,7 @@ ancestryData <- function(ancestry) .ancestryExtract(ancestry)
                parent = parent[a], child = rep(as.integer(child), length(a)))
 }
 
-.tsiSquashEdges <- function(edges) {
+tsiSquashEdges <- function(edges) {
     if (!nrow(edges)) return(edges)
     edges <- edges[order(edges$parent, edges$child, edges$left, edges$right), ]
     result <- edges[1L, , drop = FALSE]
@@ -190,7 +179,7 @@ ancestryData <- function(ancestry) .ancestryExtract(ancestry)
     result
 }
 
-.tsiSimplify <- function(x) {
+tsiSimplify <- function(x) {
     # Traverse each marginal tree, retain sample and branching nodes, and move
     # each mutation to its surviving descendant branch. Equivalent tables use
     # the same ancestral node ID across intervals. This adapter targets R lists.
@@ -200,11 +189,11 @@ ancestryData <- function(ancestry) .ancestryExtract(ancestry)
     for (j in seq_len(length(cuts) - 1L)) {
         left <- cuts[j]
         right <- cuts[j + 1L]
-        marginal <- .ancestryMarginal(x, (left + right) / 2)
+        marginal <- ancestryMarginal(x, (left + right) / 2)
         parent <- marginal$parent
         keep <- marginal$keep
         for (u in keep) {
-            above <- .ancestryPath(u, parent)[-1L]
+            above <- ancestryPath(u, parent)[-1L]
             p <- above[above %in% keep]
             if (length(p)) ed[[length(ed) + 1L]] <- data.frame(
                 left = left, right = right, parent = p[1L], child = u)
@@ -218,7 +207,7 @@ ancestryData <- function(ancestry) .ancestryExtract(ancestry)
             for (r in rows) {
                 origin <- x$mutations$node[r]
                 under <- keep[vapply(keep, function(u)
-                    origin %in% .ancestryPath(u, parent), logical(1))]
+                    origin %in% ancestryPath(u, parent), logical(1))]
                 if (!length(under)) next
                 v <- under[which.max(x$nodes$time[match(under, x$nodes$id)])]
                 mut[[length(mut) + 1L]] <- data.frame(site = x$mutations$site[r],
@@ -226,7 +215,7 @@ ancestryData <- function(ancestry) .ancestryExtract(ancestry)
             }
         }
     }
-    x$edges <- .tsiSquashEdges(do.call(rbind, ed))
+    x$edges <- tsiSquashEdges(do.call(rbind, ed))
     keep <- c(x$sampleIds, sort(setdiff(unique(c(x$edges$parent, x$edges$child)),
                                       x$sampleIds)))
     x$nodes <- x$nodes[match(keep, x$nodes$id), , drop = FALSE]

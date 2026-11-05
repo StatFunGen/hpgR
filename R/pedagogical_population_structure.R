@@ -34,10 +34,10 @@ NULL
 #' @rdname models_structure
 #' @export
 ancestryLikelihood <- function(q, genotype, frequency, log = FALSE) {
-    .dosageVector(genotype, "genotype")
-    .numericMatrix(frequency, "frequency")
-    .probability(as.vector(frequency), "frequency", length = NULL)
-    .probability(q, "q", ncol(frequency))
+    dosageVector(genotype, "genotype")
+    numericMatrix(frequency, "frequency")
+    probability(as.vector(frequency), "frequency", length = NULL)
+    probability(q, "q", ncol(frequency))
     if (nrow(frequency) != length(genotype) || abs(sum(q) - 1) >= 1e-10)
         stop("frequency must have one row per marker and q must sum to 1", call. = FALSE)
     if (!is.logical(log) || length(log) != 1L || is.na(log))
@@ -50,8 +50,8 @@ ancestryLikelihood <- function(q, genotype, frequency, log = FALSE) {
 #' @rdname models_structure
 #' @export
 genotypePCA <- function(genotype, components = 4L) {
-  .dosageMatrix(genotype, rows = 2L)
-  .scalarInteger(components, "components", 1L)
+  dosageMatrix(genotype, rows = 2L)
+  scalarInteger(components, "components", 1L)
   allele_frequency <- colMeans(genotype) / 2
   marker_sd <- sqrt(2 * allele_frequency * (1 - allele_frequency))
   ## Exclude nearly monomorphic SNPs with an unstable scaling denominator.
@@ -79,12 +79,12 @@ genotypePCA <- function(genotype, components = 4L) {
 #' projectGenotypePCA(G[1,,drop=FALSE], pc)
 #' @export
 projectGenotypePCA <- function(genotype, pca) {
-    .dosageMatrix(genotype)
+    dosageMatrix(genotype)
     if (!is.list(pca) || !is.logical(pca$keep) || anyNA(pca$keep) ||
         length(pca$keep) != ncol(genotype) || !any(pca$keep))
         stop("pca must retain markers in the supplied genotype order", call. = FALSE)
-    .probability(pca$allele_frequency, "pca$allele_frequency", ncol(genotype))
-    .numericMatrix(pca$rotation, "pca$rotation")
+    probability(pca$allele_frequency, "pca$allele_frequency", ncol(genotype))
+    numericMatrix(pca$rotation, "pca$rotation")
     if (nrow(pca$rotation) != sum(pca$keep))
         stop("pca loadings must match the retained markers", call. = FALSE)
     if (!is.null(colnames(genotype)) && !is.null(rownames(pca$rotation)) &&
@@ -108,10 +108,10 @@ projectGenotypePCA <- function(genotype, pca) {
 #' fitSourceAncestry(rbind(c(0,1,0), c(2,1,2)), F)
 #' @export
 fitSourceAncestry <- function(genotype, frequency, tolerance = 1e-6) {
-    .dosageMatrix(genotype)
-    .numericMatrix(frequency, "frequency")
-    .probability(as.vector(frequency), "frequency", length = NULL)
-    .positiveScalar(tolerance, "tolerance")
+    dosageMatrix(genotype)
+    numericMatrix(frequency, "frequency")
+    probability(as.vector(frequency), "frequency", length = NULL)
+    positiveScalar(tolerance, "tolerance")
     if (ncol(frequency) != 2L || nrow(frequency) != ncol(genotype))
         stop("frequency must give two source frequencies per marker", call. = FALSE)
     if (all(frequency[, 1L] == frequency[, 2L]))
@@ -130,14 +130,14 @@ fitSourceAncestry <- function(genotype, frequency, tolerance = 1e-6) {
 #' @export
 fitAdmixture <- function(genotype, k, scores, max_iter = 2000L,
                          per_cell_tol = 1e-7, q_tol = 1e-4) {
-  .dosageMatrix(genotype, rows = 2L)
-  .scalarInteger(k, "k", 1L, nrow(genotype))
-  .numericMatrix(scores, "scores", rows = 2L)
+  dosageMatrix(genotype, rows = 2L)
+  scalarInteger(k, "k", 1L, nrow(genotype))
+  numericMatrix(scores, "scores", rows = 2L)
   if (nrow(scores) != nrow(genotype))
     stop("scores must have one row per person", call. = FALSE)
-  .scalarInteger(max_iter, "max_iter", 1L)
-  .positiveScalar(per_cell_tol, "per_cell_tol")
-  .positiveScalar(q_tol, "q_tol")
+  scalarInteger(max_iter, "max_iter", 1L)
+  positiveScalar(per_cell_tol, "per_cell_tol")
+  positiveScalar(q_tol, "q_tol")
   n <- nrow(genotype)
   m <- ncol(genotype)
   centers <- kmeans(scores[, seq_len(min(ncol(scores), 4L)), drop = FALSE],

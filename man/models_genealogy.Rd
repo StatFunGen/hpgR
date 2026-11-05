@@ -2,44 +2,44 @@
 % Please edit documentation in R/pedagogical_genealogy.R
 \name{models_genealogy}
 \alias{models_genealogy}
-\alias{pg_sample_labels}
-\alias{pg_make_tree}
-\alias{pg_compress_local}
-\alias{pg_compress_tree}
-\alias{pg_compress_trees}
-\alias{pg_tree_summaries}
-\alias{pg_kingman_tree}
-\alias{pg_discrete_genealogy}
-\alias{pg_mutate_tree}
+\alias{pgSampleLabels}
+\alias{pgMakeTree}
+\alias{pgCompressLocal}
+\alias{pgCompressTree}
+\alias{pgCompressTrees}
+\alias{pgTreeSummaries}
+\alias{pgKingmanTree}
+\alias{pgDiscreteGenealogy}
+\alias{pgMutateTree}
 \title{Construct and summarize sample genealogies}
 \usage{
-pg_sample_labels(sample_ids, n)
+pgSampleLabels(sample_ids, n)
 
-pg_make_tree(nodes, edges, sample_nodes, sample_ids, model)
+pgMakeTree(nodes, edges, sample_nodes, sample_ids, model)
 
-pg_compress_local(record, local, sample_ids)
+pgCompressLocal(record, local, sample_ids)
 
-pg_compress_tree(
+pgCompressTree(
   record,
   position = 0,
   sample_ids = paste0("S", seq_along(record$sample_nodes))
 )
 
-pg_compress_trees(
+pgCompressTrees(
   record,
   sample_ids = paste0("S", seq_along(record$sample_nodes))
 )
 
-pg_tree_summaries(tree, pair = 1:2)
+pgTreeSummaries(tree, pair = 1:2)
 
-pg_kingman_tree(
+pgKingmanTree(
   Ne,
   n = 12L,
   ancestry_seed = 814901L,
   sample_ids = paste0("S", seq_len(n))
 )
 
-pg_discrete_genealogy(
+pgDiscreteGenealogy(
   sizes,
   n = 12L,
   ancestry_seed = 814901L,
@@ -47,7 +47,7 @@ pg_discrete_genealogy(
   sample_ids = paste0("S", seq_len(n))
 )
 
-pg_mutate_tree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
+pgMutateTree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
 }
 \arguments{
 \item{sample_ids}{Distinct nonempty sample labels in row order.}
@@ -62,9 +62,9 @@ pg_mutate_tree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
 
 \item{model}{Character label describing the generating model.}
 
-\item{record}{Finite-copy ancestry record returned by pg_record_ancestry.}
+\item{record}{Finite-copy ancestry record returned by pgRecordAncestry.}
 
-\item{local}{One local interval record returned by pg_local_trees.}
+\item{local}{One local interval record returned by pgLocalTrees.}
 
 \item{position}{Position in bases, inside the left-closed, right-open analyzed region.}
 
@@ -87,14 +87,14 @@ pg_mutate_tree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
 \item{mutation_seed}{Nonnegative integer seed for conditional mutation draws.}
 }
 \value{
-Tree constructors and compressors return nodes, edges, sample_nodes, sample_ids, root, descendants and model; pg_compress_trees returns a list of local trees. pg_tree_summaries returns pair_time, TMRCA, branch lengths by descendant count and waiting_times. pg_mutate_tree returns haplotypes, positions_bp, mutations and their spectrum. pg_sample_labels validates labels and returns invisible NULL.
+Tree constructors and compressors return nodes, edges, sample_nodes, sample_ids, root, descendants and model; pgCompressTrees returns a list of local trees. pgTreeSummaries returns pair_time, TMRCA, branch lengths by descendant count and waiting_times. pgMutateTree returns haplotypes, positions_bp, mutations and their spectrum. pgSampleLabels validates labels and returns invisible NULL.
 }
 \description{
 Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers. Tree mutation calls the source-derived mutation kernel.
 }
 \examples{
-tree <- pg_kingman_tree(20, n=4, ancestry_seed=42)
-pg_tree_summaries(tree)$TMRCA
-dna <- pg_mutate_tree(tree, length_bp=1000, mu=1e-4, mutation_seed=43)
+tree <- pgKingmanTree(20, n=4, ancestry_seed=42)
+pgTreeSummaries(tree)$TMRCA
+dna <- pgMutateTree(tree, length_bp=1000, mu=1e-4, mutation_seed=43)
 dim(dna$haplotypes)
 }

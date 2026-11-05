@@ -4,7 +4,7 @@
 
 controlChecksum <- function(path) unname(tools::md5sum(path))
 
-pg_build_p1 <- function(core_path, output_dir, truth_dir) {
+pgBuildP1 <- function(core_path, output_dir, truth_dir) {
     if (!requireNamespace("jsonlite", quietly = TRUE)) stop("jsonlite needed for manifest")
     builder_path <- normalizePath(file.path(dirname(core_path), "../tools/generate_pedigree_control.R"))
     core_sha <- controlChecksum(core_path)
@@ -33,7 +33,7 @@ pg_build_p1 <- function(core_path, output_dir, truth_dir) {
         maps <- rep(if (linked) 0.03 else 0, length(lengths))
         gc(reset = TRUE)
         timing <- system.time({
-            result <- pg_simulate(histories[[i]], lengths, n = 12L, mu = 2e-5,
+            result <- pgSimulate(histories[[i]], lengths, n = 12L, mu = 2e-5,
                                   map_lengths = maps, ancestry_seed = 814900L + 1000L * i,
                                   mutation_seed = 914900L + 1000L * i)
         })
@@ -42,7 +42,7 @@ pg_build_p1 <- function(core_path, output_dir, truth_dir) {
             for (j in seq_along(result$truth$regions)) {
                 region <- result$truth$regions[[j]]
                 stopifnot(identical(unname(result$observed$regions[[j]]$haplotypes),
-                                    pg_replay(region$ancestry, region$mutations)))
+                                    pgReplay(region$ancestry, region$mutations)))
             }
         })
         observed[[id]] <- result$observed
@@ -53,7 +53,7 @@ pg_build_p1 <- function(core_path, output_dir, truth_dir) {
             replay_seconds = unname(replay_time["elapsed"]),
             retained_object_bytes = as.numeric(object.size(result)),
             R_gc_heap_high_water_bound_MiB = sum(memory[, ncol(memory)]),
-            summaries = pg_observed_summaries(result$observed, result$calibration)$regions,
+            summaries = pgObservedSummaries(result$observed, result$calibration)$regions,
             ancestral_extensions = vapply(result$truth$regions,
                 function(x) x$ancestry$extension_generations, integer(1)),
             local_tree_intervals = vapply(result$truth$regions,
@@ -102,5 +102,5 @@ if (sys.nframe() == 0L) {
     }
     script <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)[1])
     core <- file.path(dirname(normalizePath(script)), "../R/pedagogical_wright_fisher_genealogies.R")
-    pg_build_p1(normalizePath(core), option("--output-dir"), option("--truth-dir"))
+    pgBuildP1(normalizePath(core), option("--output-dir"), option("--truth-dir"))
 }

@@ -1,0 +1,66 @@
+{
+  "schema_version": 2,
+  "engine": "hpgR",
+  "language": "R",
+  "package_version": "0.0.3.9000",
+  "canonical_notebook": "P8149_Lecture_9_Effective_Size_and_History.ipynb",
+  "files": ["observed.rds", "calibration.rds", "history_predictions.rds"],
+  "generation_design": {
+    "ancestral_size": 100,
+    "founder_size": 20,
+    "bottleneck_generations": 20,
+    "expansion_generations": 40,
+    "present_size": 1000,
+    "chromosomes": 8,
+    "sites_per_chromosome": 2000,
+    "mutation_rate": 2.5e-05,
+    "genetic_length_morgan": 0.2,
+    "sample_diploids": 64,
+    "burnin_generations": 1000,
+    "observation_seed": 20261103,
+    "ld_distance_breaks": [0.03, 0.07, 0.12, 0.2],
+    "fitting_chromosomes": [1, 2, 3, 4, 5, 6],
+    "checking_chromosomes": [7, 8]
+  },
+  "candidates": {
+    "expansion_only": {
+      "founder": null,
+      "small": 100,
+      "duration": 20,
+      "growth": 40
+    },
+    "shallow_founding": {
+      "founder": 40,
+      "small": 40,
+      "duration": 20,
+      "growth": 40
+    },
+    "recent_founding": {
+      "founder": 20,
+      "small": 20,
+      "duration": 20,
+      "growth": 40
+    },
+    "older_founding": {
+      "founder": 20,
+      "small": 20,
+      "duration": 20,
+      "growth": 80
+    }
+  },
+  "prediction_replicates_per_candidate": 12,
+  "calibration_replicates_per_candidate": 20,
+  "seed_ledger": [101001, 101002, 101003, 101004, 101005, 101006, 101007, 101008, 101009, 101010, 101011, 101012, 201001, 201002, 201003, 201004, 201005, 201006, 201007, 201008, 201009, 201010, 201011, 201012, 201013, 201014, 201015, 201016, 201017, 201018, 201019, 201020, 102001, 102002, 102003, 102004, 102005, 102006, 102007, 102008, 102009, 102010, 102011, 102012, 202001, 202002, 202003, 202004, 202005, 202006, 202007, 202008, 202009, 202010, 202011, 202012, 202013, 202014, 202015, 202016, 202017, 202018, 202019, 202020, 103001, 103002, 103003, 103004, 103005, 103006, 103007, 103008, 103009, 103010, 103011, 103012, 203001, 203002, 203003, 203004, 203005, 203006, 203007, 203008, 203009, 203010, 203011, 203012, 203013, 203014, 203015, 203016, 203017, 203018, 203019, 203020, 104001, 104002, 104003, 104004, 104005, 104006, 104007, 104008, 104009, 104010, 104011, 104012, 204001, 204002, 204003, 204004, 204005, 204006, 204007, 204008, 204009, 204010, 204011, 204012, 204013, 204014, 204015, 204016, 204017, 204018, 204019, 204020],
+  "observation": {
+    "diploid_individuals": 64,
+    "phased_haplotypes": 128,
+    "chromosomes": 8,
+    "modeled_sites": 16000
+  },
+  "mutation_model": "symmetric biallelic mutation before reproduction",
+  "reproduction": "uniform independent diploid parents with replacement",
+  "recombination": "Haldane interval switching; independent chromosome starts",
+  "founder_sampling": "diploid individuals without replacement",
+  "dependence": "chromosomes share individuals and the realized pedigree",
+  "rebuild": "Rscript tools/rebuild_population_cache.R OUTPUT_DIRECTORY WORKERS"
+}
