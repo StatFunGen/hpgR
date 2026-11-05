@@ -8,6 +8,9 @@ main <- function() {
     script <- sub('^--file=', '', commandArgs()[grepl('^--file=', commandArgs())])
     root <- normalizePath(file.path(dirname(script), '..'), mustWork = TRUE)
     source <- file.path(root, 'notebooks')
+    baseUrl <- sub('/+$', '', Sys.getenv('BASE_URL', ''))
+    if (nzchar(baseUrl) && !grepl('^(/[A-Za-z0-9._-]+)+$', baseUrl))
+        stop('BASE_URL must be an absolute URL path, such as /hpgR')
     sha <- function(path = NULL, text = NULL) {
         program <- Sys.which('shasum')
         arguments <- c('-a', '256')
@@ -176,6 +179,7 @@ main <- function() {
         c(shQuote(file.path(root, 'tools/verify_notebook_site.R')), shQuote(stage)))
     if (!identical(status, 0L)) stop('Website download and link verification failed')
     jsonlite::write_json(list(notebooks = selectedFiles, assets = dependencies,
+        base_url = baseUrl,
         rendered_pages = length(list.files(html, '[.]html$', recursive = TRUE)),
         withheld_notebooks = length(withheld),
         forbidden_matches = 0L), file.path(stage, 'publication-check.json'),

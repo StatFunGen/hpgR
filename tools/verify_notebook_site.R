@@ -9,6 +9,7 @@ main <- function() {
     stage <- normalizePath(if (length(args)) args[1L] else
         file.path(source, '_build/site-source'), mustWork = TRUE)
     html <- file.path(stage, '_build/html')
+    baseUrl <- sub('/+$', '', Sys.getenv('BASE_URL', ''))
     readJson <- function(path) jsonlite::fromJSON(path, simplifyVector = FALSE)
     entries <- readJson(file.path(source, 'catalog.json'))$notebooks
     selected <- Filter(function(entry) isTRUE(entry$website), entries)
@@ -29,7 +30,12 @@ main <- function() {
         strsplit(system2(program, arguments, stdout = TRUE)[1L], '[[:space:]]+')[[1L]][1L]
     }
     resolve <- function(url) {
-        path <- URLdecode(sub('[?#].*$', '', sub('^/', '', url)))
+        path <- sub('[?#].*$', '', url)
+        if (nzchar(baseUrl) && (identical(path, baseUrl) ||
+            startsWith(path, paste0(baseUrl, '/')))) {
+            path <- substring(path, nchar(baseUrl) + 1L)
+        }
+        path <- URLdecode(sub('^/', '', path))
         if (grepl('(^|/)[.][.](/|$)', path)) stop('Unsafe output URL: ', url)
         output <- file.path(html, path)
         if (dir.exists(output)) output <- file.path(output, 'index.html')
@@ -56,6 +62,7 @@ main <- function() {
             matches <- Filter(function(download) identical(download$filename,
                 basename(path)), page$frontmatter$downloads)
             stopifnot(length(matches) == 1L,
+                startsWith(matches[[1L]]$url, paste0(baseUrl, '/')),
                 identical(hash(resolve(matches[[1L]]$url)), hash(file.path(source, path))))
             downloads <- downloads + as.integer(path == name)
             inputs <- inputs + as.integer(path != name)
@@ -72,8 +79,23 @@ main <- function() {
     if (length(missing)) stop('Missing local assets: ', paste(missing, collapse = ', '))
     htmlPages <- list.files(html, '[.]html$', recursive = TRUE)
     stopifnot(length(htmlPages) == length(files) + 1L)
+    renderedUrls <- character()
+    for (file in file.path(html, htmlPages)) {
+        text <- paste(readLines(file, warn = FALSE), collapse = '\n')
+        attributes <- regmatches(text, gregexpr(
+            '[[:space:]](?:href|src)="/[^" ]*"', text, perl = TRUE))[[1L]]
+        urls <- sub('^[^=]+="([^"]*)"$', '\\1', attributes)
+        urls <- urls[!startsWith(urls, '//')]
+        if (nzchar(baseUrl) && any(!startsWith(urls, paste0(baseUrl, '/')) & urls != baseUrl))
+            stop('Rendered HTML contains a link outside BASE_URL: ', file)
+        renderedUrls <- unique(c(renderedUrls, urls))
+    }
+    missing <- renderedUrls[!vapply(renderedUrls, function(url) file.exists(resolve(url)), TRUE)]
+    if (length(missing)) stop('Missing rendered HTML resources: ', paste(missing, collapse = ', '))
     report <- list(notebooks = length(files), html_pages = length(htmlPages),
+        base_url = baseUrl,
         original_notebook_downloads = downloads, data_downloads = inputs,
+        rendered_html_links_checked = length(renderedUrls),
         local_links_checked = length(localLinks), missing_local_files = missing)
     jsonlite::write_json(report, file.path(stage, 'download-check.json'),
         pretty = TRUE, auto_unbox = TRUE)

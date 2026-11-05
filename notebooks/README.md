@@ -32,3 +32,7 @@ pixi run preview
 The build verifies saved code and input records, then copies selected notebooks
 and their inputs into an isolated directory. It checks page links and downloads.
 Answers and examination materials are maintained in the instructor repository.
+
+The Pages workflow builds this same publication list on pushes to `main`.
+It sets `BASE_URL` from the repository's Pages configuration and publishes only
+the verified HTML directory. Pull requests run the build checks.
