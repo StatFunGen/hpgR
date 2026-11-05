@@ -154,10 +154,8 @@ for (path in c(files,sub('[.]ipynb$','.html',html_files),'widgets/hmm-basics.mjs
     if (!file.copy(file.path(stage,path),file.path(site,path),overwrite=TRUE))
         stop('Could not refresh ',path)
 if (build_site) {
-    setwd(site)
-    book_jupyter <- file.path(site,'.pixi/envs/default/bin/jupyter')
-    if (!file.exists(book_jupyter)) book_jupyter <- jupyter
-    run(book_jupyter,c('book','build','--html'),file.path(stage,'site-build.log'))
+    run(rscript,shQuote(file.path(root,'tools/build_notebook_site.R')),
+        file.path(stage,'site-build.log'))
 }
 cat('PASS: ',length(files),' notebooks; ',length(html_files),
     ' standalone HTML exports; hpgR ',version,

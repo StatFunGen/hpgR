@@ -1,0 +1,45 @@
+:root {
+  --p8149-ink: #182735;
+  --p8149-blue: #24567a;
+  --p8149-paper: #f7fafc;
+}
+
+.p8149-hero {
+  margin: 0.5rem 0 2rem;
+  padding: 2rem 2.2rem;
+  border: 1px solid #cbdce7;
+  border-left: 0.35rem solid var(--p8149-blue);
+  border-radius: 0.6rem;
+  background: linear-gradient(120deg, #fff, var(--p8149-paper));
+  color: var(--p8149-ink);
+}
+
+.p8149-hero > p:first-child {
+  color: var(--p8149-blue);
+  font-size: 0.85rem;
+}
+
+.p8149-hero h1 {
+  margin: 0.6rem 0;
+  color: var(--p8149-ink);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.15;
+}
+
+.p8149-notebook-grid .card {
+  border-top: 0.2rem solid #b9d9eb;
+}
+
+.dark .p8149-hero {
+  background: #20394d;
+  color: #f7fafc;
+}
+
+.dark .p8149-hero h1,
+.dark .p8149-hero > p:first-child {
+  color: #f7fafc;
+}
+
+@media (max-width: 640px) {
+  .p8149-hero { padding: 1.4rem; }
+}

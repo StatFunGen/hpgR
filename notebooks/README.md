@@ -18,5 +18,17 @@ Rscript tools/sync_vignettes.R
 ```
 
 This runs supplied R cells in fresh sessions using the current package.
-The website uses a separate publication list. Answers and examination
-materials are maintained in the instructor repository.
+The `website` field in `catalog.json` selects published notebooks; its entry
+order sets the reading order within each lecture. Build and
+preview the site with:
+
+```sh
+cd notebooks
+pixi install
+pixi run build
+pixi run preview
+```
+
+The build verifies saved code and input records, then copies selected notebooks
+and their inputs into an isolated directory. It checks page links and downloads.
+Answers and examination materials are maintained in the instructor repository.

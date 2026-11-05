@@ -1,0 +1,18 @@
+version: 1
+
+project:
+  title: P8149 Human Population Genetics
+  description: R notebooks for P8149 at Columbia University
+  github: https://github.com/StatFunGen/hpgR
+  license: BSD-3-Clause
+
+site:
+  template: book-theme
+  title: P8149 Human Population Genetics
+  actions:
+    - title: GitHub
+      url: https://github.com/StatFunGen/hpgR/tree/main/notebooks
+  options:
+    logo_text: P8149 Notebooks
+    style: styles.css
+    hide_footer_links: false
