@@ -19,5 +19,7 @@ Run this from the source directory, then load the package with `library(hpgR)`.
 
 ## Documentation
 
-See the [course notebooks](notebooks/README.md)
+See the [course notebooks](https://statfungen.github.io/hpgR/)
 for use.
+
+[Notebook sources and build instructions](notebooks/README.md).
