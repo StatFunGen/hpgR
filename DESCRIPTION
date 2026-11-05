@@ -1,0 +1,19 @@
+Package: hpgR
+Title: Companion Package for P8149 Human Population Genetics
+Version: 0.0.1
+Authors@R: person("Gao", "Wang", email = "wang.gao@columbia.edu",
+                 role = c("aut", "cre"))
+Description: Companion functions for P8149 Human Population Genetics at
+    Columbia University Mailman School of Public Health. Established models
+    and methods are implemented in R through ports and rewrites of functions
+    from Daniel Nachun's popgentools R collections and Bo Peng's simuPOP. 
+    Small examples and standard probability calculations are also provided to
+    support learning and interpretation of basic concepts.
+License: GPL (>= 3)
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: stats, utils, parallel
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown, jsonlite
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

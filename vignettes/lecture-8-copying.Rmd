@@ -1,0 +1,32 @@
+---
+title: "Following the Copies"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Following the Copies}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+library(hpgR)
+```
+
+An allele's frequency changes when its copies contribute unequally to the
+next generation. Each new copy samples one parental row with replacement.
+`simulateForward()` carries out this simuPOP-derived copy-pool operation in R
+and records every parental choice.
+
+```{r copying}
+initial <- matrix(c(rep(1L, 3), rep(0L, 7)), ncol = 1L)
+record <- simulateForward(initial, sizes = c(5, 5, 3, 3, 5), seed = 8149L)
+states <- replayCopying(initial, record$parents)
+stopifnot(identical(states, record$states))
+vapply(states, function(G) mean(G[, 1]), numeric(1L))
+```
+
+Here $N$ is the diploid population size and each matrix has $2N$ haploid rows.
+`replayCopying()` reproduces every inherited allele using the recorded
+parent choices.
+
+This example isolates random copying. `simulatePopulation()` separately
+models diploid reproduction with mutation, recombination and founder sampling.

@@ -1,0 +1,8 @@
+bibentry(
+    bibtype = 'Manual',
+    title = 'hpgR: Companion R Package for P8149 Human Population Genetics',
+    author = person('Gao', 'Wang', email = 'wang.gao@columbia.edu'),
+    year = '2026',
+    note = paste('Columbia University Mailman School of Public Health.',
+                 'Package version', meta$Version)
+)

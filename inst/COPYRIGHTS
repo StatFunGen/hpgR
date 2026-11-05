@@ -1,0 +1,75 @@
+hpgR course interfaces and documentation
+Copyright (c) 2026 Gao Wang
+Distributed under GNU General Public License version 3 or later.
+
+Adapted demographyTools, ancestryTools and haplotypeTools functions
+Original author: Daniel Nachun
+Upstream DESCRIPTION: License: GPL (>= 3)
+Upstream package versions in the supplied snapshot: 0.1.0
+See provenance/source-map.tsv for the exact adapted source files and hashes.
+
+Adapted tskitR rate-map calculations
+Copyright (c) 2026 Daniel Nachun
+The supplied tskitR snapshot declares GPL (>= 3) in DESCRIPTION and includes
+the following MIT notice in LICENSE.md. Both records are retained here;
+hpgR as a combined work is distributed under GPL version 3 or later.
+
+MIT License
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Adapted tskit site-statistic kernels (trees.c)
+Copyright (c) 2019-2025 Tskit Developers
+Copyright (c) 2015-2018 University of Oxford
+Distributed under the MIT License reproduced above.
+
+Adapted simuPOP operators
+Copyright (C) 2004-2010 Bo Peng (Bo.Peng@bcm.edu)
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+The complete license is available at https://www.gnu.org/licenses/gpl-3.0.html
+and in R's standard license files. The upstream root COPYING contains older
+GPL-2 text; the adapted source headers explicitly declare GPL-3+.
+
+Only the named operators' restricted cases are adapted. simuPOP itself is
+not vendored in hpgR. No complete popgentools package is redistributed.
+
+Restricted msprime Hudson and mutation kernels translated into R
+Copyright (C) 2015-2025 University of Oxford and msprime contributors.
+Copyright (C) 2015-2021 University of Oxford (mutation generation).
+Distributed under GNU General Public License version 3 or later.
+The inspected sources are the msprime 1.4.1 files vendored in Daniel
+Nachun's tskitR. See provenance/source-map.tsv for exact source hashes.
+R tables and traversal are hpgR implementation code, not a redistribution
+of or a complete port of tskit, tsinfer, or tsdate.
+
+Adapted tsinfer ancestor construction and copying HMM
+Copyright (C) 2018-2026 University of Oxford and tsinfer contributors.
+Distributed under GNU General Public License version 3 or later.
+The inspected C sources are revision 7bfa63e, supplied in tskitR.
+
+Adapted tsdate discrete inference and coalescent priors
+Original R/C++ adaptation: Daniel Nachun, tskitR, GPL version 3 or later.
+Original tsdate algorithms: University of Oxford and tsdate contributors.
+Exact copied functions, numerical translations and source-file hashes are
+listed in provenance/source-map.tsv. Inference supports the documented
+phased-binary case and inside-outside node dating in ordinary R tables.
