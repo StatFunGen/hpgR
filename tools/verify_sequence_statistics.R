@@ -5,7 +5,10 @@ args <- commandArgs(trailingOnly = TRUE)
 stopifnot(length(args) %in% 1:2)
 library(hpgR)
 source <- file.path(normalizePath(args[1L]), "tskitR/src/tskit/trees.c")
-manifest <- subset(sourceProvenance(), id == "tskit-site-statistics")
+script <- sub("^--file=", "", commandArgs()[grepl("^--file=", commandArgs())])
+packageRoot <- normalizePath(file.path(dirname(script), ".."), mustWork = TRUE)
+manifest <- subset(utils::read.delim(file.path(packageRoot, "inst/provenance/source-map.tsv"),
+                                    stringsAsFactors = FALSE), id == "tskit-site-statistics")
 hash <- strsplit(system2("shasum", c("-a", "256", shQuote(source)), stdout = TRUE),
                  "[[:space:]]+")[[1L]][1L]
 stopifnot(identical(hash, manifest$sha256))

@@ -23,7 +23,6 @@ export(estimateFromGenerations)
 export(estimateLdSize)
 export(expectedSFS)
 export(fitAdmixture)
-export(fitAncestryAssociation)
 export(fitGaussianMixture)
 export(fitGenotypeError)
 export(fitLinkage)
@@ -122,7 +121,6 @@ export(selectionFrequencies)
 export(sfs)
 export(siblingSharingTest)
 export(simulateAncestry)
-export(simulateAncestryAssociation)
 export(simulateCopyingPath)
 export(simulateForward)
 export(simulateFrequencyRecords)
@@ -139,8 +137,6 @@ export(simulateReferenceHaplotype)
 export(simulateSiblingPair)
 export(simulateSiblingTraits)
 export(simulateUnrelatedPair)
-export(sourceCatalog)
-export(sourceProvenance)
 export(specifiedLocalTreeExample)
 export(standardizeGenotypes)
 export(summarizePopulationSample)
@@ -150,12 +146,9 @@ export(weightedLDBins)
 export(zeroCountUpperBound)
 importFrom(stats,
   approx,
-  binomial,
-  coef,
   dbinom,
   dnorm,
   dpois,
-  glm,
   kmeans,
   optim,
   pbinom,

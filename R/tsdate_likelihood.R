@@ -1,7 +1,5 @@
-# R translations of tskitR/src/tsdate_discrete.cpp and
-# tsdate_rescaling.cpp (Daniel Nachun, GPL >= 3). Source function names and
-# hashes are recorded in inst/provenance/source-map.tsv. Base R dpois replaces
-# the identical Poisson log-PMF; triangular indexing remains zero based at APIs.
+# From Daniel Nachun's tskitR: tsdate_logsumexp, tsdate_precalc_mutation_liks
+# and tsdate_constrain_ages (tsdate_discrete.cpp, tsdate_rescaling.cpp; GPL >= 3).
 
 tdTsdateLogsumexp <- function(x) {
     a <- max(x)

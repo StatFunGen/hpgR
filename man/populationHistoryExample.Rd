@@ -29,8 +29,7 @@ its stored seeds in R.}
 \value{
 A list with simulation records (when requested), DNA summaries,
   diversity and LD estimates, fitting/checking features, candidate libraries,
-  fitted history and held-out check. Inputs and numerical results are kept
-  separate from plotting, which remains in the notebook.
+  fitted history and held-out check.
 }
 \description{
 Use the same final DNA for diversity, LD, and candidate-history comparison.
@@ -43,7 +42,4 @@ This is the complete classroom recipe, with its fixed LD filtering
   and chromosome split. General-purpose calculations are documented under
   simulatePopulation, summarizePopulationSample, estimateDiversitySize,
   estimateLdSize, buildHistoryLibrary and comparePopulationHistories.
-  Complete examples use pedagogical_demographic_history_example.R; reusable algorithms
-  have their own source files. A filename identifies scope, not validation
-  beyond the recorded tests.
 }

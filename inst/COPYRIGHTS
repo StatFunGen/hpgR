@@ -6,7 +6,6 @@ Adapted demographyTools, ancestryTools and haplotypeTools functions
 Original author: Daniel Nachun
 Upstream DESCRIPTION: License: GPL (>= 3)
 Upstream package versions in the supplied snapshot: 0.1.0
-See provenance/source-map.tsv for the exact adapted source files and hashes.
 
 Adapted tskitR rate-map calculations
 Copyright (c) 2026 Daniel Nachun
@@ -50,17 +49,12 @@ The complete license is available at https://www.gnu.org/licenses/gpl-3.0.html
 and in R's standard license files. The upstream root COPYING contains older
 GPL-2 text; the adapted source headers explicitly declare GPL-3+.
 
-Only the named operators' restricted cases are adapted. simuPOP itself is
-not vendored in hpgR. No complete popgentools package is redistributed.
-
 Restricted msprime Hudson and mutation kernels translated into R
 Copyright (C) 2015-2025 University of Oxford and msprime contributors.
 Copyright (C) 2015-2021 University of Oxford (mutation generation).
 Distributed under GNU General Public License version 3 or later.
 The inspected sources are the msprime 1.4.1 files vendored in Daniel
-Nachun's tskitR. See provenance/source-map.tsv for exact source hashes.
-R tables and traversal are hpgR implementation code, not a redistribution
-of or a complete port of tskit, tsinfer, or tsdate.
+Nachun's tskitR.
 
 Adapted tsinfer ancestor construction and copying HMM
 Copyright (C) 2018-2026 University of Oxford and tsinfer contributors.
@@ -70,6 +64,3 @@ The inspected C sources are revision 7bfa63e, supplied in tskitR.
 Adapted tsdate discrete inference and coalescent priors
 Original R/C++ adaptation: Daniel Nachun, tskitR, GPL version 3 or later.
 Original tsdate algorithms: University of Oxford and tsdate contributors.
-Exact copied functions, numerical translations and source-file hashes are
-listed in provenance/source-map.tsv. Inference supports the documented
-phased-binary case and inside-outside node dating in ordinary R tables.

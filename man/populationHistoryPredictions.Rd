@@ -15,8 +15,8 @@ populationHistoryPredictions(
 \item{workers}{Number of R worker processes. Each replicate has its own seed.}
 }
 \value{
-Design, candidate labels, simulated feature banks, engine information
-  and the complete seed ledger. Fitting and checking chromosomes share each
+Design, candidate labels, simulated feature banks and the complete
+  seed ledger. Fitting and checking chromosomes share each
   replicate's realized pedigree.
 }
 \description{

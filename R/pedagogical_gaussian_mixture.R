@@ -23,10 +23,10 @@ NULL
 #' @rdname models_em
 #' @export
 simulateGaussianMixture <- function(n, means, sd = 1) {
-    n <- scalarInteger(n, "n", 2L)
+    checkInputs(n = list(scalarInteger, minimum = 2L))
+    n <- as.integer(n)
     if (n %% 2L != 0L) stop("n must be even for equal group sizes", call. = FALSE)
-    numericVector(means, "means", length = 2L)
-    positiveScalar(sd, "sd")
+    checkInputs(means = list(numericVector, length = 2L), sd = positiveScalar)
     group <- sample(rep(c(0, 1), each = n / 2))
     observed <- rnorm(n, mean = means[group + 1], sd = sd)
     list(observed = observed, group = group)
@@ -35,9 +35,7 @@ simulateGaussianMixture <- function(n, means, sd = 1) {
 #' @rdname models_em
 #' @export
 gaussianResponsibilities <- function(observed, pi, mu) {
-  numericVector(observed, "observed")
-  probability(pi, "pi")
-  numericVector(mu, "mu", length = 2L)
+  checkInputs(observed = numericVector, pi = probability, mu = list(numericVector, length = 2L))
   log_odds <- log(pi) - log1p(-pi) + dnorm(observed, mu[2], 1, log = TRUE) -
     dnorm(observed, mu[1], 1, log = TRUE)
   plogis(log_odds)
@@ -46,9 +44,7 @@ gaussianResponsibilities <- function(observed, pi, mu) {
 #' @rdname models_em
 #' @export
 gaussianMixtureLogLik <- function(observed, pi, mu) {
-  numericVector(observed, "observed")
-  probability(pi, "pi")
-  numericVector(mu, "mu", length = 2L)
+  checkInputs(observed = numericVector, pi = probability, mu = list(numericVector, length = 2L))
   log_0 <- log1p(-pi) + dnorm(observed, mu[1], 1, log = TRUE)
   log_1 <- log(pi) + dnorm(observed, mu[2], 1, log = TRUE)
   largest <- pmax(log_0, log_1)
@@ -59,13 +55,15 @@ gaussianMixtureLogLik <- function(observed, pi, mu) {
 #' @export
 gaussianMixtureUpdate <- function(observed, pi, mu) {
   r <- gaussianResponsibilities(observed, pi, mu)
-  if (sum(r) == 0 || sum(1 - r) == 0)
+  weight_1 <- sum(r)
+  weight_0 <- sum(1 - r)
+  if (weight_1 == 0 || weight_0 == 0)
     stop("both mixture groups need positive posterior weight", call. = FALSE)
   list(
     pi = mean(r),
     mu = c(
-      sum((1 - r) * observed) / sum(1 - r),
-      sum(r * observed) / sum(r)
+      sum((1 - r) * observed) / weight_0,
+      sum(r * observed) / weight_1
     )
   )
 }
@@ -74,9 +72,9 @@ gaussianMixtureUpdate <- function(observed, pi, mu) {
 #' @export
 fitGaussianMixture <- function(observed, start, tolerance = 1e-8,
                                max_iterations = 500L) {
-  numericVector(observed, "observed")
-  positiveScalar(tolerance, "tolerance")
-  max_iterations <- scalarInteger(max_iterations, "max_iterations")
+  checkInputs(observed = numericVector, tolerance = positiveScalar,
+              max_iterations = scalarInteger)
+  max_iterations <- as.integer(max_iterations)
   if (!is.list(start) || !all(c("pi", "mu") %in% names(start)))
     stop("start must contain pi and two group means in mu", call. = FALSE)
   probability(start$pi, "start$pi")

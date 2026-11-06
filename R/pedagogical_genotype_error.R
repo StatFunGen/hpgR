@@ -23,9 +23,8 @@ NULL
 #' @rdname models_genotype_error
 #' @export
 simulateGenotypeCalls <- function(n, frequency, error) {
-    n <- scalarInteger(n, "n")
-    probability(frequency, "frequency")
-    probability(error, "error")
+    checkInputs(n = scalarInteger, frequency = probability, error = probability)
+    n <- as.integer(n)
     truth <- sample(0:2, n, replace = TRUE, prob = hweProbability(frequency))
     observed <- truth
     error_event <- runif(n) < error
@@ -36,21 +35,21 @@ simulateGenotypeCalls <- function(n, frequency, error) {
 #' @rdname models_genotype_error
 #' @export
 hweProbability <- function(f) {
-  probability(f, "f")
+  checkInputs(f = probability)
   c(G0 = (1 - f)^2, G1 = 2 * f * (1 - f), G2 = f^2)
 }
 
 #' @rdname models_genotype_error
 #' @export
 genotypeLogLik <- function(f, g) {
-  dosageVector(g, "g")
+  checkInputs(g = dosageVector)
   sum(log(hweProbability(f)[g + 1]))
 }
 
 #' @rdname models_genotype_error
 #' @export
 genotypeErrorMatrix <- function(epsilon) {
-  probability(epsilon, "epsilon")
+  checkInputs(epsilon = probability)
   out <- matrix(epsilon / 3, 3, 3,
                 dimnames = list(observed = 0:2, true = 0:2))
   diag(out) <- 1 - 2 * epsilon / 3
@@ -60,7 +59,7 @@ genotypeErrorMatrix <- function(epsilon) {
 #' @rdname models_genotype_error
 #' @export
 genotypeErrorJoint <- function(d, f, epsilon) {
-  dosageVector(d, "d")
+  checkInputs(d = dosageVector)
   genotypeErrorMatrix(epsilon)[d + 1, , drop = FALSE] *
     rep(hweProbability(f), each = length(d))
 }
@@ -69,9 +68,10 @@ genotypeErrorJoint <- function(d, f, epsilon) {
 #' @export
 genotypeErrorPosterior <- function(d, f, epsilon) {
   joint <- genotypeErrorJoint(d, f, epsilon)
-  if (any(rowSums(joint) == 0))
+  likelihood <- rowSums(joint)
+  if (any(likelihood == 0))
     stop("observed calls have zero probability under this model", call. = FALSE)
-  joint / rowSums(joint)
+  joint / likelihood
 }
 
 #' @rdname models_genotype_error
@@ -96,11 +96,9 @@ genotypeErrorUpdate <- function(d, f, epsilon) {
 #' @export
 fitGenotypeError <- function(d, f = mean(d) / 2, epsilon = 0.05,
                    tolerance = 1e-10, max_iterations = 10000) {
-  dosageVector(d, "d")
-  probability(f, "f")
-  probability(epsilon, "epsilon")
-  positiveScalar(tolerance, "tolerance")
-  max_iterations <- scalarInteger(max_iterations, "max_iterations")
+  checkInputs(d = dosageVector, f = probability, epsilon = probability,
+              tolerance = positiveScalar, max_iterations = scalarInteger)
+  max_iterations <- as.integer(max_iterations)
   converged <- FALSE
   history <- data.frame(
     iteration = 0, f = f, epsilon = epsilon,

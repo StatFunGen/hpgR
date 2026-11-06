@@ -3,7 +3,7 @@
 #' An error-free nonrecombining region follows one rooted genealogy with infinite-sites mutation. Shared derived variants constrain clades. Compatible ranked binary trees are fitted by a conditional Poisson likelihood; equal best fits retain unresolved ages. Linked constraints report minimal compatible blocks and possible cut gaps.
 #'
 #' @name models_tree_inference
-#' @param G Numeric binary haplotype matrix, sampled copies in rows and polarized sites in columns; zero is ancestral. Most pti_ functions require exactly four rows.
+#' @param G Numeric binary haplotype matrix, sampled copies in rows and polarized sites in columns; zero is ancestral. Most pti functions require exactly four rows.
 #' @param mu Positive mutation rate per base per generation.
 #' @param L Positive analyzed sequence length in bases.
 #' @param tie_tolerance Nonnegative log likelihood tolerance for retaining tied best fits.
@@ -49,7 +49,8 @@ ptiKey <- function(x) paste(sort(as.integer(x)), collapse = ",")
 #' @export
 ptiPolymorphic <- function(G) {
     ptiValidateG(G)
-    keep <- colSums(G) > 0L & colSums(G) < nrow(G)
+    counts <- colSums(G)
+    keep <- counts > 0L & counts < nrow(G)
     G[, keep, drop = FALSE]
 }
 

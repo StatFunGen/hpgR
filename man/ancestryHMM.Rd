@@ -31,7 +31,7 @@ The hmmPosterior list of alpha, beta, posterior and log_likelihood;
 A haploid allele has Bernoulli likelihood given its ancestry source.
 Across genetic distance d, the state persists with probability exp(-redrawRate*d);
 otherwise it is redrawn from initial. Factors use copyingTransition and
-the source-derived hmmPosterior calculation. Missing alleles have likelihood 1.
+hmmPosterior. Missing alleles have likelihood 1.
 }
 \examples{
 F <- cbind(A=c(.2,.2), B=c(.8,.8))

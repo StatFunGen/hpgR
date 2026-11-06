@@ -1,8 +1,5 @@
-# simuPOP copying and diploid simulation interfaces.
-# Sources: RandomSelection, CloneGenoTransmitter::applyDuringMating and
-# ParentsTagger::applyDuringMating. Exact files and hashes are recorded in
-# sourceProvenance(); tested scope is recorded in inst/VALIDATION.md.
-# Random operations use R with recorded seeds and parent indices.
+# From simuPOP: RandomSelection, CloneGenoTransmitter::applyDuringMating and
+# ParentsTagger::applyDuringMating.
 
 simupopDrawParents <- function(parentCopies, offspringCopies) {
     sample.int(parentCopies, offspringCopies, replace = TRUE)
@@ -51,7 +48,7 @@ replayCopying <- function(initial, parents) {
 #' @param initial Initial haploid genotype matrix.
 #' @param sizes Diploid copy-pool sizes including generation zero.
 #' @param seed Positive integer R seed. The caller's RNG state is restored.
-#' @return List with complete states, one-based parent indices, seed and engine version.
+#' @return List with complete states, one-based parent indices, sizes and seed.
 #' @examples
 #' initial <- matrix(c(rep(1L, 3), rep(0L, 7)), ncol = 1L)
 #' record <- simulateForward(initial, sizes = c(5, 5, 3, 3, 5), seed = 8149L)
@@ -67,12 +64,13 @@ simulateForward <- function(initial, sizes, seed = 8149L) {
         stop("sizes must give diploid copy-pool sizes; initial must have 2*sizes[1] rows",
              call. = FALSE)
     }
-    seed <- scalarInteger(seed, "seed")
+    checkInputs(seed = scalarInteger)
+    seed <- as.integer(seed)
     simupopWithSeed(seed, function() {
         parents <- simupopParentMaps(sizes)
         states <- replayCopying(initial, parents)
         list(states = states, parents = parents, sizes = as.integer(sizes),
-             seed = seed, version = "0.0.3.9000", threads = 1L,
+             seed = seed,
              rng = "R Mersenne-Twister",
              model = "R translation of simuPOP haploid RandomSelection; 2N copy pool; no mutation")
     })
@@ -114,7 +112,7 @@ simulateForward <- function(initial, sizes, seed = 8149L) {
 #'   The initial and final generations are always recorded.
 #' @param seed Positive integer R seed. The caller's RNG state is restored.
 #' @return A list with observed final haplotypes and genotypes, calibration,
-#'   separate generation records, demographic truth, and engine information.
+#'   generation records and demographic truth.
 #'   Haplotype rows are paired homologues of sampled individuals. Marker rows
 #'   include all represented sites. Generation records contain complete
 #'   population frequencies and must not be passed to final-sample estimators.
@@ -142,16 +140,17 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
     }
     sizes <- as.integer(sizes)
     loci <- as.integer(loci)
-    mutationRate <- positiveScalar(mutationRate, "mutationRate", zero = TRUE)
-    reverseMutationRate <- positiveScalar(reverseMutationRate,
-                                            "reverseMutationRate", zero = TRUE)
+    checkInputs(mutationRate = list(positiveScalar, zero = TRUE),
+                reverseMutationRate = list(positiveScalar, zero = TRUE))
     if (mutationRate > 1 || reverseMutationRate > 1) {
         stop("mutation probabilities must be between zero and one", call. = FALSE)
     }
-    sampleSize <- scalarInteger(sampleSize, "sampleSize")
-    burnin <- scalarInteger(burnin, "burnin", minimum = 0L)
-    recordEvery <- scalarInteger(recordEvery, "recordEvery")
-    seed <- scalarInteger(seed, "seed")
+    checkInputs(sampleSize = scalarInteger, burnin = list(scalarInteger, minimum = 0L),
+                recordEvery = scalarInteger, seed = scalarInteger)
+    sampleSize <- as.integer(sampleSize)
+    burnin <- as.integer(burnin)
+    recordEvery <- as.integer(recordEvery)
+    seed <- as.integer(seed)
     if (!is.null(founderSize)) {
         founderSize <- scalarInteger(founderSize, "founderSize")
         if (founderSize > sizes[1L]) {

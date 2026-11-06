@@ -1,7 +1,5 @@
-# Validation scope is recorded in inst/VALIDATION.md.
-# Adapted from Daniel Nachun, tskitR/R/msprime-rate-map.R.
-# Numeric calculations are retained; S4 slots become a small S3 list.
-# See inst/provenance/source-map.tsv for source hashes and validation scope.
+# Adapted from Daniel Nachun's tskitR: RateMap, getRate,
+# getCumulativeMass and meanRate.
 
 #' Define rates along a sequence
 #'

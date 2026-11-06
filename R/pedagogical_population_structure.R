@@ -1,14 +1,8 @@
 #' Population structure and ancestry likelihoods
 #'
-#' PCA centers on 2p and scales by sqrt(2p(1-p)); markers with expected genotype standard deviation at most 0.05 are excluded. The admixture EM uses independent binomial genotype likelihoods and k-means initialization on up to four supplied PC scores. Local-ancestry association fits one logistic regression per locus, adjusting for global ancestry.
+#' PCA centers on 2p and scales by sqrt(2p(1-p)); markers with expected genotype standard deviation at most 0.05 are excluded. The admixture EM uses independent binomial genotype likelihoods and k-means initialization on up to four supplied PC scores.
 #'
 #' @name models_structure
-#' @param people Positive integer number of people.
-#' @param loci Positive integer number of loci.
-#' @param target One-based causal local-ancestry column index.
-#' @param intercept Finite logistic intercept.
-#' @param local_effect Finite log-odds effect per target local-ancestry copy.
-#' @param global_effect Finite log-odds effect per unit global ancestry.
 #' @param genotype Complete numeric genotype counts 0,1,2: a people-by-marker matrix for PCA and admixture, or a vector for one person in ancestryLikelihood.
 #' @param components Positive integer maximum number of PCs to retain, limited by the data rank.
 #' @param k Positive integer number of ancestry sources, at most the number of people and distinct score rows.
@@ -19,10 +13,7 @@
 #' @param q Source probability vector for one person, summing to one.
 #' @param frequency Marker-by-source matrix of reference allele frequencies in [0,1].
 #' @param log Logical; return the log likelihood when TRUE.
-#' @param disease Binary disease outcome, one value per person.
-#' @param local Complete people-by-loci numeric matrix of local-ancestry counts 0,1,2.
-#' @param global Vector of global-ancestry fractions in [0,1], one per person.
-#' @returns genotypePCA returns scores, allele_frequency, keep, variance_fraction and rotation (retained markers by PCs). fitAdmixture returns q (people by sources), p (markers by sources), log_likelihood, converged and iterations, warning on an exhausted limit. ancestryLikelihood returns a likelihood or log likelihood for one person. simulateAncestryAssociation returns global ancestry, a people-by-loci local matrix, disease_probability and disease. fitAncestryAssociation returns a locus-by-two matrix of local-effect estimates and standard errors.
+#' @returns genotypePCA returns scores, allele_frequency, keep, variance_fraction and rotation (retained markers by PCs). fitAdmixture returns q (people by sources), p (markers by sources), log_likelihood, converged and iterations, warning on an exhausted limit. ancestryLikelihood returns a likelihood or log likelihood for one person.
 #' @examples
 #' set.seed(42)
 #' G <- simulateGenotypes(20, rep(.3, 10))
@@ -34,14 +25,11 @@ NULL
 #' @rdname models_structure
 #' @export
 ancestryLikelihood <- function(q, genotype, frequency, log = FALSE) {
-    dosageVector(genotype, "genotype")
-    numericMatrix(frequency, "frequency")
-    probability(as.vector(frequency), "frequency", length = NULL)
-    probability(q, "q", ncol(frequency))
+    checkInputs(genotype = dosageVector,
+                frequency = list(numericMatrix, minimum = 0, maximum = 1),
+                q = list(probability, length = ncol(frequency)), log = logicalScalar)
     if (nrow(frequency) != length(genotype) || abs(sum(q) - 1) >= 1e-10)
         stop("frequency must have one row per marker and q must sum to 1", call. = FALSE)
-    if (!is.logical(log) || length(log) != 1L || is.na(log))
-        stop("log must be TRUE or FALSE", call. = FALSE)
     f <- as.vector(frequency %*% q)
     if (log) sum(dbinom(genotype, size = 2, prob = f, log = TRUE)) else
         prod(dbinom(genotype, size = 2, prob = f))
@@ -50,8 +38,8 @@ ancestryLikelihood <- function(q, genotype, frequency, log = FALSE) {
 #' @rdname models_structure
 #' @export
 genotypePCA <- function(genotype, components = 4L) {
-  dosageMatrix(genotype, rows = 2L)
-  scalarInteger(components, "components", 1L)
+  checkInputs(genotype = list(dosageMatrix, rows = 2L),
+              components = list(scalarInteger, minimum = 1L))
   allele_frequency <- colMeans(genotype) / 2
   marker_sd <- sqrt(2 * allele_frequency * (1 - allele_frequency))
   ## Exclude nearly monomorphic SNPs with an unstable scaling denominator.
@@ -79,7 +67,7 @@ genotypePCA <- function(genotype, components = 4L) {
 #' projectGenotypePCA(G[1,,drop=FALSE], pc)
 #' @export
 projectGenotypePCA <- function(genotype, pca) {
-    dosageMatrix(genotype)
+    checkInputs(genotype = dosageMatrix)
     if (!is.list(pca) || !is.logical(pca$keep) || anyNA(pca$keep) ||
         length(pca$keep) != ncol(genotype) || !any(pca$keep))
         stop("pca must retain markers in the supplied genotype order", call. = FALSE)
@@ -108,10 +96,9 @@ projectGenotypePCA <- function(genotype, pca) {
 #' fitSourceAncestry(rbind(c(0,1,0), c(2,1,2)), F)
 #' @export
 fitSourceAncestry <- function(genotype, frequency, tolerance = 1e-6) {
-    dosageMatrix(genotype)
-    numericMatrix(frequency, "frequency")
-    probability(as.vector(frequency), "frequency", length = NULL)
-    positiveScalar(tolerance, "tolerance")
+    checkInputs(genotype = dosageMatrix,
+                frequency = list(numericMatrix, minimum = 0, maximum = 1),
+                tolerance = positiveScalar)
     if (ncol(frequency) != 2L || nrow(frequency) != ncol(genotype))
         stop("frequency must give two source frequencies per marker", call. = FALSE)
     if (all(frequency[, 1L] == frequency[, 2L]))
@@ -130,14 +117,13 @@ fitSourceAncestry <- function(genotype, frequency, tolerance = 1e-6) {
 #' @export
 fitAdmixture <- function(genotype, k, scores, max_iter = 2000L,
                          per_cell_tol = 1e-7, q_tol = 1e-4) {
-  dosageMatrix(genotype, rows = 2L)
-  scalarInteger(k, "k", 1L, nrow(genotype))
-  numericMatrix(scores, "scores", rows = 2L)
+  checkInputs(genotype = list(dosageMatrix, rows = 2L),
+              k = list(scalarInteger, minimum = 1L, maximum = nrow(genotype)),
+              scores = list(numericMatrix, rows = 2L),
+              max_iter = list(scalarInteger, minimum = 1L), per_cell_tol = positiveScalar,
+              q_tol = positiveScalar)
   if (nrow(scores) != nrow(genotype))
     stop("scores must have one row per person", call. = FALSE)
-  scalarInteger(max_iter, "max_iter", 1L)
-  positiveScalar(per_cell_tol, "per_cell_tol")
-  positiveScalar(q_tol, "q_tol")
   n <- nrow(genotype)
   m <- ncol(genotype)
   centers <- kmeans(scores[, seq_len(min(ncol(scores), 4L)), drop = FALSE],

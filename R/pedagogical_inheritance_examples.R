@@ -24,17 +24,15 @@
 NULL
 
 # Sources: Pritchard 2.1/2.3; Gorroochurn 8.2/8.8; Coop Ch.4 and public R examples.
-# Label mutation and focal-interval tracking retain their explicit small models;
-# uniform parental draws use the shared simuPOP kernel.
 
 #' @rdname models_process_examples
 #' @export
 copyHistory <- function(sizes, initial, mu=0) {
-    numericVector(sizes, "sizes", minimum = 1)
+    checkInputs(sizes = list(numericVector, minimum = 1))
     if (any(sizes != floor(sizes))) stop("sizes must contain integer population sizes", call. = FALSE)
-    numericVector(initial, "initial", 2 * sizes[1L], minimum = 0)
+    checkInputs(initial = list(numericVector, length = 2 * sizes[1L], minimum = 0))
     if (any(initial != floor(initial))) stop("initial must contain integer allele labels", call. = FALSE)
-    probability(mu, "mu")
+    checkInputs(mu = probability)
     copies <- list(as.integer(initial))
     parents <- list()
     mutations <- list()
@@ -96,7 +94,7 @@ populationProcessExample <- function() {
     # Coop Fig.4.2: distinct founder labels track descent without mutation.
     set.seed(814903)
     ancestry <- copyHistory(rep(5L,15L), 1:10)
-    pair <- c(0L,1L) # fixed before looking at the history, not a selected pair
+    pair <- c(0L,1L) # Prespecified sampled copies.
     trace <- list(pair)
     current <- pair
     meeting <- NULL
@@ -135,7 +133,7 @@ populationProcessExample <- function() {
             intervals=intervals, shared=shared, cuts=cuts, path=path-1L)
     }
     
-    result <- list(seed_by_process=c(bottleneck=814901L, mutation=814902L,
+    list(seed_by_process=c(bottleneck=814901L, mutation=814902L,
         ancestry=814903L,recombination=814904L), R_version=R.version.string,
         bottleneck=bottleneck, mutation=mutation, ancestry=ancestry,
         recombination=recombination,
@@ -145,5 +143,4 @@ populationProcessExample <- function() {
                              "blob/master/Rcode/Loss_of_heterozyg_varying_pop.R"),
             Notes="8.2,8.5,8.6,8.9",
             Handbook="16.2.3 pp.465-466"))
-    result
 }

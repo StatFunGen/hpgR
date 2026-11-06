@@ -50,7 +50,7 @@ ptiCladeInterval(pair_result, clade = 1:4)
 ptiLinkedConstraints(G, positions)
 }
 \arguments{
-\item{G}{Numeric binary haplotype matrix, sampled copies in rows and polarized sites in columns; zero is ancestral. Most pti_ functions require exactly four rows.}
+\item{G}{Numeric binary haplotype matrix, sampled copies in rows and polarized sites in columns; zero is ancestral. Most pti functions require exactly four rows.}
 
 \item{four}{Logical; require four rows when TRUE, otherwise at least two.}
 

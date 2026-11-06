@@ -1,32 +1,7 @@
-# Restricted Hudson ancestry simulator translated from msprime 1.4.1.
+# From msprime 1.4.1: msp_run_coalescent, msp_std_common_ancestor_event,
+# msp_merge_two_ancestors and msp_recombination_event.
 # Copyright (C) 2015-2025 University of Oxford and msprime contributors.
 # GPL-3.0-or-later; source supplied in Daniel Nachun's tskitR/src/msprime.
-#
-# Source map (msprime.c, supplied snapshot SHA256
-# 2382cbd8d170a1a8ab59d473673e3edeccb9c9ee8ff775124946420c444da62d):
-# msp_run_coalescent:5091; msp_std_get_common_ancestor_waiting_time:7580;
-# msp_get_common_ancestor_waiting_time_from_rate:4774;
-# msp_std_common_ancestor_event:7591; msp_merge_two_ancestors:3758;
-# msp_insert_merged_ancestor:3700; overlap/segment helpers:2765-2886;
-# msp_get_recomb_left_bound:416; msp_set_segment_mass:437;
-# msp_sample_waiting_time:4847; msp_choose_uniform_breakpoint:3279;
-# msp_recombination_event:3342; msp_store_arg_recombination:3185;
-# msp_store_arg_edges:2571; msp_store_additional_nodes_edges:2610;
-# msp_is_completed:6496; msp_set_store_full_arg:294.
-#
-# R translates the listed source transitions. R lists replace lineage/segment
-# heaps and AVL containers. A piecewise overlap matrix
-# replaces the overlap AVL tree; direct interval masses replace Fenwick lookup.
-# Pair choice remains unrestricted, including nonoverlapping segment chains.
-# Recombination mass includes gaps inside a chain. Local-MRCA material is removed
-# exactly when the overlap count falls from two to zero. Uniform integer cuts
-# implement the source's constant-rate, discrete-genome mass/floor operation.
-#
-# Supported: contemporaneous samples, one constant diploid population, neutral
-# autosomes, scalar rate, integer sequence length, optional full ARG recording.
-# Excluded: structure, demographic events, growth, ancient samples, gene
-# conversion, pedigree, DTWF, SMC, selection, rate maps and initial ancestry.
-# R Mersenne-Twister supplies random draws. Recorded event replay is deterministic.
 
 msprimeEmptySegments <- function() {
     matrix(numeric(), nrow = 0L, ncol = 3L,
@@ -104,8 +79,7 @@ msprimeCover <- function(segments, left) {
     nodes
 }
 
-# R interval representation of msp_merge_two_ancestors. Splitting at the
-# overlap ledger's boundaries is the source's copy_overlap_count operation.
+# From msprime's msp_merge_two_ancestors and copy_overlap_count.
 msprimeMergeAncestors <- function(state, first, second) {
     a <- state$lineages[[as.character(first)]]
     b <- state$lineages[[as.character(second)]]
@@ -218,7 +192,8 @@ msprimeFinishEdges <- function(state) {
 msprimeAncestry <- function(samples, populationSize, sequenceLength,
                               recombinationRate = 0, seed = 8149L,
                               recordFullArg = FALSE, events = NULL) {
-    samples <- scalarInteger(samples, "samples")
+    checkInputs(samples = scalarInteger)
+    samples <- as.integer(samples)
     if (samples > .Machine$integer.max / 2L) stop("Too many sample copies", call. = FALSE)
     msprimeAncestryCopies(2L * samples, populationSize, sequenceLength,
                            recombinationRate, seed, recordFullArg, events)
@@ -230,13 +205,13 @@ msprimeAncestry <- function(samples, populationSize, sequenceLength,
 msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                                     recombinationRate = 0, seed = 8149L,
                                     recordFullArg = FALSE, events = NULL) {
-    copies <- scalarInteger(copies, "copies", minimum = 2L)
-    populationSize <- positiveScalar(populationSize, "populationSize")
-    sequenceLength <- scalarInteger(sequenceLength, "sequenceLength")
-    recombinationRate <- positiveScalar(recombinationRate, "recombinationRate", TRUE)
-    seed <- scalarInteger(seed, "seed", minimum = 0L)
-    if (!is.logical(recordFullArg) || length(recordFullArg) != 1L ||
-        is.na(recordFullArg)) stop("recordFullArg must be TRUE or FALSE", call. = FALSE)
+    checkInputs(copies = list(scalarInteger, minimum = 2L), populationSize = positiveScalar,
+                sequenceLength = scalarInteger,
+                recombinationRate = list(positiveScalar, zero = TRUE),
+                seed = list(scalarInteger, minimum = 0L), recordFullArg = logicalScalar)
+    copies <- as.integer(copies)
+    sequenceLength <- as.integer(sequenceLength)
+    seed <- as.integer(seed)
     if (!is.null(events) && !is.list(events)) {
         stop("events must be a recorded Hudson event list", call. = FALSE)
     }

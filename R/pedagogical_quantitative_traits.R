@@ -31,21 +31,20 @@ NULL
 #' @rdname models_traits
 #' @export
 simulateGenotypes <- function(n, frequency) {
-    scalarInteger(n, "n", 1L)
-    probability(frequency, "frequency", length = NULL)
+    checkInputs(n = list(scalarInteger, minimum = 1L),
+                frequency = list(probability, length = NULL))
     result <- vapply(frequency, function(p) rbinom(n, size = 2, prob = p), numeric(n))
     matrix(result, nrow = n, dimnames = list(NULL, names(frequency)))
 }
 
-# Continuous additive trait conditional on realized sibling sharing.
 #' @rdname models_traits
 #' @export
 simulateSiblingTraits <- function(n_pairs, V_A, V_C, V_E, mean_height = 0) {
-    scalarInteger(n_pairs, "n_pairs", 1L)
-    positiveScalar(V_A, "V_A", zero = TRUE)
-    positiveScalar(V_C, "V_C", zero = TRUE)
-    positiveScalar(V_E, "V_E", zero = TRUE)
-    numericVector(mean_height, "mean_height", 1L)
+    checkInputs(n_pairs = list(scalarInteger, minimum = 1L),
+                V_A = list(positiveScalar, zero = TRUE),
+                V_C = list(positiveScalar, zero = TRUE),
+                V_E = list(positiveScalar, zero = TRUE),
+                mean_height = list(numericVector, length = 1L))
     ibd_sharing <- rbeta(n_pairs, shape1 = 50, shape2 = 50)
     z1 <- rnorm(n_pairs)
     z2 <- rnorm(n_pairs)
@@ -62,10 +61,8 @@ simulateSiblingTraits <- function(n_pairs, V_A, V_C, V_E, mean_height = 0) {
 #' @rdname models_traits
 #' @export
 standardizeGenotypes <- function(genotype, frequency = colMeans(genotype) / 2) {
-    dosageMatrix(genotype)
-    probability(frequency, "frequency", ncol(genotype))
-    if (any(frequency == 0 | frequency == 1))
-        stop("frequency must be strictly between 0 and 1 for standardization", call. = FALSE)
+    checkInputs(genotype = dosageMatrix,
+                frequency = list(probability, length = ncol(genotype), open = TRUE))
     centered <- sweep(genotype, 2, 2 * frequency, '-')
     sweep(centered, 2, sqrt(2 * frequency * (1 - frequency)), '/')
 }
@@ -73,18 +70,15 @@ standardizeGenotypes <- function(genotype, frequency = colMeans(genotype) / 2) {
 #' @rdname models_traits
 #' @export
 geneticRelationship <- function(standardized_genotype) {
-    numericMatrix(standardized_genotype, "standardized_genotype")
+    checkInputs(standardized_genotype = numericMatrix)
     tcrossprod(standardized_genotype) / ncol(standardized_genotype)
 }
 
-# Profile ML with a centered phenotype and one genetic covariance component.
-# This is the classroom likelihood; it is not a REML implementation.
 #' @rdname models_traits
 #' @export
 geneticProfileNLL <- function(h2, eigenvalues, rotated_phenotype) {
-    probability(h2, "h2")
-    numericVector(eigenvalues, "eigenvalues", minimum = 0)
-    numericVector(rotated_phenotype, "rotated_phenotype", length(eigenvalues))
+    checkInputs(h2 = probability, eigenvalues = list(numericVector, minimum = 0),
+                rotated_phenotype = list(numericVector, length = length(eigenvalues)))
     if (!any(rotated_phenotype != 0))
         stop("rotated_phenotype must have positive variation", call. = FALSE)
     n_people <- length(rotated_phenotype)
@@ -98,9 +92,9 @@ geneticProfileNLL <- function(h2, eigenvalues, rotated_phenotype) {
 #' @rdname models_traits
 #' @export
 simulatePolygenicTrait <- function(standardized_genotype, V_G, V_E) {
-    numericMatrix(standardized_genotype, "standardized_genotype", rows = 2L)
-    positiveScalar(V_G, "V_G", zero = TRUE)
-    positiveScalar(V_E, "V_E", zero = TRUE)
+    checkInputs(standardized_genotype = list(numericMatrix, rows = 2L),
+                V_G = list(positiveScalar, zero = TRUE),
+                V_E = list(positiveScalar, zero = TRUE))
     n_snps <- ncol(standardized_genotype)
     n_people <- nrow(standardized_genotype)
     marker_effect <- rnorm(n_snps, 0, sqrt(V_G / n_snps))
@@ -123,10 +117,10 @@ simulatePolygenicTrait <- function(standardized_genotype, V_G, V_E) {
 #' @export
 simulateGaussianTrait <- function(label, mean_height, additive_variance,
                             environmental_variance, n) {
-  scalarInteger(n, "n", 1L)
-  numericVector(mean_height, "mean_height", 1L)
-  positiveScalar(additive_variance, "additive_variance", zero = TRUE)
-  positiveScalar(environmental_variance, "environmental_variance", zero = TRUE)
+  checkInputs(n = list(scalarInteger, minimum = 1L),
+              mean_height = list(numericVector, length = 1L),
+              additive_variance = list(positiveScalar, zero = TRUE),
+              environmental_variance = list(positiveScalar, zero = TRUE))
   if (!is.character(label) || length(label) != 1L || is.na(label))
     stop("label must be one character string", call. = FALSE)
   additive_value <- rnorm(n, 0, sqrt(additive_variance))

@@ -1,7 +1,6 @@
-# Source functions copied from Daniel Nachun's tskitR/R/tsdate-discrete.R.
-# GPL >= 3. Exact source hashes and function names are in source-map.tsv.
-# Mechanical adaptation: private .td_ names and R-list table accessors.
-# The inside/outside recurrences and conditional coalescent priors are retained.
+# From Daniel Nachun's tskitR: node_time_values, discrete_likelihoods,
+# belief_propagation, bp_inside_pass and bp_outside_pass (tsdate-discrete.R).
+# GPL >= 3.
 
 .td_LIN_GRID <- "linear"
 

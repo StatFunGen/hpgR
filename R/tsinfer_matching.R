@@ -1,9 +1,6 @@
 # Copying-HMM recurrence from ancestor_matcher_update_site_likelihood_values
-# and traceback in tsinfer/ancestor_matcher.c (Oxford, GPL >= 3), and Dan
-# Nachun's tsinfer-matching.R / tsinfer-pipeline.R. Dense state arrays replace
-# the C tree-compressed likelihood store. Scores are normalized per site.
-# The transition is max(L[u]*(1-rho+rho/n), rho/n), including its tie rule.
-# Path compression is an optimization, not an additional inferential model.
+# and traceback in tsinfer/ancestor_matcher.c (Oxford, GPL >= 3), and Daniel
+# Nachun's tsinfer-matching.R / tsinfer-pipeline.R.
 
 tsiMatch <- function(haplotype, reference, nodeIds, recombination, mismatch,
                       numNodes) {
@@ -69,7 +66,7 @@ inferAncestry <- function(haplotypes, positions, sequenceLength,
                           recombinationProbability = .01,
                           mismatchProbability = 1e-20) {
     G <- as.matrix(haplotypes)
-    sequenceLength <- positiveScalar(sequenceLength, "sequenceLength")
+    checkInputs(sequenceLength = positiveScalar)
     if (!is.numeric(G) || nrow(G) < 2L || ncol(G) < 1L ||
         anyNA(G) || any(!G %in% c(0, 1)) ||
         !is.numeric(positions) || length(positions) != ncol(G) ||

@@ -1,6 +1,6 @@
 #' Construct and summarize sample genealogies
 #'
-#' Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers. Tree mutation calls the source-derived mutation kernel.
+#' Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers.
 #'
 #' @name models_genealogy
 #' @param Ne Positive diploid effective size for a constant-size Kingman model.

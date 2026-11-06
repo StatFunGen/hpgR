@@ -1,7 +1,6 @@
-# Biallelic site statistics from tskit/trees.c in the supplied tskitR source.
-# Sources: diversity_summary_func, D_summary_func, r2_summary_func,
-# tsk_treeseq_update_site_afs and fold. See sourceProvenance() and COPYRIGHTS.
-# These count/frequency kernels use one sample set and complete binary calls.
+# From tskit's trees.c, supplied in Daniel Nachun's tskitR:
+# diversity_summary_func, D_summary_func, r2_summary_func,
+# tsk_treeseq_update_site_afs and fold.
 
 tskitDiversity <- function(count, n) {
     # Sum the per-allele contribution over the two alleles.

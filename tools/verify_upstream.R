@@ -22,7 +22,10 @@ loadFunctions <- function(path, wanted) {
     env
 }
 
-manifest <- sourceProvenance()
+script <- sub("^--file=", "", commandArgs()[grepl("^--file=", commandArgs())])
+packageRoot <- normalizePath(file.path(dirname(script), ".."), mustWork = TRUE)
+manifest <- utils::read.delim(file.path(packageRoot, "inst/provenance/source-map.tsv"),
+                             stringsAsFactors = FALSE, check.names = FALSE)
 for (i in which(manifest$upstream != "simuPOP")) {
     path <- file.path(root, manifest$upstream[i], manifest$file[i])
     hash <- strsplit(system2("shasum", c("-a", "256", shQuote(path)), stdout = TRUE),

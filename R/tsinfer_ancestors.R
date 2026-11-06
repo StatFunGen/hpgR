@@ -2,7 +2,6 @@
 # Daniel Nachun's tskitR (revision 7bfa63e). University of Oxford, GPL >= 3.
 # Original functions: ancestor_builder_finalise, break_ancestor,
 # compute_between_focal_sites, compute_ancestral_states, make_ancestor.
-# Matrices replace the C bit-packed genotype store. Indices here are one based.
 
 tsiDescriptors <- function(G, times) {
     descriptors <- list()

@@ -70,7 +70,8 @@ assert(!any(grepl("[.](so|dll|dylib|pyd)$", files, ignore.case = TRUE)),
 implemented <- c("inferAncestry", "dateAncestry")
 assert(all(implemented %in% getNamespaceExports("hpgR")),
     "Sequence inference and node dating must be exported")
-manifest <- sourceProvenance()
+manifest <- utils::read.delim(file.path(root, "inst/provenance/source-map.tsv"),
+                             stringsAsFactors = FALSE, check.names = FALSE)
 for (name in implemented) {
     rows <- which(vapply(strsplit(manifest$functions, ";", fixed = TRUE),
         function(functions) name %in% functions, logical(1)))

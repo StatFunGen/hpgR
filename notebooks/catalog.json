@@ -80,18 +80,6 @@
       "website": false
     },
     {
-      "file": "P8149_Lecture_6_Admixture_Mapping.ipynb",
-      "lecture": 6,
-      "role": "teaching_demonstration",
-      "website": false
-    },
-    {
-      "file": "P8149_Lecture_6_Local_Ancestry_HMM.ipynb",
-      "lecture": 6,
-      "role": "teaching_demonstration",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
       "lecture": 8,
       "role": "teaching_demonstration",

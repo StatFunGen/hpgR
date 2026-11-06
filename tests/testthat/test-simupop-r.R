@@ -23,6 +23,24 @@ test_that("forward simulation restores the caller's random generator", {
     expect_identical(RNGkind(), kind)
 })
 
+test_that("seeded draws restore the caller's generator after an error", {
+    restore <- hpgR:::rngRestorer()
+    on.exit(restore(), add = TRUE)
+    RNGkind("L'Ecuyer-CMRG", "Box-Muller", "Rejection")
+    set.seed(725L)
+    before <- .Random.seed
+    kind <- RNGkind()
+    expect_error(hpgR:::simupopWithSeed(91L, function() {
+        runif(3L)
+        stop("draw failed")
+    }), "draw failed")
+    expect_identical(.Random.seed, before)
+    expect_identical(RNGkind(), kind)
+    result <- withVisible(hpgR:::simupopWithSeed(91L, function() invisible(2L)))
+    expect_identical(result, list(value = 2L, visible = FALSE))
+    expect_identical(.Random.seed, before)
+})
+
 test_that("a simulation does not leave an RNG state when the caller had none", {
     # Observe entry and exit before returning to the test reporter.
     inspectAbsentSeed <- function(draw) {

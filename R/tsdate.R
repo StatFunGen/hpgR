@@ -1,5 +1,4 @@
-# Public R-list interface to the copied tsdate inside--outside routines in
-# Daniel Nachun's tskitR/R/tsdate-interface.R (inside_outside).
+# From Daniel Nachun's tskitR: inside_outside (tsdate-interface.R).
 
 #' Date inferred ancestral nodes using mutations
 #'
@@ -19,9 +18,8 @@
 dateAncestry <- function(ancestry, mutationRate, populationSize,
                          timepoints = 40L, minBranchLength = 1e-8) {
     ancestryCheckTables(ancestry)
-    mutationRate <- positiveScalar(mutationRate, "mutationRate")
-    populationSize <- positiveScalar(populationSize, "populationSize")
-    minBranchLength <- positiveScalar(minBranchLength, "minBranchLength")
+    checkInputs(mutationRate = positiveScalar, populationSize = positiveScalar,
+                minBranchLength = positiveScalar)
     if (!is.numeric(timepoints) || any(!is.finite(timepoints)) ||
         (length(timepoints) == 1L && (timepoints < 5 || timepoints != floor(timepoints))) ||
         (length(timepoints) > 1L && (length(timepoints) < 5L ||

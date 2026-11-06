@@ -54,7 +54,8 @@ populationSampleFeatures <- function(observed, design, chromosomes) {
 }
 
 examplePopulationPredictions <- function(candidates, design, banks, workers = 1L) {
-    workers <- scalarInteger(workers, "workers")
+    checkInputs(workers = scalarInteger)
+    workers <- as.integer(workers)
     jobs <- unlist(lapply(names(candidates), function(id) {
         seeds <- c(banks[[id]]$training_seeds, banks[[id]]$calibration_seeds)
         lapply(seq_along(seeds), function(j) list(id = id, index = j, seed = seeds[j]))
@@ -125,8 +126,8 @@ populationHistoryDesign <- function() {
 #' Generate population-history predictions in R
 #' @param predictionData Design and seeds from populationHistoryDesign.
 #' @param workers Number of R worker processes. Each replicate has its own seed.
-#' @return Design, candidate labels, simulated feature banks, engine information
-#'   and the complete seed ledger. Fitting and checking chromosomes share each
+#' @return Design, candidate labels, simulated feature banks and the complete
+#'   seed ledger. Fitting and checking chromosomes share each
 #'   replicate's realized pedigree.
 #' @export
 populationHistoryPredictions <- function(predictionData = populationHistoryDesign(),
@@ -138,7 +139,6 @@ populationHistoryPredictions <- function(predictionData = populationHistoryDesig
     result <- predictionData[required]
     result$banks <- examplePopulationPredictions(result$candidates,
         result$design, result$banks, workers)
-    result$engine <- simupopEngine()
     result$seed_ledger <- unlist(lapply(result$banks, function(bank)
         c(bank$training_seeds, bank$calibration_seeds)), use.names = TRUE)
     result
@@ -161,15 +161,11 @@ populationHistoryPredictions <- function(predictionData = populationHistoryDesig
 #'   its stored seeds in R.
 #' @return A list with simulation records (when requested), DNA summaries,
 #'   diversity and LD estimates, fitting/checking features, candidate libraries,
-#'   fitted history and held-out check. Inputs and numerical results are kept
-#'   separate from plotting, which remains in the notebook.
+#'   fitted history and held-out check.
 #' @details This is the complete classroom recipe, with its fixed LD filtering
 #'   and chromosome split. General-purpose calculations are documented under
 #'   simulatePopulation, summarizePopulationSample, estimateDiversitySize,
 #'   estimateLdSize, buildHistoryLibrary and comparePopulationHistories.
-#'   Complete examples use pedagogical_demographic_history_example.R; reusable algorithms
-#'   have their own source files. A filename identifies scope, not validation
-#'   beyond the recorded tests.
 #' @export
 populationHistoryExample <- function(observed, calibration, predictionData,
                                      simulate = FALSE,

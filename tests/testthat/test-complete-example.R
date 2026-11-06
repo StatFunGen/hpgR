@@ -1,13 +1,3 @@
-test_that("complete-example source is registered separately from reusable models", {
-    manifest <- utils::read.delim(system.file("provenance", "modules.tsv", package = "hpgR"),
-                                 stringsAsFactors = FALSE)
-    expect_true(all(c("simupop.R", "pedagogical_effective_size.R",
-                      "pedagogical_demographic_history_example.R") %in% manifest$file))
-    entry <- manifest[manifest$file == "pedagogical_demographic_history_example.R", ]
-    expect_identical(entry$kind, "pedagogical")
-    expect_match(entry$validation_scope, "complete classroom")
-})
-
 test_that("the example schedule preserves the declared founder and growth history", {
     candidate <- list(founder = 20L, small = 20L, duration = 20L, growth = 40L)
     design <- list(ancestral_size = 100L, present_size = 1000L)
@@ -58,7 +48,6 @@ test_that("serial and parallel R prediction rebuilds use identical seeded draws"
     x$banks <- list(a = list(training_seeds = 38001:38002, calibration_seeds = 38101:38102),
         b = list(training_seeds = 38201:38202, calibration_seeds = 38301:38302))
     serial <- populationHistoryPredictions(x)
-    expect_identical(serial$engine$language, "R")
     expect_identical(dim(serial$banks$a$train_fit), c(2L, 6L))
     expect_true(all(is.finite(serial$banks$a$train_fit)))
     if (.Platform$OS.type != "windows") {

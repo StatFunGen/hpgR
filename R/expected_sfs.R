@@ -1,9 +1,5 @@
-# Validation scope is recorded in inst/VALIDATION.md.
-# The four internal calculations below are copied from Daniel Nachun's
-# demographyTools/R/demography_sfs.R: .w_matrix, .expm1d, .etjj_constant,
-# .truncated_sfs. Their Ne is a haploid size convention. The public hpgR
-# interface explicitly passes 2 * Ne for diploid effective size.
-# The demographic-history fitting algorithms are not included here.
+# From Daniel Nachun's demographyTools: .w_matrix, .expm1d,
+# .etjj_constant and .truncated_sfs.
 
 #' Predict the spectrum under constant population size
 #'
@@ -25,10 +21,9 @@
 #' stopifnot(isTRUE(all.equal(prediction, 4 * Ne * mu * L / seq_len(n - 1L))))
 #' @export
 expectedSFS <- function(n, Ne, mu, length_bp) {
-    n <- scalarInteger(n, "n", 2L)
-    Ne <- positiveScalar(Ne, "Ne")
-    mu <- positiveScalar(mu, "mu", zero = TRUE)
-    length_bp <- positiveScalar(length_bp, "length_bp")
+    checkInputs(n = list(scalarInteger, minimum = 2L), Ne = positiveScalar,
+                mu = list(positiveScalar, zero = TRUE), length_bp = positiveScalar)
+    n <- as.integer(n)
     expected <- truncatedSfs(n, 2 * Ne, Inf)
     mu * length_bp * expected[seq.int(2L, n)]
 }

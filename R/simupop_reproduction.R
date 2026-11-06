@@ -1,24 +1,11 @@
-# Neutral, autosomal simuPOP operators expressed with base-R matrices.
-# Upstream: Bo Peng and simuPOP contributors (source snapshot in provenance),
+# Upstream: Bo Peng and simuPOP contributors,
 # GPL-3.0-or-later, https://github.com/BoPeng/simuPOP.
-# Read against the source snapshot recorded in inst/provenance/source-map.tsv:
+# Source functions:
 # __init__.py::SNPMutator; mutator.cpp::BaseMutator::apply and
 # MatrixMutator::{MatrixMutator,mutate}; mating.cpp::RandomParentChooser::
 # chooseParents and CombinedParentsChooser::chooseParents; transmitter.cpp::
 # Recombinator::{initialize,transmitGenotype,applyDuringMating};
 # sampling.py::RandomSampler::drawSample and Population::extractIndividuals.
-#
-# Representation: each row is one haplotype; consecutive rows are the two
-# homologues of a diploid. Columns retain every represented site. The supported
-# model has neutral binary alleles on autosomes, independent parent draws with
-# replacement, selfing and independent interval switches.
-#
-# R matrices represent the translated operations and probability laws.
-# R draws a binomial number of Bernoulli successes and
-# a uniformly chosen subset, an exact sparse equivalent of the native Bernoulli
-# trials. Mutation uses the same max(u,v) proposal/thinning construction as
-# MatrixMutator. Recorded events give deterministic replay.
-# Reference comparisons are recorded in inst/SIMUPOP_VALIDATION.md.
 
 simupopCheckHaplotypes <- function(haplotypes) {
     haplotypes <- genotypeMatrix(haplotypes)
@@ -30,7 +17,6 @@ simupopCheckHaplotypes <- function(haplotypes) {
 }
 
 # Draw precisely the success set of independent Bernoulli(probability) trials.
-# Keeping sparse events avoids allocating one uniform variate for every site.
 simupopBernoulli <- function(size, probability) {
     if (!size || probability == 0) return(integer())
     if (probability == 1) return(seq_len(size))
@@ -50,8 +36,8 @@ simupopMutate <- function(haplotypes, forward, reverse = forward,
         !nrow(haplotypes) || !ncol(haplotypes)) {
         stop("haplotypes must be a nonempty numeric matrix", call. = FALSE)
     }
-    forward <- positiveScalar(forward, "forward", zero = TRUE)
-    reverse <- positiveScalar(reverse, "reverse", zero = TRUE)
+    checkInputs(forward = list(positiveScalar, zero = TRUE),
+                reverse = list(positiveScalar, zero = TRUE))
     if (forward > 1 || reverse > 1) {
         stop("mutation probabilities must lie between zero and one", call. = FALSE)
     }
@@ -88,8 +74,9 @@ simupopMutate <- function(haplotypes, forward, reverse = forward,
 # Two independent ANY_SEX RandomParentChooser calls, with replacement and
 # allowSelfing=TRUE. Each entry supplies one gamete of an offspring.
 simupopParents <- function(parentSize, offspringSize, parents = NULL) {
-    parentSize <- scalarInteger(parentSize, "parentSize")
-    offspringSize <- scalarInteger(offspringSize, "offspringSize")
+    checkInputs(parentSize = scalarInteger, offspringSize = scalarInteger)
+    parentSize <- as.integer(parentSize)
+    offspringSize <- as.integer(offspringSize)
     if (offspringSize > .Machine$integer.max / 2L) {
         stop("offspringSize is too large", call. = FALSE)
     }
@@ -226,7 +213,8 @@ simupopSample <- function(haplotypes, size, indices = NULL) {
         !nrow(haplotypes) || nrow(haplotypes) %% 2L || !ncol(haplotypes)) {
         stop("haplotypes must have paired diploid rows", call. = FALSE)
     }
-    size <- scalarInteger(size, "size")
+    checkInputs(size = scalarInteger)
+    size <- as.integer(size)
     populationSize <- nrow(haplotypes) %/% 2L
     if (size > populationSize) {
         stop("sample size cannot exceed the diploid population", call. = FALSE)

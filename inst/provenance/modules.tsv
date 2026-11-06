@@ -9,8 +9,7 @@ expected_sfs.R	upstream	sfs	constant-size expected SFS; explicit size conversion
 posterior_summary.R	upstream	posterior	direct source-body and output comparisons
 rate_map.R	upstream	rate-map	direct numeric comparisons; container representation differs
 weighted_ld.R	upstream	weighted-ld	strict identity remains open for floating-point cases
-pedagogical_source_catalog.R	pedagogical		source-record interface written for the classroom examples
-pedagogical_input_validation.R	pedagogical		shared input validation written for the course interfaces
+input_validation.R	utility		shared argument checks for package interfaces
 msprime.R	upstream	msprime-ancestry;msprime-mutation	public R interfaces to restricted source-translated ancestry and mutation kernels; R event simulation
 msprime_ancestry.R	upstream	msprime-ancestry	restricted Hudson C-transition translation with R segment/overlap containers; deterministic R event replay and independent original-C probability-law checks
 msprime_mutation.R	upstream	msprime-mutation	restricted edgewise Poisson placement at unique continuous sites; binary root zero; original-C mutation-law comparison and deterministic supplied-event replay
@@ -42,4 +41,3 @@ pedagogical_quantitative_traits.R	pedagogical		Gaussian and marker-effect traits
 sequence_statistics.R	upstream	tskit-site-statistics	biallelic complete-call diversity, D, r2 and one-sample-set SFS kernels; direct original-C oracle comparisons
 pedagogical_demographic_inference.R	pedagogical		candidate-history discrepancies and terminal-extension likelihood; independent calibration and optimizer checks
 pedagogical_genetic_drift.R	pedagogical		finite-population allele counts, mutation paths, drift moments and binomial bounds; analytical and seeded cases
-pedagogical_admixture_mapping.R	pedagogical		local-ancestry association with global-ancestry adjustment; notebook likelihood checks

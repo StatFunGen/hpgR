@@ -3,3 +3,5 @@
 ^hpgR_.*\.tar\.gz$
 tools
 ^notebooks$
+^inst/(catalog|provenance|reference)(/|$)
+^inst/[^/]+[.]md$

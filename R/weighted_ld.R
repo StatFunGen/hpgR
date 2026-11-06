@@ -1,9 +1,5 @@
-# Strict identical acceptance remains open; see inst/VALIDATION.md.
-# R translation of Daniel Nachun's ancestryTools header
-# inst/include/ancestryTools/weighted_ld_fft.h: assign_cm_bins,
-# aggregate_weighted_ld_bins, compute_pair_count_histogram.
-# Keep accumulation order explicit for differential tests against the C++.
-# These are deterministic summaries, not a forward simulator or an Ne estimator.
+# From Daniel Nachun's ancestryTools: assign_cm_bins,
+# aggregate_weighted_ld_bins and compute_pair_count_histogram.
 
 #' Assign markers to genetic-distance bins
 #' @param cM Marker positions in centimorgans.
@@ -13,7 +9,8 @@
 #' @return Zero-based integer bin indices; -1 marks excluded positions.
 #' @export
 assignCMBins <- function(cM, cm_min, bin_width_cm, n_bins) {
-    n_bins <- scalarInteger(n_bins, "n_bins")
+    checkInputs(n_bins = scalarInteger)
+    n_bins <- as.integer(n_bins)
     if (!is.numeric(cM) || any(!is.finite(cM)) ||
         length(cm_min) != 1L || !is.finite(cm_min) ||
         length(bin_width_cm) != 1L || !is.finite(bin_width_cm)) {
@@ -61,7 +58,8 @@ pairCountHistogram <- function(snps_per_bin) {
 #' @return List containing weighted sums, bin counts, squared sums and pair counts.
 #' @export
 weightedLDBins <- function(genotype, p_A, p_B, p_hat, bin_id, n_bins) {
-    n_bins <- scalarInteger(n_bins, "n_bins")
+    checkInputs(n_bins = scalarInteger)
+    n_bins <- as.integer(n_bins)
     if (!is.matrix(genotype) || !is.numeric(genotype) ||
         any(!is.finite(genotype)) || nrow(genotype) < 1L || ncol(genotype) < 1L) {
         stop("genotype must be a finite nonempty numeric matrix", call. = FALSE)

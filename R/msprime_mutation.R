@@ -1,19 +1,13 @@
-# Restricted translation of vendored msprime 1.4.1 mutation placement.
-# Source in Daniel Nachun's tskitR snapshot:
-# src/msprime/mutgen.c::mutgen_place_mutations (1077--1158),
-# mutation_matrix_choose_root_state and mutation_matrix_transition.
-# Copyright University of Oxford; GPL-3.0-or-later. See provenance records.
-# Uniform continuous positions, constant rate, and BinaryMutationModel with
-# root state 0 are supported. Unique positions mean each new site has one
-# 0 -> 1 transition. Site and mutation records use R data frames. batchEdges
-# draws all edge counts before positions and times for long discrete records.
-# Both draw orders use the same Poisson exposure and uniform placement laws.
+# From msprime 1.4.1: mutgen_place_mutations, mutation_matrix_choose_root_state
+# and mutation_matrix_transition, supplied in Daniel Nachun's tskitR.
+# Copyright University of Oxford; GPL-3.0-or-later.
 
 msprimeMutations <- function(ancestry, mutationRate, seed, events = NULL,
                               batchEdges = FALSE) {
     ancestryCheckTables(ancestry)
-    mutationRate <- positiveScalar(mutationRate, "mutationRate", zero = TRUE)
-    seed <- scalarInteger(seed, "seed", minimum = 0L)
+    checkInputs(mutationRate = list(positiveScalar, zero = TRUE),
+                seed = list(scalarInteger, minimum = 0L))
+    seed <- as.integer(seed)
     if (!is.logical(batchEdges) || length(batchEdges) != 1L || is.na(batchEdges))
         stop("batchEdges must be TRUE or FALSE", call. = FALSE)
     nodes <- ancestry$nodes

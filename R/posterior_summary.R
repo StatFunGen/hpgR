@@ -1,6 +1,4 @@
-# Validation scope is recorded in inst/VALIDATION.md.
-# Copied from Daniel Nachun, demographyTools/R/bayesian_utils.R,
-# .posterior_summary. Only the public function name and documentation change.
+# From Daniel Nachun's demographyTools: .posterior_summary.
 
 #' Summarize samples from a posterior distribution
 #' @param samples Numeric matrix, draws in rows and parameters in columns.

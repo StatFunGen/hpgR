@@ -10,7 +10,7 @@ sources <- utils::read.delim(file.path(root, "inst/provenance/source-map.tsv"),
                            stringsAsFactors = FALSE, check.names = FALSE)
 files <- list.files(file.path(root, "R"), pattern = "[.]R$")
 stopifnot(!anyDuplicated(manifest$file), setequal(files, manifest$file))
-stopifnot(all(manifest$kind %in% c("upstream", "pedagogical", "documentation")))
+stopifnot(all(manifest$kind %in% c("upstream", "pedagogical", "utility", "documentation")))
 approved_sources <- c("haplotypeTools", "ancestryTools", "demographyTools",
                      "ARGtools", "tskitR", "simuPOP")
 stopifnot(!anyDuplicated(sources$id), all(sources$upstream %in% approved_sources),
@@ -25,6 +25,7 @@ for (i in seq_len(nrow(manifest))) {
     } else {
         stopifnot(grepl("^[a-z][a-z0-9_]*[.]R$", file))
         stopifnot(identical(startsWith(file, "pedagogical_"), kind == "pedagogical"))
+        if (kind == "utility") stopifnot(identical(file, "input_validation.R"))
         stopifnot(!grepl("^(ported|adopted|adapted|adapter|simple|utils)_", file))
     }
     if (kind == "upstream") {

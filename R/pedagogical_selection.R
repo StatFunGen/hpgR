@@ -20,9 +20,8 @@ NULL
 #' @rdname models_selection
 #' @export
 selectionFrequencies <- function(p0, w, generations) {
-    probability(p0, "p0")
-    fitnessWeights(w)
-    scalarInteger(generations, "generations", 0L)
+    checkInputs(p0 = probability, w = fitnessWeights,
+                generations = list(scalarInteger, minimum = 0L))
     p <- numeric(generations + 1)
     p[1] <- p0
     for (t in seq_len(generations)) p[t + 1] <- selectedFrequency(p[t], w)
@@ -32,16 +31,14 @@ selectionFrequencies <- function(p0, w, generations) {
 #' @rdname models_selection
 #' @export
 selectionDeclineProbability <- function(Ne, initial, selected) {
-    scalarInteger(Ne, "Ne")
-    probability(initial, "initial")
-    probability(selected, "selected")
+    checkInputs(Ne = scalarInteger, initial = probability, selected = probability)
     pbinom(ceiling(2 * Ne * initial) - 1, size = 2 * Ne, prob = selected)
 }
 
 #' @rdname models_selection
 #' @export
 balancedFrequency <- function(w) {
-    fitnessWeights(w)
+    checkInputs(w = fitnessWeights)
     if (w[2] <= max(w[c(1, 3)]))
         stop("w must give the heterozygote the greatest fitness", call. = FALSE)
     # Equilibrium of the allele in the first homozygote.
@@ -51,8 +48,7 @@ balancedFrequency <- function(w) {
 #' @rdname models_selection
 #' @export
 selectedFrequency <- function(p, w) {
-  probability(p, "p")
-  fitnessWeights(w)
+  checkInputs(p = probability, w = fitnessWeights)
   q <- 1 - p
   mean_fitness <- p^2 * w[1] + 2 * p * q * w[2] + q^2 * w[3]
   if (mean_fitness == 0) stop("the current population must have positive mean fitness", call. = FALSE)

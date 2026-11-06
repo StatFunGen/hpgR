@@ -57,15 +57,17 @@ matchedDraws <- function(N, mu, replicates = 600L, base_seed) {
     list(results = do.call(rbind, rows), sfs = spectra)
 }
 
-# Founder-label and allele summaries of the same source-derived copying records.
+# Founder-label and allele summaries of copying records.
 #' @rdname models_genealogy_controls
 #' @export
 founderDiversityExample <- function(N = 40L, generations = 60L,
                                     replicates = 200L, seed = 814906L) {
-    N <- scalarInteger(N, "N")
-    generations <- scalarInteger(generations, "generations", 0L)
-    replicates <- scalarInteger(replicates, "replicates", 2L)
-    seed <- scalarInteger(seed, "seed")
+    checkInputs(N = scalarInteger, generations = list(scalarInteger, minimum = 0L),
+                replicates = list(scalarInteger, minimum = 2L), seed = scalarInteger)
+    N <- as.integer(N)
+    generations <- as.integer(generations)
+    replicates <- as.integer(replicates)
+    seed <- as.integer(seed)
     copies <- 2L * N
     initial <- cbind(seq_len(copies), rep(0:1, each = N))
     H0 <- 2 * N^2 / (copies * (copies - 1))
@@ -88,18 +90,19 @@ founderDiversityExample <- function(N = 40L, generations = 60L,
                      seeds = seed + seq_len(replicates) - 1L))
 }
 
-# Complete small example. Existing source-derived Kingman and mutation
-# functions supply trees and sequences; pgMakeTree adds the stated tip time.
 #' @rdname models_genealogy_controls
 #' @export
 terminalExtensionExample <- function(Ne = 80, n = 12L, mutationRate = 2e-5,
                                      sequenceLength = 1000, extension = 40,
                                      regions = 48L, bootstrap = 120L, seed = 814903L) {
-    n <- scalarInteger(n, "n", 3L)
-    regions <- scalarInteger(regions, "regions", 2L)
-    bootstrap <- scalarInteger(bootstrap, "bootstrap", 2L)
-    seed <- scalarInteger(seed, "seed")
-    extension <- positiveScalar(extension, "extension", zero = TRUE)
+    checkInputs(n = list(scalarInteger, minimum = 3L),
+                regions = list(scalarInteger, minimum = 2L),
+                bootstrap = list(scalarInteger, minimum = 2L), seed = scalarInteger,
+                extension = list(positiveScalar, zero = TRUE))
+    n <- as.integer(n)
+    regions <- as.integer(regions)
+    bootstrap <- as.integer(bootstrap)
+    seed <- as.integer(seed)
     trees <- lapply(seq_len(regions), function(j) {
         tree <- pgKingmanTree(Ne, n, pgRegionSeed(seed, j))
         nodes <- tree$nodes[c("id", "time")]
@@ -123,12 +126,12 @@ terminalExtensionExample <- function(Ne = 80, n = 12L, mutationRate = 2e-5,
             regions = regions, seed = seed, trees = trees))
 }
 
-# Two local genealogies specified before mutation. Node and edge construction
-# is a small classroom recipe; mutation placement uses the shared source kernel.
+# Two local genealogies specified before mutation.
 #' @rdname models_genealogy_controls
 #' @export
 specifiedLocalTreeExample <- function(seed = 814905L) {
-    seed <- scalarInteger(seed, "seed")
+    checkInputs(seed = scalarInteger)
+    seed <- as.integer(seed)
     make <- function(pair, time) {
         other <- setdiff(1:3, pair)
         pgMakeTree(data.frame(id = 1:7, time = c(rep(0, 4), time, 400, 800)),
@@ -162,8 +165,6 @@ NULL
 
 # Source model: Pritchard 2.2, pp.91--94 and 102--103, Fig.2.35;
 # Laruson and Reed (2021), Sec.9.1, pp.178--180.
-# Stored realization used by the animation. Source-kernel replay tests verify
-# the node/edge records and mutation carrier sets.
 #' @rdname models_coalescent_example
 #' @export
 coalescentExample <- function() {

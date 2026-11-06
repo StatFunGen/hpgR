@@ -1,7 +1,6 @@
-# Source functions copied from Daniel Nachun's tskitR/R/tsdate-prior.R.
-# GPL >= 3. Exact source hashes and function names are in source-map.tsv.
-# Mechanical adaptation: private .td_ names and R-list table accessors.
-# The inside/outside recurrences and conditional coalescent priors are retained.
+# From Daniel Nachun's tskitR: .compute_conditional_prior,
+# .spans_by_samples and build_prior_grid (tsdate-prior.R).
+# GPL >= 3.
 
 tdLognormApprox <- function(mean, var) {
     beta <- log(var/mean^2 + 1)

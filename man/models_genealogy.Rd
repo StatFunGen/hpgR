@@ -90,7 +90,7 @@ pgMutateTree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
 Tree constructors and compressors return nodes, edges, sample_nodes, sample_ids, root, descendants and model; pgCompressTrees returns a list of local trees. pgTreeSummaries returns pair_time, TMRCA, branch lengths by descendant count and waiting_times. pgMutateTree returns haplotypes, positions_bp, mutations and their spectrum. pgSampleLabels validates labels and returns invisible NULL.
 }
 \description{
-Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers. Tree mutation calls the source-derived mutation kernel.
+Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers.
 }
 \examples{
 tree <- pgKingmanTree(20, n=4, ancestry_seed=42)

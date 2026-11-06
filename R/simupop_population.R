@@ -1,29 +1,9 @@
-# Composition of the neutral simuPOP operators in simupop_reproduction.R.
-# The mutation -> mating order, founder/final sampling and record schedule
-# follow the original user-guide composition. Scientific operators derive from
-# simuPOP (Bo Peng and contributors, GPL-3.0-or-later); this file supplies the
-# R matrix representation and result records, not a new reproduction model.
-
-simupopEngine <- function() {
-    list(implementation = "hpgR neutral diploid simulation",
-         version = "0.0.3.9000", language = "R", threads = 1L,
-         rng = "R Mersenne-Twister",
-         alleles = "0/1", mutation_timing = "parental generation before mating",
-         mutation_model = "finite biallelic mutation",
-         recombination = "adjacent-marker Haldane switch fractions",
-         reproduction = "sex-independent random diploid parents; selfing allowed")
-}
+# Based on simuPOP's SNPMutator, RandomParentChooser, Recombinator and
+# RandomSampler (Bo Peng and contributors, GPL-3.0-or-later).
 
 simupopWithSeed <- function(seed, draw) {
-    hadSeed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-    oldSeed <- if (hadSeed) get(".Random.seed", envir = .GlobalEnv) else NULL
-    oldKind <- RNGkind()
-    on.exit({
-        do.call(RNGkind, as.list(oldKind))
-        if (hadSeed) assign(".Random.seed", oldSeed, envir = .GlobalEnv) else
-            if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-                rm(".Random.seed", envir = .GlobalEnv)
-    }, add = TRUE)
+    restore <- rngRestorer()
+    on.exit(restore(), add = TRUE)
     set.seed(seed, kind = "Mersenne-Twister", normal.kind = "Inversion",
              sample.kind = "Rejection")
     draw()
@@ -99,6 +79,6 @@ simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
                  founder_indices = founderIndices, burnin = burnin, seed = seed,
                  sizes = sizes, ancestralSize = sizes[1L],
                  reproductiveSizes = c(if (is.null(founderSize)) sizes[1L] else
-                     founderSize, sizes[-1L])), engine = simupopEngine())
+                     founderSize, sizes[-1L])))
     })
 }

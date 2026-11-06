@@ -1,5 +1,5 @@
 test_that("shared sequence kernels match the original C fixtures", {
-    path <- system.file("reference", "sequence_statistics.tsv", package = "hpgR")
+    path <- test_path("fixtures", "sequence_statistics.tsv")
     reference <- read.delim(path)
     actual <- vapply(seq_len(nrow(reference)), function(i) {
         r <- reference[i, ]

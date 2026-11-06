@@ -8,7 +8,6 @@
 # the parental copies before Wright--Fisher reproduction. It matches the
 # SNPMutator preOps timing used by simulatePopulation.
 # Assumptions: neutral biallelic sequences, known phase/map/rate, random mating.
-# Validation uses exact small matrices and direct pair enumeration.
 
 populationHaplotypes <- function(haplotypes) {
     x <- genotypeMatrix(haplotypes)
@@ -228,8 +227,9 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
     }
     cutoff <- positiveScalar(minMinorAlleleFrequency, "minMinorAlleleFrequency")
     if (cutoff >= .5) stop("minor allele frequency cutoff must be below 1/2", call. = FALSE)
-    maxPairs <- scalarInteger(maxPairs, "maxPairs")
-    seed <- scalarInteger(seed, "seed", 0L)
+    checkInputs(maxPairs = scalarInteger, seed = list(scalarInteger, minimum = 0L))
+    maxPairs <- as.integer(maxPairs)
+    seed <- as.integer(seed)
     restore <- rngRestorer()
     on.exit(restore(), add = TRUE)
     set.seed(seed)

@@ -83,24 +83,10 @@ test_that("the installed package payload has no Python files or native libraries
     expect_identical(files[grepl("[.]py[cow]?$", files, ignore.case = TRUE)], character())
     expect_identical(files[grepl("[.](so|dll|dylib|pyd)$", files, ignore.case = TRUE)],
         character())
-})
-
-test_that("sequence inference and dating have implemented source records", {
-    available <- c("inferAncestry", "dateAncestry")
-    expect_true(all(available %in% getNamespaceExports("hpgR")))
-    manifest <- sourceProvenance()
-    for (name in available) {
-        rows <- which(vapply(strsplit(manifest$functions, ";", fixed = TRUE),
-            function(functions) name %in% functions, logical(1)))
-        expect_true(length(rows) > 0L,
-            info = paste(name, "must retain an honest source-status record"))
-        if (length(rows)) {
-            text <- paste(unlist(manifest[rows,
-                intersect(c("status", "adaptation", "validation_scope"), names(manifest)),
-                drop = FALSE]), collapse = " ")
-            expect_match(tolower(text), "r (translation|implementation|adaptation)")
-        }
-    }
+    if (file.exists(file.path(root, "Meta", "package.rds")))
+        expect_false(any(grepl("^(catalog|provenance|reference)(/|$)", files)))
+    expect_false(any(c("sourceCatalog", "sourceProvenance", "simupopEngine") %in%
+        ls(asNamespace("hpgR"))))
 })
 
 test_that("ancestry simulation and mutation return ordinary zero-based R tables", {

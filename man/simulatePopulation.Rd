@@ -51,7 +51,7 @@ The initial and final generations are always recorded.}
 }
 \value{
 A list with observed final haplotypes and genotypes, calibration,
-  separate generation records, demographic truth, and engine information.
+  generation records and demographic truth.
   Haplotype rows are paired homologues of sampled individuals. Marker rows
   include all represented sites. Generation records contain complete
   population frequencies and must not be passed to final-sample estimators.

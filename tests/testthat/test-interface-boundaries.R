@@ -19,8 +19,6 @@ test_that('single-person and single-marker simulations retain matrix dimensions'
     set.seed(123)
     expect_equal(dim(simulateGenotypes(1, c(.2,.5))), c(1L,2L))
     expect_equal(dim(simulateGenotypes(3, .2)), c(3L,1L))
-    expect_equal(dim(simulateAncestryAssociation(1,2,1)$local), c(1L,2L))
-    expect_equal(dim(simulateAncestryAssociation(3,1,1)$local), c(3L,1L))
     fit <- fitAdmixture(matrix(c(0,1,2),3,1),1,matrix(1:3,3,1))
     expect_equal(dim(fit$p), c(1L,1L))
     expect_equal(fit$q, matrix(1,3,1))

@@ -14,7 +14,7 @@ simulateForward(initial, sizes, seed = 8149L)
 \item{seed}{Positive integer R seed. The caller's RNG state is restored.}
 }
 \value{
-List with complete states, one-based parent indices, seed and engine version.
+List with complete states, one-based parent indices, sizes and seed.
 }
 \description{
 R translation of RandomSelection, CloneGenoTransmitter and ParentsTagger.

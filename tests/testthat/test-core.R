@@ -51,12 +51,3 @@ test_that("posterior summaries retain upstream calculations", {
     expect_equal(actual$median, apply(x, 2L, median))
     expect_equal(actual$lower, apply(x, 2L, quantile, .025))
 })
-
-test_that("source records ship with the installed package", {
-    sources <- sourceProvenance()
-    expect_true(all(c("rate-map", "sfs", "posterior", "weighted-ld",
-                      "parent-choice", "transmission", "parent-records",
-                      "native-mating", "native-mutation", "native-sampling") %in% sources$id))
-    expect_false(anyDuplicated(sources$id) > 0L)
-    expect_true(all(nchar(sources$sha256) == 64L))
-})

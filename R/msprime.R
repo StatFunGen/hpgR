@@ -1,8 +1,5 @@
-# Public interfaces for restricted, source-mapped R ancestry calculations.
-# Scientific event kernels are translated from the msprime C sources vendored
-# in Daniel Nachun's tskitR. See msprime_ancestry.R, msprime_mutation.R and
-# inst/MSPRIME_SOURCE_MAP.md. Sequence inference and dating are implemented in
-# tsinfer_*.R and tsdate*.R with their own source and numerical checks.
+# From msprime's msp_run_coalescent and mutgen_place_mutations,
+# supplied in Daniel Nachun's tskitR.
 
 #' Simulate constant-size Hudson ancestry in R
 #'
@@ -25,16 +22,15 @@
 simulateAncestry <- function(samples, populationSize, sequenceLength,
                              recombinationRate = 0, seed = 8149L,
                              recordFullArg = FALSE) {
-    samples <- scalarInteger(samples, "samples")
-    populationSize <- positiveScalar(populationSize, "populationSize")
-    sequenceLength <- positiveScalar(sequenceLength, "sequenceLength")
+    checkInputs(samples = scalarInteger, populationSize = positiveScalar,
+                sequenceLength = positiveScalar)
+    samples <- as.integer(samples)
     if (sequenceLength != floor(sequenceLength))
         stop("sequenceLength must be an integer for discrete ancestral breakpoints",
              call. = FALSE)
-    recombinationRate <- positiveScalar(recombinationRate, "recombinationRate", TRUE)
-    seed <- scalarInteger(seed, "seed")
-    if (!is.logical(recordFullArg) || length(recordFullArg) != 1L || is.na(recordFullArg))
-        stop("recordFullArg must be TRUE or FALSE", call. = FALSE)
+    checkInputs(recombinationRate = list(positiveScalar, zero = TRUE), seed = scalarInteger,
+                recordFullArg = logicalScalar)
+    seed <- as.integer(seed)
     msprimeAncestry(samples, populationSize, sequenceLength,
         recombinationRate, seed, recordFullArg)
 }
@@ -51,7 +47,7 @@ simulateAncestry <- function(samples, populationSize, sequenceLength,
 #'   mutations are replaced. The input ancestry is unchanged.
 #' @export
 mutateAncestry <- function(ancestry, mutationRate, seed = 8150L) {
-    mutationRate <- positiveScalar(mutationRate, "mutationRate", TRUE)
-    seed <- scalarInteger(seed, "seed")
+    checkInputs(mutationRate = list(positiveScalar, zero = TRUE), seed = scalarInteger)
+    seed <- as.integer(seed)
     msprimeMutations(ancestry, mutationRate, seed)
 }

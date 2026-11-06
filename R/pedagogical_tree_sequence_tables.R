@@ -1,7 +1,7 @@
 # R representation and traversal of ancestry tables.
 # Half-open edge intervals and zero-based node IDs follow the source table
 # conventions. Local trees suppress unary nodes; recorded tables retain
-# their mutation-bearing branches. These helpers use explicit R traversals.
+# their mutation-bearing branches.
 
 ancestryCheckTables <- function(x) {
     if (!inherits(x, "hpgR_ancestry") || !is.data.frame(x$nodes) ||
@@ -147,9 +147,8 @@ ancestryExtract <- function(ancestry) {
 #' @param ancestry An hpgR_ancestry R object.
 #' @return Observed phased haplotypes, ordered positions and analyzed length;
 #'   local root/pair ages; full node/edge tables and unary-suppressed local
-#'   trees with node, parent, time and is_sample columns. Node/sample IDs remain
-#'   zero based. This is R table traversal, not
-#'   a port of the complete tskit simplifier or an ancestry-inference method.
+#'   trees with node, parent, time and is_sample columns. Node/sample IDs are
+#'   zero based.
 #' @export
 ancestryData <- function(ancestry) ancestryExtract(ancestry)
 

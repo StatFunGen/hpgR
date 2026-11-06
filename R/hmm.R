@@ -1,8 +1,5 @@
-# Daniel Nachun, haplotypeTools, GPL >= 3.
-# R translation of HMMProbSpace::forward, backward and posterior in
-# inst/include/haplotypeTools/hmm_engine_prob.h. See source-map.tsv.
-# Dense transition steps use matrix multiplication. Backward messages use
-# the source's self-normalized mode. Rows are observations, columns states.
+# From Daniel Nachun's haplotypeTools: HMMProbSpace::forward,
+# HMMProbSpace::backward and HMMProbSpace::posterior (GPL >= 3).
 
 #' State probabilities in a finite hidden Markov model
 #'
@@ -13,26 +10,14 @@
 #' @return A list with alpha, beta, posterior and log_likelihood.
 #' @export
 hmmPosterior <- function(emission, transition, initial = NULL) {
-    if (!is.matrix(emission) || !is.numeric(emission) ||
-        !nrow(emission) || !ncol(emission) || any(!is.finite(emission)) ||
-        any(emission < 0)) stop('emission must be a nonnegative likelihood matrix')
+    checkInputs(emission = list(numericMatrix, minimum = 0),
+                transition = list(transitionProbabilities, states = ncol(emission),
+                                  observations = nrow(emission)))
     n <- nrow(emission)
     k <- ncol(emission)
     varying <- length(dim(transition)) == 3L
-    expected <- if (varying) c(k, k, n - 1L) else c(k, k)
-    if (!identical(as.integer(dim(transition)), as.integer(expected)) ||
-        any(!is.finite(transition)) || any(transition < 0))
-        stop('transition dimensions or probabilities are invalid')
-    if (varying && n > 1L) {
-        for (j in seq_len(n - 1L))
-            if (any(abs(rowSums(matrix(transition[, , j], k, k)) - 1) > 1e-10))
-                stop('transition rows must sum to one')
-    } else if (!varying && any(abs(rowSums(transition) - 1) > 1e-10)) {
-        stop('transition rows must sum to one')
-    }
     if (is.null(initial)) initial <- rep(1 / k, k)
-    if (length(initial) != k || any(!is.finite(initial)) || any(initial < 0) ||
-        abs(sum(initial) - 1) > 1e-10) stop('initial probabilities must sum to one')
+    checkInputs(initial = list(probability, length = k, sumToOne = TRUE))
     alpha <- beta <- matrix(0, n, k, dimnames = dimnames(emission))
     scale <- numeric(n)
     alpha[1L, ] <- initial * emission[1L, ]
