@@ -1,12 +1,14 @@
 # Course notebooks
 
 Install hpgR from the repository root, then open a notebook with the R kernel.
-Run cells in order. Student assignments contain the task and supplied code;
-complete the remaining cells yourself.
+Run cells in order.
 
-Teaching examples and student assignments are listed in `catalog.json`.
+Teaching examples and data downloads are listed in `catalog.json`.
 `data/` contains their inputs. Models and estimators live in hpgR; figures
 and plotting helpers live in the notebooks.
+
+Assignment requirements and function suggestions are in the lecture slides.
+Students write their own reports using hpgR and the supplied data.
 
 Commit notebooks and their inputs. HTML exports and ZIP downloads are local
 generated files; the repository keeps the RDS inputs directly.

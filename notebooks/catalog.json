@@ -2,12 +2,6 @@
   "schemaVersion": 1,
   "notebooks": [
     {
-      "file": "P8149_Homework_1.ipynb",
-      "lecture": 1,
-      "role": "student_assignment",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_2_EM_Basics.ipynb",
       "lecture": 2,
       "role": "teaching_demonstration",
@@ -29,12 +23,6 @@
       "file": "P8149_Lecture_2_Li_Stephens_HMM.ipynb",
       "lecture": 2,
       "role": "teaching_demonstration",
-      "website": true
-    },
-    {
-      "file": "P8149_Homework_2.ipynb",
-      "lecture": 2,
-      "role": "student_assignment",
       "website": true
     },
     {
@@ -62,12 +50,6 @@
       "website": true
     },
     {
-      "file": "P8149_Homework_3.ipynb",
-      "lecture": 3,
-      "role": "student_assignment",
-      "website": true
-    },
-    {
       "file": "P8149_Lecture_4_Family_Heritability.ipynb",
       "lecture": 4,
       "role": "teaching_demonstration",
@@ -86,12 +68,6 @@
       "website": false
     },
     {
-      "file": "P8149_Homework_4.ipynb",
-      "lecture": 4,
-      "role": "student_assignment",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_5_Population_Structure_PCA.ipynb",
       "lecture": 5,
       "role": "teaching_demonstration",
@@ -101,12 +77,6 @@
       "file": "P8149_Lecture_5_Ancestry_Proportions.ipynb",
       "lecture": 5,
       "role": "teaching_demonstration",
-      "website": true
-    },
-    {
-      "file": "P8149_Lecture_5_Homework_5_Starter.ipynb",
-      "lecture": 5,
-      "role": "student_assignment",
       "website": true
     },
     {
@@ -122,12 +92,6 @@
       "website": false
     },
     {
-      "file": "P8149_Homework_6.ipynb",
-      "lecture": 6,
-      "role": "student_assignment",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
       "lecture": 8,
       "role": "teaching_demonstration",
@@ -137,12 +101,6 @@
       "file": "P8149_Lecture_8_Effective_Size_Generation_Records.ipynb",
       "lecture": 8,
       "role": "teaching_demonstration",
-      "website": true
-    },
-    {
-      "file": "P8149_Homework_8.ipynb",
-      "lecture": 8,
-      "role": "student_assignment",
       "website": true
     },
     {
@@ -170,12 +128,6 @@
       "website": true
     },
     {
-      "file": "P8149_Homework_9.ipynb",
-      "lecture": 9,
-      "role": "student_assignment",
-      "website": true
-    },
-    {
       "file": "P8149_Lecture_10_Differentiation_Is_Not_History.ipynb",
       "lecture": 10,
       "role": "teaching_demonstration",
@@ -200,12 +152,6 @@
       "website": false
     },
     {
-      "file": "P8149_Homework_10.ipynb",
-      "lecture": 10,
-      "role": "student_assignment",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_11_Favored_Allele.ipynb",
       "lecture": 11,
       "role": "teaching_demonstration",
@@ -224,16 +170,24 @@
       "website": false
     },
     {
-      "file": "P8149_Homework_11.ipynb",
-      "lecture": 11,
-      "role": "student_assignment",
-      "website": false
-    },
-    {
       "file": "P8149_Lecture_12_Ancient_Dogs_Uncertainty.ipynb",
       "lecture": 12,
       "role": "teaching_demonstration",
       "website": false
+    }
+  ],
+  "datasets": [
+    {
+      "file": "data/hapmap_snprelate_ld_pruned.rds",
+      "title": "HapMap genotypes (RDS)"
+    },
+    {
+      "file": "data/P8149_Homework_5_Structure_Data.rds",
+      "title": "Population structure genotypes (RDS)"
+    },
+    {
+      "file": "data/P8149_Homework_9_Toy_Sequences.csv",
+      "title": "Ancestral and derived sequence states (CSV)"
     }
   ]
 }

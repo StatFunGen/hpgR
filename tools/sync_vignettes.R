@@ -59,6 +59,7 @@ input_hashes <- setNames(lapply(inputs,function(path) {
 assets <- list.files(file.path(site,'widgets'), recursive=TRUE, full.names=FALSE)
 assets <- if (length(assets)) file.path('widgets', assets) else character()
 staged_paths <- unique(c(files, inputs, assets,
+    if (!is.null(catalog)) vapply(catalog$datasets, `[[`, '', 'file'),
     if (!is.null(catalog)) 'catalog.json'))
 for (path in staged_paths) {
     dest <- file.path(stage,path)
@@ -122,8 +123,7 @@ for (file in files) {
     book$metadata$hpgR_version <- version
     executable <- Filter(function(c) nzchar(trimws(paste(c$source,collapse=''))), cells)
     book$metadata$hpgR_validation <- list(status=if (!length(executable))
-        'instructions_checked' else if (identical(book$metadata$course_role,
-        'student_assignment')) 'supplied_cells_pass' else 'fresh_R_session_pass',
+        'instructions_checked' else 'fresh_R_session_pass',
         version=version)
     book$metadata$notebook_source <- 'R calculations provided by hpgR'
     paths <- names(book$metadata$notebook_input_sha256)

@@ -11,7 +11,8 @@ main <- function() {
     html <- file.path(stage, '_build/html')
     baseUrl <- sub('/+$', '', Sys.getenv('BASE_URL', ''))
     readJson <- function(path) jsonlite::fromJSON(path, simplifyVector = FALSE)
-    entries <- readJson(file.path(source, 'catalog.json'))$notebooks
+    catalog <- readJson(file.path(source, 'catalog.json'))
+    entries <- catalog$notebooks
     selected <- Filter(function(entry) isTRUE(entry$website), entries)
     files <- vapply(selected, `[[`, '', 'file')
     slugs <- tolower(gsub('_', '-', sub('[.]ipynb$', '', files)))
@@ -74,7 +75,16 @@ main <- function() {
                 paste0('https://github.com/StatFunGen/hpgR/edit/main/notebooks/', name)))
         localLinks <- unique(c(localLinks, localUrls(page)))
     }
-    localLinks <- unique(c(localLinks, localUrls(readJson(file.path(html, 'index.json')))))
+    homeLinks <- localUrls(readJson(file.path(html, 'index.json')))
+    for (entry in catalog$datasets) {
+        expectedHash <- hash(file.path(source, entry$file))
+        candidates <- homeLinks[grepl('[.](rds|csv)$', homeLinks)]
+        matches <- candidates[vapply(candidates, function(url)
+            file.exists(resolve(url)) && identical(hash(resolve(url)), expectedHash), TRUE)]
+        if (length(matches) != 1L) stop('Missing or duplicate data download: ', entry$file)
+        inputs <- inputs + 1L
+    }
+    localLinks <- unique(c(localLinks, homeLinks))
     missing <- localLinks[!vapply(localLinks, function(url) file.exists(resolve(url)), TRUE)]
     if (length(missing)) stop('Missing local assets: ', paste(missing, collapse = ', '))
     htmlPages <- list.files(html, '[.]html$', recursive = TRUE)

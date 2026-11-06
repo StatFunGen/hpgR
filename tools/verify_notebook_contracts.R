@@ -18,9 +18,13 @@ if (!is.null(catalog)) {
     stopifnot(!anyDuplicated(files), all(basename(files) == files),
         setequal(files,list.files(site,'[.]ipynb$')))
     for (entry in catalog$notebooks) stopifnot(
-        entry$role %in% c('teaching_demonstration','student_assignment'),
+        identical(entry$role, 'teaching_demonstration'),
         identical(entry$website, entry$lecture %in% c(2L,3L,5L,8L,9L)),
-        !grepl('answer|solution|midterm|instructor',entry$file,ignore.case=TRUE))
+        !grepl('homework|answer|solution|midterm|instructor',entry$file,ignore.case=TRUE))
+    dataFiles <- vapply(catalog$datasets, `[[`, '', 'file')
+    stopifnot(!anyDuplicated(dataFiles),
+        all(grepl('^data/[A-Za-z0-9_/-]+[.](rds|csv)$', dataFiles)),
+        all(file.exists(file.path(site, dataFiles))))
 }
 stopifnot(all(popgen_files %in% files))
 books <- setNames(lapply(file.path(site, files), jsonlite::fromJSON,

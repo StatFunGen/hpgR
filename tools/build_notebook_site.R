@@ -36,8 +36,8 @@ main <- function() {
     if (!length(selected)) stop('The website publication list is empty')
     if (any(vapply(selected, function(entry)
         !entry$lecture %in% c(2L, 3L, 5L, 8L, 9L) ||
-        !entry$role %in% c('teaching_demonstration', 'student_assignment') ||
-        grepl('answer|solution|midterm|instructor', entry$file, ignore.case = TRUE), TRUE)))
+        !identical(entry$role, 'teaching_demonstration') ||
+        grepl('homework|answer|solution|midterm|instructor', entry$file, ignore.case = TRUE), TRUE)))
         stop('A notebook is outside the approved publication scope')
     selectedFiles <- vapply(selected, `[[`, '', 'file')
     withheld <- setdiff(files, selectedFiles)
@@ -62,7 +62,12 @@ main <- function() {
         if (!length(headings)) stop('Notebook needs a title')
         sub('^# ', '', headings[1L])
     }
-    dependencies <- character()
+    datasets <- catalog$datasets
+    dataFiles <- vapply(datasets, `[[`, '', 'file')
+    if (anyDuplicated(dataFiles) ||
+        any(!grepl('^data/[A-Za-z0-9_/-]+[.](rds|csv)$', dataFiles)))
+        stop('Invalid data download list')
+    dependencies <- dataFiles
     titles <- character()
     for (entry in selected) {
         book <- jsonlite::fromJSON(file.path(source, entry$file), simplifyVector = FALSE)
@@ -121,8 +126,6 @@ main <- function() {
     toc <- c('  toc:', '    - file: index.md')
     for (lecture in sort(unique(vapply(selected, `[[`, 0L, 'lecture')))) {
         entries <- Filter(function(entry) entry$lecture == lecture, selected)
-        entries <- entries[order(vapply(entries, function(entry)
-            entry$role == 'student_assignment', TRUE))]
         toc <- c(toc, paste0('    - title: Lecture ', lecture), '      children:')
         home <- c(home, '', paste0('## Lecture ', lecture), '',
             '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
@@ -130,12 +133,14 @@ main <- function() {
             label <- titles[entry$file]
             toc <- c(toc, paste0('        - file: ', entry$file),
                 paste0('          title: ', quoteYaml(label)))
-            kind <- if (entry$role == 'student_assignment') 'Student assignment' else 'R notebook'
             home <- c(home, paste0(':::{card} ', label),
-                paste0(':link: ', entry$file), '', kind, ':::', '')
+                paste0(':link: ', entry$file), '', 'R notebook', ':::', '')
         }
         home <- c(home, '::::')
     }
+    home <- c(home, '', '## Data', '')
+    for (entry in datasets)
+        home <- c(home, paste0('- [', entry$title, '](', entry$file, ')'))
     writeLines(home, file.path(stage, 'index.md'), useBytes = TRUE)
     config <- readLines(file.path(source, 'myst.yml'), warn = FALSE)
     position <- which(config == 'site:')
@@ -171,6 +176,8 @@ main <- function() {
     textFiles <- outputFiles[grepl('[.](html|json|js|mjs|md|txt|ipynb)$', outputFiles)]
     for (path in textFiles) {
         contents <- paste(readLines(path, warn = FALSE), collapse = '\n')
+        if (grepl('(?i)(?:P8149[^"<>[:space:]]*Homework[^"<>[:space:]]*[.]ipynb|p8149-(?:lecture-5-)?homework-)',
+            contents, perl = TRUE)) stop('Assignment notebook in ', path)
         found <- forbidden[vapply(forbidden, function(term)
             grepl(term, contents, fixed = TRUE), TRUE)]
         if (length(found)) stop('Unpublished material in ', path, ': ', paste(found, collapse = ', '))
