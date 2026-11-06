@@ -36,9 +36,17 @@ jobs:
           logs <- list.files("check", pattern = "(00check[.]log|[.]Rout[.]fail)$",
                              recursive = TRUE, full.names = TRUE)
           for (path in logs) {
-            text <- paste(tail(readLines(path, warn = FALSE), 200L), collapse = "\n")
-            text <- gsub("%", "%25", text, fixed = TRUE)
-            text <- gsub("\r", "%0D", text, fixed = TRUE)
-            text <- gsub("\n", "%0A", text, fixed = TRUE)
-            cat("::error title=", basename(path), "::", text, "\n", sep = "")
+            lines <- readLines(path, warn = FALSE)
+            failures <- grep("(Failure|Error|Warning) [(]'", lines)
+            chunks <- if (length(failures)) lapply(seq_along(failures), function(i) {
+              end <- if (i < length(failures)) failures[i + 1L] - 1L else length(lines)
+              head(lines[seq.int(failures[i], end)], 14L)
+            }) else list(tail(lines, 40L))
+            for (chunk in chunks) {
+              text <- paste(chunk, collapse = "\n")
+              text <- gsub("%", "%25", text, fixed = TRUE)
+              text <- gsub("\r", "%0D", text, fixed = TRUE)
+              text <- gsub("\n", "%0A", text, fixed = TRUE)
+              cat("::error title=", basename(path), "::", text, "\n", sep = "")
+            }
           }
