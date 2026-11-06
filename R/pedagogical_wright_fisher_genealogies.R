@@ -74,8 +74,7 @@ pgInteger <- function(x, minimum = 0, name = deparse(substitute(x))) {
 #' @rdname models_copy_records
 #' @export
 pgWithSeed <- function(seed, draw) {
-    pgInteger(seed, 0, "seed")
-    pgCheck(length(seed) == 1L && seed <= .Machine$integer.max, "invalid seed")
+    checkInputs(seed = list(scalarInteger, minimum = 0L))
     simupopWithSeed(seed, draw)
 }
 
@@ -89,10 +88,9 @@ pgParentDraws <- function(parent_ids, offspring_copies) {
 #' @rdname models_copy_records
 #' @export
 pgRegionSeed <- function(base_seed, region, mutation = FALSE) {
-    pgInteger(base_seed, 0, "base_seed")
-    pgInteger(region, 1, "region")
-    pgCheck(length(base_seed) == 1L && base_seed <= .Machine$integer.max &&
-                 length(region) == 1L, "invalid seed/region identifier")
+    checkInputs(base_seed = list(numericVector, length = 1L, minimum = 0,
+                                maximum = .Machine$integer.max, integer = TRUE),
+                region = list(numericVector, length = 1L, minimum = 1, integer = TRUE))
     # Avoid adjacent replicate base seeds reusing a previous replicate's region2.
     # These are reproducible distinct seed assignments, not a formal parallel-RNG
     # substream guarantee. Dataset builders also check their complete seed ledger.
@@ -217,20 +215,14 @@ pgAdvanceFrontier <- function(index, frontier) {
 pgRecordAncestry <- function(sizes, length_bp, n, map_length = 0,
                                ancestry_seed = 814901L, complete_roots = TRUE,
                                max_extension = 20000L, sample_indices = seq_len(n)) {
-    pgInteger(sizes, 1, "sizes")
-    pgInteger(n, 2, "n")
-    pgInteger(max_extension, 0, "max_extension")
-    pgCheck(length(n) == 1L && n <= 2 * tail(sizes, 1L), "n exceeds final copy pool")
-    pgCheck(length(max_extension) == 1L, "max_extension must be scalar")
-    pgCheck(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
-             "length_bp must be positive")
-    pgCheck(length(map_length) == 1L && is.finite(map_length) && map_length >= 0,
-             "map_length must be nonnegative Morgans")
-    pgInteger(sample_indices, 1, "sample_indices")
-    pgCheck(length(sample_indices) == n && !anyDuplicated(sample_indices) &&
-                 all(sample_indices <= 2 * tail(sizes, 1L)), "invalid fixed sample indices")
-    pgCheck(is.logical(complete_roots) && length(complete_roots) == 1L &&
-                 !is.na(complete_roots), "complete_roots must be TRUE or FALSE")
+    checkInputs(sizes = list(numericVector, minimum = 1, integer = TRUE),
+                n = list(numericVector, length = 1L, minimum = 2, integer = TRUE,
+                         maximum = 2 * tail(sizes, 1L)),
+                max_extension = list(numericVector, length = 1L, minimum = 0, integer = TRUE),
+                length_bp = positiveScalar, map_length = list(positiveScalar, zero = TRUE),
+                sample_indices = list(numericVector, length = n, minimum = 1,
+                    maximum = 2 * tail(sizes, 1L), integer = TRUE, distinct = TRUE),
+                complete_roots = logicalScalar)
     pgWithSeed(ancestry_seed, function() {
         generation <- rep(seq_along(sizes) - 1L, 2L * sizes)
         pools <- split(seq_along(generation), generation)
@@ -327,7 +319,7 @@ pgValidateAncestry <- function(record, require_complete = TRUE) {
 #' @rdname models_copy_records
 #' @export
 pgMutateAncestry <- function(record, mu, mutation_seed = 814902L) {
-    pgCheck(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
+    checkInputs(mu = list(positiveScalar, zero = TRUE))
     pgValidateAncestry(record)
     # Retain only sample ancestral edges BELOW each local MRCA. Ancestors above
     # it would add sample-fixed states, not segregating sites or pair differences.

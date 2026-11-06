@@ -139,9 +139,8 @@ pgCompressTrees <- function(record,
 #' @rdname models_genealogy
 #' @export
 pgTreeSummaries <- function(tree, pair = 1:2) {
-    pgInteger(pair, 1, "pair")
-    pgCheck(length(pair) == 2L && !anyDuplicated(pair) && all(pair <= tree$n),
-             "pair must name two distinct sample indices")
+    checkInputs(pair = list(numericVector, length = 2L, minimum = 1,
+                            maximum = tree$n, integer = TRUE, distinct = TRUE))
     nodes <- tree$nodes
     edges <- tree$edges
     descendants <- tree$descendants
@@ -173,9 +172,8 @@ pgTreeSummaries <- function(tree, pair = 1:2) {
 #' @export
 pgKingmanTree <- function(Ne, n = 12L, ancestry_seed = 814901L,
                             sample_ids = paste0("S", seq_len(n))) {
-    pgCheck(length(Ne) == 1L && is.finite(Ne) && Ne > 0, "Ne must be positive")
-    pgInteger(n, 2, "n")
-    pgCheck(length(n) == 1L, "n must be scalar")
+    checkInputs(Ne = positiveScalar,
+                n = list(numericVector, length = 1L, minimum = 2, integer = TRUE))
     pgSampleLabels(sample_ids, n)
     ancestry <- msprimeAncestryCopies(n, Ne, 1L, seed = ancestry_seed)
     tree <- pgMakeTree(
@@ -192,12 +190,11 @@ pgKingmanTree <- function(Ne, n = 12L, ancestry_seed = 814901L,
 pgDiscreteGenealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
                                   max_extension = 20000L,
                                   sample_ids = paste0("S", seq_len(n))) {
-    pgInteger(sizes, 1, "sizes")
-    pgInteger(n, 2, "n")
-    pgInteger(max_extension, 0, "max_extension")
-    pgCheck(all(sizes <= .Machine$integer.max / 2) && length(n) == 1L &&
-                 n <= 2 * tail(sizes, 1L) && length(max_extension) == 1L,
-             "invalid population, sample size or completion limit")
+    checkInputs(sizes = list(numericVector, minimum = 1, integer = TRUE,
+                            maximum = .Machine$integer.max / 2),
+                n = list(numericVector, length = 1L, minimum = 2, integer = TRUE,
+                         maximum = 2 * tail(sizes, 1L)),
+                max_extension = list(numericVector, length = 1L, minimum = 0, integer = TRUE))
     pgSampleLabels(sample_ids, n)
     pgWithSeed(ancestry_seed, function() {
         nodes <- data.frame(id = seq_len(n), time = rep(0, n))
@@ -277,9 +274,7 @@ pgTreeAncestry <- function(tree, length_bp) {
 #' @export
 pgMutateTree <- function(tree, length_bp = 1000, mu = 2e-5,
                             mutation_seed = 914901L) {
-    pgCheck(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
-             "length_bp must be positive")
-    pgCheck(length(mu) == 1L && is.finite(mu) && mu >= 0, "mu must be nonnegative")
+    checkInputs(length_bp = positiveScalar, mu = list(positiveScalar, zero = TRUE))
     exposure <- length_bp * tree$edges$length
     pgCheck(all(is.finite(mu * exposure)), "mutation exposure is too large")
     ancestry <- pgTreeAncestry(tree, length_bp)

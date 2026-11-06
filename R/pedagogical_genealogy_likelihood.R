@@ -252,10 +252,8 @@ ptiFitRank <- function(design, counts, rate) {
 #' @export
 ptiFitAges <- function(G, mu, L, tie_tolerance = 1e-7) {
     G <- ptiPolymorphic(G)
-    if (length(mu) != 1L || !is.finite(mu) || mu <= 0 ||
-        length(L) != 1L || !is.finite(L) || L <= 0 ||
-        length(tie_tolerance) != 1L || !is.finite(tie_tolerance) || tie_tolerance < 0)
-        stop("mu, L, and tie_tolerance must be finite; mu and L must be positive")
+    checkInputs(mu = positiveScalar, L = positiveScalar,
+                tie_tolerance = list(positiveScalar, zero = TRUE))
     consensus <- ptiConsensus(G)
     if (!length(consensus$trees)) return(list(status = "incompatible", consensus = consensus,
         fits = list(), best_fits = list(), node_ages = data.frame()))
@@ -287,10 +285,8 @@ ptiFitAges <- function(G, mu, L, tie_tolerance = 1e-7) {
 #' @export
 ptiPairIntervals <- function(G, mu, L, alpha = .05) {
     ptiValidateG(G, four = FALSE)
-    if (length(mu) != 1L || !is.finite(mu) || mu <= 0 ||
-        length(L) != 1L || !is.finite(L) || L <= 0 ||
-        length(alpha) != 1L || !is.finite(alpha) || alpha <= 0 || alpha >= 1)
-        stop("positive finite mu and L and 0 < alpha < 1 are required")
+    checkInputs(mu = positiveScalar, L = positiveScalar,
+                alpha = list(probability, open = TRUE))
     pairs <- combn(seq_len(nrow(G)), 2)
     result <- do.call(rbind, lapply(seq_len(ncol(pairs)), function(k) {
         i <- pairs[1, k]; j <- pairs[2, k]

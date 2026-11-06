@@ -28,17 +28,13 @@ NULL
 pgForwardExposure <- function(sizes, n = 12L, ancestry_seed = 814901L,
                                 max_extension = 20000L,
                                 sample_indices = seq_len(n)) {
-    pgInteger(sizes, 1, "sizes")
-    pgCheck(all(sizes <= .Machine$integer.max / 2), "population copy pool is too large")
-    pgInteger(n, 2, "n")
-    pgCheck(length(n) == 1L && n <= 2 * tail(sizes, 1L),
-             "n exceeds final copy pool")
-    pgInteger(max_extension, 0, "max_extension")
-    pgCheck(length(max_extension) == 1L, "max_extension must be scalar")
-    pgInteger(sample_indices, 1, "sample_indices")
-    pgCheck(length(sample_indices) == n && !anyDuplicated(sample_indices) &&
-                 all(sample_indices <= 2 * tail(sizes, 1L)),
-             "invalid fixed sample indices")
+    checkInputs(sizes = list(numericVector, minimum = 1, integer = TRUE,
+                            maximum = .Machine$integer.max / 2),
+                n = list(numericVector, length = 1L, minimum = 2, integer = TRUE,
+                         maximum = 2 * tail(sizes, 1L)),
+                max_extension = list(numericVector, length = 1L, minimum = 0, integer = TRUE),
+                sample_indices = list(numericVector, length = n, minimum = 1,
+                    maximum = 2 * tail(sizes, 1L), integer = TRUE, distinct = TRUE))
     pgWithSeed(ancestry_seed, function() {
         # Generate even maps older than an early sample MRCA: this preserves the
         # exact forward RNG sequence used by pgRecordAncestry() for this seed.
@@ -79,10 +75,7 @@ pgForwardSfs <- function(sizes, length_bp = 1000, n = 12L, mu = 2e-5,
                            ancestry_seed = 814901L, mutation_seed = 914901L,
                            max_extension = 20000L,
                            sample_indices = seq_len(n)) {
-    pgCheck(length(length_bp) == 1L && is.finite(length_bp) && length_bp > 0,
-             "length_bp must be positive")
-    pgCheck(length(mu) == 1L && is.finite(mu) && mu >= 0,
-             "mu must be nonnegative")
+    checkInputs(length_bp = positiveScalar, mu = list(positiveScalar, zero = TRUE))
     exposure <- pgForwardExposure(sizes, n, ancestry_seed, max_extension,
                                      sample_indices)
     expected <- mu * length_bp * exposure$branch_generations

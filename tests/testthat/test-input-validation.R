@@ -131,3 +131,19 @@ test_that("HMM input checks retain singleton and varying-transition models", {
     expect_error(hmmPosterior(emission * -1, constant), "emission.*values in")
     expect_error(hmmPosterior(matrix(numeric(), 0, 2), constant), "emission.*numeric matrix")
 })
+
+test_that("genealogy parameters use the shared scalar and index rules", {
+    set.seed(8105L)
+    before <- .Random.seed
+    expect_error(pgForwardSfs(4, length_bp = NA_real_), "length_bp.*finite")
+    expect_error(pgForwardSfs(4, mu = c(.1, .2)), "mu.*finite")
+    expect_error(pgRecordAncestry(4, 100, 4, map_length = -1), "map_length.*nonnegative")
+    expect_error(pgRecordAncestry(4, 100, 4, sample_indices = c(1, 1, 2, 3)),
+                 "sample_indices.*distinct")
+    expect_error(pgForwardExposure(4, 4, sample_indices = 6:9), "sample_indices.*values in")
+    expect_error(pgKingmanTree(0, 4), "Ne.*positive")
+    expect_error(pgDiscreteGenealogy(4, 4, max_extension = c(1, 2)), "max_extension.*length 1")
+    expect_error(pgRecordAncestry(4, 100, 4, complete_roots = NA), "complete_roots.*TRUE or FALSE")
+    expect_identical(.Random.seed, before)
+    expect_identical(sum(pgForwardSfs(4, n = 4, mu = 0)$sfs), 0L)
+})

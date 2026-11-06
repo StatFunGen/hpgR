@@ -9,13 +9,10 @@
 #' @return Zero-based integer bin indices; -1 marks excluded positions.
 #' @export
 assignCMBins <- function(cM, cm_min, bin_width_cm, n_bins) {
-    checkInputs(n_bins = scalarInteger)
+    checkInputs(n_bins = scalarInteger, cM = list(numericVector, empty = TRUE),
+                cm_min = list(numericVector, length = 1L),
+                bin_width_cm = list(numericVector, length = 1L))
     n_bins <- as.integer(n_bins)
-    if (!is.numeric(cM) || any(!is.finite(cM)) ||
-        length(cm_min) != 1L || !is.finite(cm_min) ||
-        length(bin_width_cm) != 1L || !is.finite(bin_width_cm)) {
-        stop("positions and bin limits must be finite", call. = FALSE)
-    }
     out <- rep(-1L, length(cM))
     if (bin_width_cm <= 0) return(out)
     for (i in seq_along(cM)) {
@@ -32,11 +29,7 @@ assignCMBins <- function(cM, cm_min, bin_width_cm, n_bins) {
 #' @return Numeric vector of counts at lags zero through B - 1.
 #' @export
 pairCountHistogram <- function(snps_per_bin) {
-    if (!is.numeric(snps_per_bin) || !length(snps_per_bin) ||
-        any(!is.finite(snps_per_bin)) || any(snps_per_bin < 0) ||
-        any(snps_per_bin != floor(snps_per_bin))) {
-        stop("snps_per_bin must contain nonnegative integer counts", call. = FALSE)
-    }
+    checkInputs(snps_per_bin = list(numericVector, minimum = 0, integer = TRUE))
     B <- length(snps_per_bin)
     hist <- numeric(B)
     for (k in seq.int(0L, B - 1L)) {
@@ -58,20 +51,14 @@ pairCountHistogram <- function(snps_per_bin) {
 #' @return List containing weighted sums, bin counts, squared sums and pair counts.
 #' @export
 weightedLDBins <- function(genotype, p_A, p_B, p_hat, bin_id, n_bins) {
-    checkInputs(n_bins = scalarInteger)
+    checkInputs(n_bins = scalarInteger, genotype = numericMatrix,
+                p_A = list(probability, length = ncol(genotype)),
+                p_B = list(probability, length = ncol(genotype)),
+                p_hat = list(probability, length = ncol(genotype)),
+                bin_id = list(numericVector, length = ncol(genotype), integer = TRUE))
     n_bins <- as.integer(n_bins)
-    if (!is.matrix(genotype) || !is.numeric(genotype) ||
-        any(!is.finite(genotype)) || nrow(genotype) < 1L || ncol(genotype) < 1L) {
-        stop("genotype must be a finite nonempty numeric matrix", call. = FALSE)
-    }
     N <- nrow(genotype)
     L <- ncol(genotype)
-    if (any(lengths(list(p_A, p_B, p_hat, bin_id)) != L) ||
-        any(!is.finite(c(p_A, p_B, p_hat, bin_id))) ||
-        any(c(p_A, p_B, p_hat) < 0 | c(p_A, p_B, p_hat) > 1) ||
-        any(bin_id != floor(bin_id))) {
-        stop("use one valid frequency and integer bin index per marker", call. = FALSE)
-    }
     S <- matrix(0, N, n_bins)
     snps_per_bin <- integer(n_bins)
     SS <- S_col_sum <- numeric(n_bins)

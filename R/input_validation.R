@@ -37,7 +37,8 @@ positiveScalar <- function(x, name, zero = FALSE) {
 }
 
 numericVector <- function(x, name, length = NULL, minimum = -Inf, maximum = Inf,
-                           empty = FALSE, integer = FALSE, nondecreasing = FALSE) {
+                           empty = FALSE, integer = FALSE, nondecreasing = FALSE,
+                           distinct = FALSE) {
     if (!is.numeric(x) || is.complex(x) || !is.null(dim(x)) ||
         (!empty && !base::length(x)) || any(!is.finite(x)) ||
         any(x < minimum | x > maximum) ||
@@ -52,6 +53,8 @@ numericVector <- function(x, name, length = NULL, minimum = -Inf, maximum = Inf,
         stop(name, " must contain integers", call. = FALSE)
     if (nondecreasing && any(diff(x) < 0))
         stop(name, " must be nondecreasing", call. = FALSE)
+    if (distinct && anyDuplicated(x))
+        stop(name, " must contain distinct values", call. = FALSE)
     x
 }
 
