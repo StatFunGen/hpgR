@@ -29,3 +29,16 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           build_args: 'c("--no-manual")'
+      - name: Report detailed check failures
+        if: failure()
+        shell: Rscript {0}
+        run: |
+          logs <- list.files("check", pattern = "(00check[.]log|[.]Rout[.]fail)$",
+                             recursive = TRUE, full.names = TRUE)
+          for (path in logs) {
+            text <- paste(tail(readLines(path, warn = FALSE), 200L), collapse = "\n")
+            text <- gsub("%", "%25", text, fixed = TRUE)
+            text <- gsub("\r", "%0D", text, fixed = TRUE)
+            text <- gsub("\n", "%0A", text, fixed = TRUE)
+            cat("::error title=", basename(path), "::", text, "\n", sep = "")
+          }
