@@ -6,5 +6,10 @@ SIMUPOP_VALIDATION.md
 TEACHING_FUNCTION_AUDIT.md
 VALIDATION.md
 VIGNETTES_MAP.md
-provenance
-catalog
+/provenance/*
+!/provenance/modules.tsv
+!/provenance/source-map.tsv
+/catalog/*
+!/catalog/files.tsv
+!/catalog/packages.tsv
+!/catalog/symbols.tsv

@@ -1,0 +1,45 @@
+file	kind	source_ids	validation_scope
+simupop.R	upstream	parent-choice;transmission;parent-records;native-mating;native-mutation;native-sampling	self-contained R copying and diploid simulation interfaces; exact event replay and independent native probability-law tests
+simupop_reproduction.R	upstream	native-mating;native-mutation;native-sampling;recombination;individual-order	R translations of neutral parent choice, parental mutation, meiosis and ordered individual sampling; event replay and analytic law checks
+simupop_population.R	upstream	native-mating;native-mutation;native-sampling	composition of translated operators; explicit burn-in, founder sampling and observation records; local R seed with caller state restored
+pedagogical_effective_size.R	pedagogical		diversity, LD and successive-generation effective-size estimates; source kernels and defining equations
+pedagogical_demographic_history_example.R	pedagogical		complete classroom population-history recipe; calls reusable simulation and inference functions; differential check against the step-by-step notebook
+hpgR-package.R	documentation		package-level documentation
+expected_sfs.R	upstream	sfs	constant-size expected SFS; explicit size conversion
+posterior_summary.R	upstream	posterior	direct source-body and output comparisons
+rate_map.R	upstream	rate-map	direct numeric comparisons; container representation differs
+weighted_ld.R	upstream	weighted-ld	strict identity remains open for floating-point cases
+pedagogical_source_catalog.R	pedagogical		source-record interface written for the classroom examples
+pedagogical_input_validation.R	pedagogical		shared input validation written for the course interfaces
+msprime.R	upstream	msprime-ancestry;msprime-mutation	public R interfaces to restricted source-translated ancestry and mutation kernels; R event simulation
+msprime_ancestry.R	upstream	msprime-ancestry	restricted Hudson C-transition translation with R segment/overlap containers; deterministic R event replay and independent original-C probability-law checks
+msprime_mutation.R	upstream	msprime-mutation	restricted edgewise Poisson placement at unique continuous sites; binary root zero; original-C mutation-law comparison and deterministic supplied-event replay
+pedagogical_tree_sequence_tables.R	pedagogical		R table validation, marginal traversal, observation extraction, copying-path conversion and marginal unary reduction; explicit classroom table helpers
+pedagogical_ancestry_comparison.R	pedagogical		length-weighted clade and age validation using separate recorded ancestry
+tsinfer_ancestors.R	upstream	tsinfer-ancestors	original-C ancestor descriptor, bounds and haplotype fixtures
+tsinfer_matching.R	upstream	tsinfer-interface;tsinfer-matching;tsinfer-tables	ancestor and sample matching, dense-state optimal copying scores and node/edge/mutation insertion; classroom table helpers are in pedagogical_tree_sequence_tables.R
+tsdate.R	upstream	tsdate-interface	complete inside-outside dating interface and posterior summaries
+tsdate_inside_outside.R	upstream	tsdate-discrete	copied inside-outside source recurrences with private names and R table adapters
+tsdate_prior.R	upstream	tsdate-prior;tsdate-moments	conditional coalescent priors and genomic span mixtures
+tsdate_likelihood.R	upstream	tsdate-likelihood;tsdate-order	Poisson likelihoods, message sums and ordered node ages; original C++ checks
+pedagogical_node_dating_tables.R	pedagogical		R-list accessors and traversal for classroom ancestry tables; mutation-to-edge assignment follows the supplied count-edge routine
+pedagogical_wright_fisher_genealogies.R	pedagogical		haploid copy records, mutation overlay and supplied-event replay; probability-model and deterministic-state checks
+pedagogical_genealogy.R	pedagogical		Kingman and mutation examples call the source-derived msprime kernels; exact discrete-copy comparison and tree presentation helpers
+pedagogical_genealogy_likelihood.R	pedagogical		four-copy topology, constrained Poisson ages and linked constraints; source and sequence-only tests
+pedagogical_wright_fisher_sfs.R	pedagogical		branch-exposure calculation and mutation counts; exact discrete-copy classroom control
+pedagogical_genealogy_examples.R	pedagogical		coalescent, founder-diversity, terminal-extension and local-tree example recipes; saved states and source-kernel checks
+pedagogical_inheritance_examples.R	pedagogical		six animation states, frequency records and mutation paths; original base-R probability models and saved-state checks
+hmm.R	upstream	probability-hmm	R translation of probability-space forward, self-normalized backward and posterior recurrences; exhaustive paths and original C++ fixture comparison
+pedagogical_gaussian_mixture.R	pedagogical		fixed-variance Gaussian mixture EM and balanced-group simulation retained from course notebooks
+pedagogical_genotype_error.R	pedagogical		HWE genotype likelihood and uniform-redraw call-error EM; notebook parity and direct likelihood optimization
+pedagogical_haplotype_hmm.R	pedagogical		binary observations, donor-redraw simulation and emission helpers calling source-derived HMM inference
+pedagogical_linkage.R	pedagogical		count-based linkage likelihood and maximum LOD calculation
+pedagogical_kinship.R	pedagogical		PLINK-style IBS moments, frequency moments and KING formula with independent-marker family simulations
+pedagogical_population_structure.R	pedagogical		standardized PCA, binomial ancestry EM and local ancestry association; current notebook equations and fixed-seed parity
+pedagogical_migration_differentiation.R	pedagogical		two-population migration and finite sampling; frequency-based differentiation and HWE pooling
+pedagogical_selection.R	pedagogical		diploid viability selection, deterministic trajectories and binomial sampling controls
+pedagogical_quantitative_traits.R	pedagogical		Gaussian and marker-effect traits, sibling covariance, standardized GRM and profile ML; fixed-seed notebook parity
+sequence_statistics.R	upstream	tskit-site-statistics	biallelic complete-call diversity, D, r2 and one-sample-set SFS kernels; direct original-C oracle comparisons
+pedagogical_demographic_inference.R	pedagogical		candidate-history discrepancies and terminal-extension likelihood; independent calibration and optimizer checks
+pedagogical_genetic_drift.R	pedagogical		finite-population allele counts, mutation paths, drift moments and binomial bounds; analytical and seeded cases
+pedagogical_admixture_mapping.R	pedagogical		local-ancestry association with global-ancestry adjustment; notebook likelihood checks

@@ -136,8 +136,9 @@ test_that('SNP likelihood and ancestry EM retain their numerical answers', {
     y <- as.vector(crossprod(eig$vectors,trait$phenotype))
     fit <- optimize(geneticProfileNLL,c(.001,.999),
         eigenvalues=pmax(eig$values,1e-8),rotated_phenotype=y)
+    # Eigenvectors and the numerical minimizer vary slightly across BLAS builds.
     expect_equal(fit$minimum,courseFixture()[['4_SNP_Heritability']]$h2_likelihood,
-        tolerance=1e-12)
+        tolerance=sqrt(.Machine$double.eps))
     expect_equal(var(trait$genetic_value),.5)
     expected <- courseFixture()[['5_Homework_5_Starter']]
     pc <- genotypePCA(expected$toy_x)
