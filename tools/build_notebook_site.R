@@ -35,7 +35,7 @@ main <- function() {
     selected <- Filter(function(entry) isTRUE(entry$website), allEntries)
     if (!length(selected)) stop('The website publication list is empty')
     if (any(vapply(selected, function(entry)
-        !entry$lecture %in% c(2L, 3L, 5L, 8L, 9L) ||
+        !entry$lecture %in% c(2L, 3L, 8L, 9L) ||
         !identical(entry$role, 'teaching_demonstration') ||
         grepl('homework|answer|solution|midterm|instructor', entry$file, ignore.case = TRUE), TRUE)))
         stop('A notebook is outside the approved publication scope')

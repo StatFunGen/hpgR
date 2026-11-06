@@ -71,13 +71,13 @@
       "file": "P8149_Lecture_5_Population_Structure_PCA.ipynb",
       "lecture": 5,
       "role": "teaching_demonstration",
-      "website": true
+      "website": false
     },
     {
       "file": "P8149_Lecture_5_Ancestry_Proportions.ipynb",
       "lecture": 5,
       "role": "teaching_demonstration",
-      "website": true
+      "website": false
     },
     {
       "file": "P8149_Lecture_6_Admixture_Mapping.ipynb",
