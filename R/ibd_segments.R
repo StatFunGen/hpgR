@@ -34,6 +34,7 @@ detectIbdSegments <- function(haplotypes, geneticPositions, chromosome = NULL,
         final <- index[pmin(last[take] * wordSize, length(index))]
         lengthCm <- 100 * (geneticPositions[final] - geneticPositions[first])
         keep <- lengthCm >= minimumCm
+        if (!any(keep)) return(NULL)
         data.frame(hap1 = pairs[1L, take[keep]], hap2 = pairs[2L, take[keep]],
             chromosome = rep(as.character(id), sum(keep)), fromSite = first[keep],
             toSite = final[keep], startCm = 100 * geneticPositions[first[keep]],

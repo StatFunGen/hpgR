@@ -170,3 +170,184 @@ NULL
 coalescentExample <- function() {
     readRDS(system.file("examples", "coalescent.rds", package = "hpgR", mustWork = TRUE))
 }
+
+
+#' Extract a site's genealogy from recorded population transmissions
+#'
+#' Convert the realized parental-copy indices into a finite-copy ancestry record.
+#' Founder sampling maps the first reproductive pool to its original ancestral
+#' copies without adding a generation. The DNA and transmission draws are kept.
+#' @param population Result of simulatePopulation with recordSites supplied.
+#' @param site Recorded marker-column index. Defaults to the first recorded site.
+#' @param samples Rows of the observed haplotype matrix to trace.
+#' @return A copy record for one site, suitable for pgCompressTree. It includes
+#'   population nodes and edges, sampled-copy IDs, sample labels, the selected
+#'   marker and root-completion status within the recorded burn-in. No older
+#'   unrecorded ancestry is added.
+#' @export
+populationGenealogy <- function(population, site = NULL,
+                                samples = seq_len(nrow(population$observed$haplotypes))) {
+    transmission <- population$records$copyParents
+    if (is.null(transmission)) stop("recordSites is required when simulating the population",
+                                   call. = FALSE)
+    if (is.null(site)) site <- transmission$sites[1L]
+    checkInputs(site = scalarInteger,
+        samples = list(numericVector, minimum = 1,
+            maximum = nrow(population$observed$haplotypes), integer = TRUE, distinct = TRUE))
+    column <- match(site, transmission$sites)
+    if (is.na(column)) stop("site was not recorded", call. = FALSE)
+    truth <- population$truth
+    burnin <- truth$burnin
+    sizes <- c(rep(truth$ancestralSize, burnin + 1L), truth$sizes[-1L])
+    generations <- seq_along(sizes) - 1L - burnin
+    offsets <- cumsum(c(0L, head(2L * sizes, -1L)))
+    pools <- lapply(seq_along(sizes), function(i)
+        offsets[i] + seq_len(2L * sizes[i]))
+    nodes <- data.frame(id = seq_len(2L * sum(sizes)),
+        generation = rep(generations, 2L * sizes),
+        time = rep(tail(generations, 1L) - generations, 2L * sizes))
+    founderRows <- as.vector(rbind(2L * truth$founder_indices - 1L,
+                                   2L * truth$founder_indices))
+    edges <- lapply(seq_along(transmission$parents), function(i) {
+        parent <- transmission$parents[[i]][, column]
+        if (i == burnin + 1L && length(founderRows)) parent <- founderRows[parent]
+        data.frame(left = 0, right = 1, parent = pools[[i]][parent], child = pools[[i + 1L]])
+    })
+    rows <- as.vector(rbind(2L * truth$sample_indices - 1L, 2L * truth$sample_indices))
+    sampleNodes <- tail(pools, 1L)[[1L]][rows[samples]]
+    record <- list(nodes = nodes, edges = do.call(rbind, edges), length_bp = 1,
+        sample_nodes = sampleNodes, sample_indices = rows[samples],
+        sample_generation = tail(generations, 1L),
+        size_history = data.frame(generation = generations, N = sizes),
+        ancestral_N = truth$ancestralSize, extension_generations = 0L,
+        ancestry_seed = truth$seed, map_length = 0,
+        sample_ids = paste0("H", samples), marker = transmission$markers[column, , drop = FALSE])
+    record$local_trees <- pgLocalTrees(record)
+    record$root_complete <- all(vapply(record$local_trees, `[[`, logical(1), "complete"))
+    pgValidateAncestry(record, require_complete = FALSE)
+    record
+}
+#' Trace a fixed sample at recorded genomic positions
+#' @param design Population-history design; defaults to populationHistoryDesign.
+#' @param sites Marker columns at which parental copying is recorded.
+#' @param samples Sampled haplotype rows, in a fixed order.
+#' @inheritParams simulatePopulationHistory
+#' @return The original simulation, compressed point trees, and four-copy
+#'   projections. Recording does not change the simulated DNA.
+#' @export
+populationAncestryExample <- function(design = populationHistoryDesign()$design,
+    sites = unique(c(5000L, as.integer(rep((0:7) * 10000L, each = 2L) +
+        rep(c(125L, 9875L), 8L)), 2500L, 7500L)), samples = 1:12,
+    recordEvery = 10000L) {
+    specification <- populationHistoryDesign()
+    simulation <- simulatePopulationHistory(specification$candidates$recent_founding,
+        design, design$observation_seed, recordEvery = recordEvery, recordSites = sites)
+    trees <- lapply(sites, function(site) {
+        populationTree(simulation, site, samples)
+    })
+    names(trees) <- as.character(sites)
+    list(simulation = simulation, sites = sites, trees = trees,
+         four = lapply(trees, recordedSubset))
+}
+
+#' Compare discrete and coalescent genealogies for one size history
+#' @param design Population-history sequence and sampling design.
+#' @param replicates Independent draws per ancestry model.
+#' @param scale Multiply sizes and durations by this integer; divide mutation rate by it.
+#' @param baseSeed First seed, fixed before drawing the trees.
+#' @return Repeated tree ages, finite-site sequence summaries, and their spectra.
+#' @export
+matchedHistoryDraws <- function(design = populationHistoryDesign()$design,
+    replicates = 200L, scale = 1L, baseSeed = 7814900L) {
+    checkInputs(replicates = list(scalarInteger, minimum = 2L),
+        scale = scalarInteger, baseSeed = scalarInteger)
+    candidate <- populationHistoryDesign()$candidates$recent_founding
+    schedule <- populationSizeSchedule(candidate, design)
+    parents <- head(c(candidate$founder, schedule[-1L]), -1L)
+    parents <- rep(parents * scale, each = scale)
+    n <- 12L
+    L <- design$sites_per_chromosome
+    mu <- design$mutation_rate / scale
+    rows <- vector("list", 2L * replicates)
+    spectra <- matrix(0L, 2L * replicates, n - 1L)
+    for (i in seq_along(rows)) {
+        discrete <- i <= replicates
+        tree <- if (discrete) pgDiscreteGenealogy(c(parents, design$present_size * scale),
+            n, baseSeed + i, ancestralSize = design$ancestral_size * scale) else
+            pgKingmanTree(design$ancestral_size * scale, n, baseSeed + i,
+                          populationSizes = rev(parents))
+        summary <- pgTreeSummaries(tree)
+        ancestry <- structure(list(nodes = data.frame(id = tree$nodes$id - 1L,
+            time = tree$nodes$time, flags = as.integer(tree$nodes$id %in% tree$sample_nodes)),
+            edges = data.frame(left = 0, right = L,
+                parent = tree$edges$parent - 1L, child = tree$edges$child - 1L),
+            sampleIds = tree$sample_nodes - 1L, sequenceLength = L,
+            timeUnits = "generations"), class = c("hpgR_ancestry", "list"))
+        dna <- ancestryData(mutateAncestry(ancestry, mu, baseSeed + 100000L + i,
+                                          model = "binary"))$observed$haplotypes
+        spectra[i, ] <- sfs(dna)
+        # Pair clock uses observed differences, including recurrent hits.
+        rows[[i]] <- data.frame(model = if (discrete) "Discrete WF" else "Kingman",
+            scale = scale, pair_time = summary$pair_time, TMRCA = summary$TMRCA,
+            branch_length = summary$total_branch_length,
+            S = sum(spectra[i, ]), pi_region = sum(tskitDiversity(colSums(dna), n)),
+            pair_differences = sum(dna[1L, ] != dna[2L, ]),
+            multifurcation = summary$max_children > 2L,
+            ancestry_seed = baseSeed + i, mutation_seed = baseSeed + 100000L + i)
+    }
+    list(results = do.call(rbind, rows), sfs = spectra, parentalSizes = parents,
+        n = n, length = L, mutationRate = mu,
+        expectation = expectedHistorySFS(n, c(design$ancestral_size * scale, parents), mu, L))
+}
+#' Read a point tree from recorded parental copying
+#' @inheritParams populationGenealogy
+#' @return A compressed tree with actual integer node ages and sampled-copy labels.
+#' @export
+populationTree <- function(population, site = NULL,
+    samples = seq_len(nrow(population$observed$haplotypes))) {
+    transmission <- population$records$copyParents
+    if (is.null(transmission)) stop("recordSites is required when simulating the population",
+                                   call. = FALSE)
+    if (is.null(site)) site <- transmission$sites[1L]
+    checkInputs(site = scalarInteger,
+        samples = list(numericVector, minimum = 1,
+            maximum = nrow(population$observed$haplotypes), integer = TRUE, distinct = TRUE))
+    column <- match(site, transmission$sites)
+    if (is.na(column)) stop("site was not recorded", call. = FALSE)
+    truth <- population$truth
+    n <- length(samples)
+    rows <- as.vector(rbind(2L * truth$sample_indices - 1L,
+                           2L * truth$sample_indices))[samples]
+    founderRows <- as.vector(rbind(2L * truth$founder_indices - 1L,
+                                   2L * truth$founder_indices))
+    active <- seq_len(n)
+    nodes <- data.frame(id = active, time = 0)
+    edges <- list()
+    total <- length(transmission$parents)
+    for (age in seq_len(total)) {
+        generation <- total - age + 1L
+        rows <- transmission$parents[[generation]][rows, column]
+        if (generation == truth$burnin + 1L && length(founderRows))
+            rows <- founderRows[rows]
+        groups <- split(seq_along(rows), rows)
+        nextNodes <- integer(length(groups))
+        for (j in seq_along(groups)) {
+            group <- groups[[j]]
+            if (length(group) == 1L) nextNodes[j] <- active[group] else {
+                id <- nrow(nodes) + 1L
+                nodes <- rbind(nodes, data.frame(id = id, time = age))
+                edges[[length(edges) + 1L]] <- data.frame(parent = id, child = active[group])
+                nextNodes[j] <- id
+            }
+        }
+        active <- nextNodes
+        rows <- as.integer(names(groups))
+        if (length(active) == 1L) break
+    }
+    if (length(active) > 1L)
+        stop("recorded burn-in does not contain the sample MRCA", call. = FALSE)
+    result <- pgMakeTree(nodes, do.call(rbind, edges), seq_len(n),
+        paste0("H", samples), "recorded point tree from the shared forward population")
+    result$marker <- transmission$markers[column, , drop = FALSE]
+    result
+}

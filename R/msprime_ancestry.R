@@ -191,7 +191,7 @@ msprimeFinishEdges <- function(state) {
 
 msprimeAncestry <- function(samples, populationSize, sequenceLength,
                               recombinationRate = 0, seed = 8149L,
-                              recordFullArg = FALSE, events = NULL) {
+                              recordFullArg = FALSE, events = NULL, populationSizes = NULL) {
     checkInputs(samples = scalarInteger)
     samples <- as.integer(samples)
     if (samples > .Machine$integer.max / 2L) stop("Too many sample copies", call. = FALSE)
@@ -204,11 +204,13 @@ msprimeAncestry <- function(samples, populationSize, sequenceLength,
 # kernel with the same diploid Ne and pair-merger rate 1/(2Ne).
 msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                                     recombinationRate = 0, seed = 8149L,
-                                    recordFullArg = FALSE, events = NULL) {
+                                    recordFullArg = FALSE, events = NULL, populationSizes = NULL) {
     checkInputs(copies = list(scalarInteger, minimum = 2L), populationSize = positiveScalar,
                 sequenceLength = scalarInteger,
                 recombinationRate = list(positiveScalar, zero = TRUE),
                 seed = list(scalarInteger, minimum = 0L), recordFullArg = logicalScalar)
+    if (!is.null(populationSizes))
+        numericVector(populationSizes, "populationSizes", minimum = .Machine$double.xmin)
     copies <- as.integer(copies)
     sequenceLength <- as.integer(sequenceLength)
     seed <- as.integer(seed)
@@ -247,7 +249,10 @@ msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                     recombinationRate *
                     (tail(x[, "right"], 1L) - x[1L, "left"] - 1), numeric(1L))
                 totalRecombination <- sum(masses)
-                caRate <- if (n > 1L) n * (n - 1L) / (4 * populationSize) else 0
+                epoch <- floor(state$currentTime) + 1L
+                size <- if (!is.null(populationSizes) && epoch <= length(populationSizes))
+                    populationSizes[epoch] else populationSize
+                caRate <- if (n > 1L) n * (n - 1L) / (4 * size) else 0
                 if (!is.finite(totalRecombination) || !is.finite(caRate)) {
                     stop("Hudson event rates exceed the finite numeric range",
                          call. = FALSE)
@@ -262,6 +267,14 @@ msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                          call. = FALSE)
                 }
                 time <- state$currentTime + wait
+                # msp_run_coalescent applies a demographic event before the next
+                # stochastic event when its scheduled time is earlier. Rates are
+                # constant inside each epoch; exponential residuals are memoryless.
+                if (!is.null(populationSizes) && epoch <= length(populationSizes) &&
+                    time >= epoch) {
+                    state$currentTime <- as.numeric(epoch)
+                    next
+                }
                 if (time <= state$currentTime) time <- state$currentTime +
                     max(.Machine$double.xmin,
                         abs(state$currentTime) * .Machine$double.eps)
@@ -326,7 +339,8 @@ msprimeAncestryCopies <- function(copies, populationSize, sequenceLength,
                 gap_recombination = state$gapRecombinations),
             source = list(implementation = "restricted pure-R Hudson translation",
                 reference = "msprime 1.4.1 vendored in tskitR",
-                populationSize = populationSize, recombinationRate = recombinationRate,
+                populationSize = populationSize, populationSizes = populationSizes,
+                recombinationRate = recombinationRate,
                 discreteGenome = TRUE, recordFullArg = recordFullArg,
                 rng = "R Mersenne-Twister", seed = seed)),
             class = c("hpgR_ancestry", "list"))

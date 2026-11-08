@@ -32,7 +32,7 @@ Ne, observed and predicted bin fractions, log-scale loss, and limits.
   then requires a different prespecified binning or a count likelihood.
 }
 \description{
-Minimize squared differences of log genome fractions, using the bin criterion
-of Carmi et al. (2014) and the finite-chromosome expectation in
-expectedIbdLength. A changing population history need not fit any constant size.
+Fit the observed genome fraction in each length bin to expectedIbdLength
+by minimizing squared log residuals (Carmi et al., 2014). The fitted constant
+size summarizes sharing across the ancestral generations contributing to these bins.
 }

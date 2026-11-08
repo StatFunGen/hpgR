@@ -4,8 +4,7 @@ args <- commandArgs(FALSE)
 file_arg <- args[grepl("^--file=", args)]
 if (length(file_arg) != 1L) stop("Run this file with Rscript")
 tool_path <- normalizePath(sub("^--file=", "", file_arg))
-vignettes <- Sys.getenv("HPGR_VIGNETTE_DIR")
-if (!nzchar(vignettes)) stop("Set HPGR_VIGNETTE_DIR to the canonical vignette repository")
+fixtures <- file.path(dirname(dirname(tool_path)), "tests/fixtures/genealogy_controls")
 library(hpgR)
 
 checks <- character()
@@ -80,8 +79,8 @@ for (design in list(balanced_design, cat_design)) {
           near(got$ages[names(expected)], expected, 1e-5) && got$kkt_violation < 1e-5)
 }
 
-observed <- readRDS(file.path(vignettes, "data", "popgen_forward_p1", "observed.rds"))
-calibration <- readRDS(file.path(vignettes, "data", "popgen_forward_p1", "calibration.rds"))
+observed <- readRDS(file.path(fixtures, "observed.rds"))
+calibration <- readRDS(file.path(fixtures, "calibration.rds"))
 region <- observed$D3$regions[[1]]
 G <- region$haplotypes[1:4, , drop = FALSE]
 mu <- calibration$D3$mu_per_base_per_generation

@@ -15,7 +15,8 @@ simulatePopulation(
   founderSize = NULL,
   reverseMutationRate = mutationRate,
   recordEvery = 1L,
-  seed = 8149L
+  seed = 8149L,
+  recordSites = NULL
 )
 }
 \arguments{
@@ -48,6 +49,9 @@ to mutationRate, giving a finite biallelic mutation--drift equilibrium.}
 The initial and final generations are always recorded.}
 
 \item{seed}{Positive integer R seed. The caller's RNG state is restored.}
+
+\item{recordSites}{Optional marker-column indices whose actual parental-copy
+transmissions are recorded in every generation, including burn-in.}
 }
 \value{
 A list with observed final haplotypes and genotypes, calibration,

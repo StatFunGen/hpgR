@@ -10,9 +10,11 @@ dir.create(directory, recursive = TRUE, showWarnings = FALSE)
 workers <- if (length(args) == 2L) as.integer(args[2L]) else 1L
 specification <- populationHistoryDesign()
 cat("Generating observed DNA with seed", specification$design$observation_seed, "\n")
-simulation <- simulatePopulationHistory(
-    specification$candidates$recent_founding, specification$design,
-    specification$design$observation_seed, recordEvery = 1L)
+recorded_example <- populationAncestryExample(recordEvery = 1L)
+simulation <- recorded_example$simulation
+ancestry_truth <- list(sites = recorded_example$sites, trees = recorded_example$trees,
+    four = recorded_example$four, design = specification$design)
+saveRDS(ancestry_truth, file.path(directory, "ancestry_truth.rds"), version = 3)
 saveRDS(simulation$observed, file.path(directory, "observed.rds"), version = 3)
 saveRDS(simulation$calibration, file.path(directory, "calibration.rds"), version = 3)
 replicateCount <- sum(vapply(specification$banks, function(b)
@@ -25,10 +27,10 @@ analysis <- populationHistoryExample(simulation$observed, simulation$calibration
 saveRDS(analysis, file.path(directory, "analysis.rds"), version = 3)
 saveRDS(simulation, file.path(directory, "generation_records.rds"), version = 3)
 design <- specification$design
-manifest <- list(schema_version = 2L, engine = "hpgR", language = "R",
+manifest <- list(schema_version = 4L, engine = "hpgR", language = "R",
     package_version = as.character(packageVersion("hpgR")),
     canonical_notebook = "P8149_Lecture_9_Effective_Size_and_History.ipynb",
-    files = c("observed.rds", "calibration.rds", "history_predictions.rds"),
+    files = c("observed.rds", "calibration.rds", "history_predictions.rds", "ancestry_truth.rds"),
     generation_design = design, candidates = specification$candidates,
     prediction_replicates_per_candidate = length(specification$banks[[1L]]$training_seeds),
     calibration_replicates_per_candidate = length(specification$banks[[1L]]$calibration_seeds),

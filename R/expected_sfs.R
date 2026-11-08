@@ -78,3 +78,55 @@ truncatedSfs <- function(n, Ne, tau) {
     if (is.infinite(tau)) before_tmrca <- 0
     c(0, sfs_mid, before_tmrca)
 }
+
+# From demographyTools::.sfs_expected_single_pop.
+sfsExpectedSingle <- function(epochs, n, mu) {
+    if (n < 2L) return(numeric(0))
+    pop <- "population"
+    n_epochs <- nrow(epochs)
+
+    j <- seq(2L, n)
+    coal_rate <- j * (j - 1) / 2
+    etjj_total <- numeric(n - 1L)
+    no_coal_prob <- rep(1, n - 1L)
+
+    for (k in seq_len(n_epochs)) {
+        Ne <- epochs[[pop]][k]
+        if (k < n_epochs) {
+            tau <- epochs$time_generations[k + 1L] -
+                   epochs$time_generations[k]
+        } else {
+            tau <- Inf
+        }
+        etjj_epoch <- etjjConstant(n, Ne, tau)
+        etjj_total <- etjj_total + no_coal_prob * etjj_epoch
+        if (is.finite(tau)) {
+            scaled_time <- coal_rate / Ne * tau
+            no_coal_prob <- no_coal_prob * exp(-scaled_time)
+        }
+    }
+
+    W <- wMatrix(n)
+    sfs <- as.numeric(colSums(etjj_total * W)) * mu
+    sfs
+}
+
+
+#' Predict the SFS along a specified size history
+#'
+#' From demographyTools::.sfs_expected_single_pop. The neutral infinite-sites
+#' model accumulates coalescent waiting-time components over the size epochs.
+#' The oldest population is at mutation-drift equilibrium.
+#' @inheritParams expectedSFS
+#' @param sizes Diploid sizes in forward order. The first is the ancestral
+#'   size; each subsequent entry is the parental size for a recent generation.
+#' @return Expected segregating-site counts for derived counts 1 to n - 1.
+#' @export
+expectedHistorySFS <- function(n, sizes, mu, length_bp) {
+    checkInputs(n = list(scalarInteger, minimum = 2L),
+        sizes = list(numericVector, minimum = .Machine$double.xmin),
+        mu = list(positiveScalar, zero = TRUE), length_bp = positiveScalar)
+    epochs <- data.frame(time_generations = seq_along(sizes) - 1L,
+                         population = 2 * c(rev(sizes[-1L]), sizes[1L]))
+    sfsExpectedSingle(epochs, as.integer(n), mu * length_bp)
+}

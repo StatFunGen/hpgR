@@ -63,6 +63,19 @@ for (n in c(2L, 3L, 4L, 8L, 12L, 20L)) {
           paste("bit-identical SFS", n))
 }
 
+epoch <- loadFunctions(file.path(root, "demographyTools/R/demography_sfs.R"),
+    c(".sfs_expected_single_pop", ".w_matrix", ".expm1d", ".etjj_constant"))
+methods::setClass("hpgOracleDemography", slots = c(epochs = "data.frame"))
+epoch$populationNames <- function(x) "population"
+for (n in c(4L, 12L, 20L)) for (sizes in list(100, c(100,20,20,50,1000))) {
+    epochs <- data.frame(time_generations = seq_along(sizes) - 1L,
+                        population = 2 * c(rev(sizes[-1L]), sizes[1L]))
+    original <- epoch$.sfs_expected_single_pop(
+        methods::new("hpgOracleDemography", epochs = epochs), n, 1e-8 * 10000)
+    actual <- expectedHistorySFS(n, sizes, 1e-8, 10000)
+    check(identical(actual, original), paste("bit-identical demographic SFS", n, length(sizes)))
+}
+
 post <- loadFunctions(file.path(root, "demographyTools/R/bayesian_utils.R"),
                       ".posterior_summary")
 check(identical(body(posteriorSummary), body(post$.posterior_summary)),

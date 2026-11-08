@@ -105,9 +105,14 @@ publicData <- function(name) {
 population <- publicData(popgen_files[3L])
 pair <- publicData(popgen_files[4L])
 tree <- publicData(popgen_files[5L])
-stopifnot(identical(pair$observed, tree$observed),
-    identical(pair$observed, readRDS(file.path(site, "data/popgen_forward_p1/observed.rds"))),
-    identical(tree$calibration, readRDS(file.path(site, "data/popgen_forward_p1/calibration.rds"))))
+arg <- publicData(popgen_files[6L])
+stopifnot(identical(pair$observed, population$observed),
+    identical(tree$observed, population$observed),
+    identical(arg$observed, population$observed),
+    identical(pair$ancestry_truth, tree$ancestry_truth),
+    identical(tree$ancestry_truth, arg$ancestry_truth),
+    identical(tree$ancestry_truth, readRDS(file.path(site,
+        "data/population_history/ancestry_truth.rds"))))
 for (name in c("observed", "calibration"))
     stopifnot(identical(get(name, population),
         readRDS(file.path(site, "data/population_history", paste0(name, ".rds")))))
@@ -172,4 +177,4 @@ if (length(args) > 1L) jsonlite::write_json(result, args[2L], auto_unbox = TRUE,
 cat('PASS:', length(files), 'notebooks; supplied R cells, inputs and source hashes checked.\n')
 cat("Code cells", sum(vapply(rows, `[[`, 0L, "codeCells")),
     "; figures", sum(vapply(rows, `[[`, 0L, "figures")), "\n")
-cat("Shared genealogy observations and the single closing-figure source match.\n")
+cat("Observed DNA inputs and the single closing-figure source match.\n")

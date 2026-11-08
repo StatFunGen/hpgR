@@ -49,3 +49,24 @@ test_that("finite-copy mutations use the common placement kernel", {
     for (seed in list(-1L, 1.5, NA_real_, Inf, c(1L, 2L)))
         expect_error(pgMutateAncestry(record, .001, seed), "seed")
 })
+
+
+test_that("discrete mutation uses integer sites inside fractional edge spans", {
+    ancestry <- structure(list(
+        nodes = data.frame(id = 0:2, time = c(0, 0, 10), flags = c(1L, 1L, 0L)),
+        edges = data.frame(left = .2, right = 2.2, parent = 2L, child = 0:1),
+        sampleIds = 0:1, sequenceLength = 3, timeUnits = "generations"),
+        class = c("hpgR_ancestry", "list"))
+    set.seed(9181L)
+    before <- .Random.seed
+    mutated <- mutateAncestry(ancestry, 1, seed = 9182L, model = "binary")
+    expect_identical(.Random.seed, before)
+    expect_equal(mutated$sites$position, c(1, 2))
+    expect_true(all(mutated$sites$position >= .2 & mutated$sites$position < 2.2))
+
+    # [0.2, 0.8) contains no integer position and has zero mutation exposure.
+    ancestry$edges$right <- .8
+    empty <- mutateAncestry(ancestry, 100, seed = 9182L, model = "binary")
+    expect_equal(nrow(empty$sites), 0L)
+    expect_equal(nrow(empty$mutations), 0L)
+})

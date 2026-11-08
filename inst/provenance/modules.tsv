@@ -5,14 +5,14 @@ simupop_population.R	upstream	native-mating;native-mutation;native-sampling	comp
 pedagogical_effective_size.R	pedagogical		diversity, LD, IBD and successive-generation effective-size estimates; source kernels and defining equations
 pedagogical_demographic_history_example.R	pedagogical		complete classroom population-history recipe; calls reusable simulation and inference functions; differential check against the step-by-step notebook
 hpgR-package.R	documentation		package-level documentation
-expected_sfs.R	upstream	sfs	constant-size expected SFS; explicit size conversion
+expected_sfs.R	upstream	sfs	constant and piecewise-size SFS; bit-identical original-R outputs and independent genealogy-exposure checks
 posterior_summary.R	upstream	posterior	direct source-body and output comparisons
 rate_map.R	upstream	rate-map	direct numeric comparisons; container representation differs
 weighted_ld.R	upstream	weighted-ld	strict identity remains open for floating-point cases
 input_validation.R	utility		shared argument checks for package interfaces
 msprime.R	upstream	msprime-ancestry;msprime-mutation	public R interfaces to restricted source-translated ancestry and mutation kernels; R event simulation
-msprime_ancestry.R	upstream	msprime-ancestry	restricted Hudson C-transition translation with R segment/overlap containers; deterministic R event replay and independent original-C probability-law checks
-msprime_mutation.R	upstream	msprime-mutation	restricted edgewise Poisson placement at unique continuous sites; binary root zero; original-C mutation-law comparison and deterministic supplied-event replay
+msprime_ancestry.R	upstream	msprime-ancestry	restricted Hudson C-transition translation with R segment/overlap containers; deterministic R event replay and independent original-C probability-law checks; piecewise-size pair-hazard checks
+msprime_mutation.R	upstream	msprime-mutation	restricted edgewise Poisson placement at unique continuous sites; binary root zero; original-C mutation-law comparison and deterministic supplied-event replay; discrete recurrent binary mutations checked against the finite-state pair law
 pedagogical_tree_sequence_tables.R	pedagogical		R table validation, marginal traversal, observation extraction, copying-path conversion and marginal unary reduction; explicit classroom table helpers
 pedagogical_ancestry_comparison.R	pedagogical		length-weighted clade and age validation using separate recorded ancestry
 tsinfer_ancestors.R	upstream	tsinfer-ancestors	original-C ancestor descriptor, bounds and haplotype fixtures

@@ -47,3 +47,17 @@ test_that("constant-size fitting recovers a source-generated sharing expectation
     expect_equal(fit$Ne,n,tolerance=1e-4)
     expect_lt(fit$loss,1e-9)
 })
+
+
+test_that("IBD inputs reject invalid lengths before calculation", {
+    segments <- data.frame(lengthCm = c(8, 10, 15))
+    expect_error(summarizeIbdSharing(data.frame(lengthCm = "10"), 10, 20),
+                 "lengthCm.*numeric")
+    expect_error(summarizeIbdSharing(data.frame(lengthCm = NA_real_), 10, 20),
+                 "lengthCm.*finite")
+    expect_error(summarizeIbdSharing(segments, 10, 20, c("8", "Inf")), "bins")
+    expect_error(summarizeIbdSharing(segments, 10, 0), "positive")
+    expect_error(summarizeIbdSharing(segments, 10, 20, c(8, 10, -Inf)), "bins")
+    expect_error(estimateIbdSize(segments, 10, 20, maxGeneration = NA_real_),
+                 "maxGeneration")
+})

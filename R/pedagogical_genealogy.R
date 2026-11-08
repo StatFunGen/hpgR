@@ -2,8 +2,10 @@
 #'
 #' Compressed trees retain sampled leaves and branching ancestors. Node ages and edge lengths are generations before the sample. The discrete genealogy retains simultaneous mergers; the Kingman genealogy uses continuous exponential pair mergers.
 #'
+#' @param populationSizes Optional one-generation diploid sizes backward from sampling.
 #' @name models_genealogy
-#' @param Ne Positive diploid effective size for a constant-size Kingman model.
+#' @param Ne Positive ancestral diploid effective size; used throughout when
+#'   populationSizes is omitted.
 #' @param n Integer number of sampled haploid copies, at least two.
 #' @param ancestry_seed Nonnegative integer seed for ancestry draws.
 #' @param sample_ids Distinct nonempty sample labels in row order.
@@ -13,6 +15,7 @@
 #' @param mu Nonnegative mutation rate per base per generation.
 #' @param mutation_seed Nonnegative integer seed for conditional mutation draws.
 #' @param sizes Nonempty positive integer diploid sizes in forward generation order, beginning with the ancestral population.
+#' @param ancestralSize Diploid size before the specified discrete history.
 #' @param max_extension Nonnegative integer limit for generations added before the stated history to complete sample ancestry.
 #' @param record Finite-copy ancestry record returned by pgRecordAncestry.
 #' @param local One local interval record returned by pgLocalTrees.
@@ -171,15 +174,16 @@ pgTreeSummaries <- function(tree, pair = 1:2) {
 #' @rdname models_genealogy
 #' @export
 pgKingmanTree <- function(Ne, n = 12L, ancestry_seed = 814901L,
-                            sample_ids = paste0("S", seq_len(n))) {
+                            sample_ids = paste0("S", seq_len(n)), populationSizes = NULL) {
     checkInputs(Ne = positiveScalar,
                 n = list(numericVector, length = 1L, minimum = 2, integer = TRUE))
     pgSampleLabels(sample_ids, n)
-    ancestry <- msprimeAncestryCopies(n, Ne, 1L, seed = ancestry_seed)
+    ancestry <- msprimeAncestryCopies(n, Ne, 1L, seed = ancestry_seed,
+        populationSizes = populationSizes)
     tree <- pgMakeTree(
         data.frame(id = ancestry$nodes$id + 1L, time = ancestry$nodes$time),
         data.frame(parent = ancestry$edges$parent + 1L, child = ancestry$edges$child + 1L),
-        seq_len(n), sample_ids, "constant-size Kingman exponential pair mergers")
+        seq_len(n), sample_ids, "Kingman exponential pair mergers")
     tree$Ne <- Ne
     tree$ancestry_seed <- ancestry_seed
     tree
@@ -189,12 +193,14 @@ pgKingmanTree <- function(Ne, n = 12L, ancestry_seed = 814901L,
 #' @export
 pgDiscreteGenealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
                                   max_extension = 20000L,
-                                  sample_ids = paste0("S", seq_len(n))) {
+                                  sample_ids = paste0("S", seq_len(n)),
+                                  ancestralSize = sizes[1L]) {
     checkInputs(sizes = list(numericVector, minimum = 1, integer = TRUE,
                             maximum = .Machine$integer.max / 2),
                 n = list(numericVector, length = 1L, minimum = 2, integer = TRUE,
                          maximum = 2 * tail(sizes, 1L)),
                 max_extension = list(numericVector, length = 1L, minimum = 0, integer = TRUE))
+    checkInputs(ancestralSize = positiveScalar)
     pgSampleLabels(sample_ids, n)
     pgWithSeed(ancestry_seed, function() {
         nodes <- data.frame(id = seq_len(n), time = rep(0, n))
@@ -206,14 +212,14 @@ pgDiscreteGenealogy <- function(sizes, n = 12L, ancestry_seed = 814901L,
         age <- 0L
         while (length(lineages) > 1L) {
             pgCheck(age < max_age, "discrete genealogy reached its root-completion limit")
-            N <- if (age < horizon) parent_sizes[age + 1L] else sizes[1L]
+            N <- if (age < horizon) parent_sizes[age + 1L] else ancestralSize
             # Consecutive draws use the same N only up to the next size change.
             remaining <- Inf
             if (age < horizon) {
                 tail_sizes <- parent_sizes[seq.int(age + 1L, horizon)]
                 change <- which(tail_sizes != N)
                 if (length(change)) remaining <- min(remaining, change[1L] - 1L)
-                else if (sizes[1L] != N) remaining <- min(remaining, horizon - age)
+                else if (ancestralSize != N) remaining <- min(remaining, horizon - age)
             }
             k <- length(lineages)
             pool <- 2 * N

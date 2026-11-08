@@ -3,9 +3,9 @@
 
 #' Expected length in long IBD segments
 #'
-#' Translate the discrete-generation probability and finite-chromosome length
-#' kernels used by demographyTools. A lineage pair merges with probability
-#' 1/(2 Ne[g]) in generation g. The segment kernel includes chromosome ends.
+#' A lineage pair first shares an ancestor in generation g with probability
+#' prod(1 - 1/(2 Ne[k]), k < g) / (2 Ne[g]). The expected shared length
+#' includes chromosome ends.
 #' @param effectiveSizes Diploid effective sizes for generations 1, 2, ... .
 #' @param minimumCm Minimum segment length in centimorgans.
 #' @param chromosomeLengthsCm Analyzed chromosome lengths in centimorgans.

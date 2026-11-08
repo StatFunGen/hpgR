@@ -111,6 +111,8 @@ simulateForward <- function(initial, sizes, seed = 8149L) {
 #' @param recordEvery Record allele frequencies every this many generations.
 #'   The initial and final generations are always recorded.
 #' @param seed Positive integer R seed. The caller's RNG state is restored.
+#' @param recordSites Optional marker-column indices whose actual parental-copy
+#'   transmissions are recorded in every generation, including burn-in.
 #' @return A list with observed final haplotypes and genotypes, calibration,
 #'   generation records and demographic truth.
 #'   Haplotype rows are paired homologues of sampled individuals. Marker rows
@@ -129,7 +131,7 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
                                geneticPositions = NULL, positions = NULL,
                                burnin = 0L, founderSize = NULL,
                                reverseMutationRate = mutationRate,
-                               recordEvery = 1L, seed = 8149L) {
+                               recordEvery = 1L, seed = 8149L, recordSites = NULL) {
     if (!is.numeric(sizes) || !length(sizes) || any(!is.finite(sizes)) ||
         any(sizes < 1 | sizes != floor(sizes) | sizes > .Machine$integer.max / 2)) {
         stop("sizes must give positive diploid population sizes", call. = FALSE)
@@ -176,6 +178,9 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
     }
     positions <- checkPositions(positions, "positions")
     geneticPositions <- checkPositions(geneticPositions, "geneticPositions", TRUE)
+    if (!is.null(recordSites))
+        numericVector(recordSites, "recordSites", minimum = 1, maximum = sum(loci),
+                      integer = TRUE, distinct = TRUE)
     fractions <- lapply(geneticPositions, function(z)
         c(-expm1(-2 * diff(z)) / 2, 0))
     markers <- data.frame(chromosome = rep(seq_along(loci), loci),
@@ -183,5 +188,5 @@ simulatePopulation <- function(sizes, loci, mutationRate, sampleSize,
         genetic_position = unlist(geneticPositions, use.names = FALSE))
     markers$site <- seq_len(nrow(markers))
     simupopPopulation(sizes, loci, mutationRate, reverseMutationRate,
-        sampleSize, burnin, founderSize, recordEvery, seed, markers, fractions)
+        sampleSize, burnin, founderSize, recordEvery, seed, markers, fractions, recordSites)
 }

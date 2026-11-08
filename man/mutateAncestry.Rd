@@ -2,9 +2,14 @@
 % Please edit documentation in R/msprime.R
 \name{mutateAncestry}
 \alias{mutateAncestry}
-\title{Add continuous infinite-sites binary mutations in R}
+\title{Add mutations to an ancestry record in R}
 \usage{
-mutateAncestry(ancestry, mutationRate, seed = 8150L)
+mutateAncestry(
+  ancestry,
+  mutationRate,
+  seed = 8150L,
+  model = c("infiniteSites", "binary")
+)
 }
 \arguments{
 \item{ancestry}{An hpgR_ancestry R object.}
@@ -12,13 +17,16 @@ mutateAncestry(ancestry, mutationRate, seed = 8150L)
 \item{mutationRate}{Rate per base per generation.}
 
 \item{seed}{Positive integer R seed. Caller RNG state is restored.}
+
+\item{model}{Mutation model: infiniteSites uses unique continuous positions;
+binary uses integer sites and symmetric recurrent 0/1 mutations.}
 }
 \value{
 A new hpgR_ancestry object with R site and mutation tables. Existing
   mutations are replaced. The input ancestry is unchanged.
 }
 \description{
-The edgewise Poisson count and uniform position/time operations translate
-mutgen_place_mutations in the vendored msprime source. Distinct positions
-and binary root state zero give one 0-to-1 mutation at each new site.
+Draw Poisson mutation counts on branches, then sample positions and times
+uniformly along each branch. The ancestral state is 0. Under the binary
+model, each integer position inside an edge span has the same mutation rate.
 }

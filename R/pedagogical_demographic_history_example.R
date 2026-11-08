@@ -17,10 +17,11 @@ populationSizeSchedule <- function(candidate, design) {
 #' @param design Sequence, rates and sampling specification.
 #' @param seed R random seed.
 #' @param recordEvery Interval between stored generation records.
+#' @inheritParams simulatePopulation
 #' @return The observed DNA, calibration and separate simulation records.
 #' @export
 simulatePopulationHistory <- function(candidate, design, seed,
-                                         recordEvery = 10000L) {
+                                         recordEvery = 10000L, recordSites = NULL) {
     simulatePopulation(sizes = populationSizeSchedule(candidate, design),
         loci = rep(design$sites_per_chromosome, design$chromosomes),
         mutationRate = design$mutation_rate,
@@ -29,7 +30,8 @@ simulatePopulationHistory <- function(candidate, design, seed,
         geneticPositions = rep(list(seq(0, design$genetic_length_morgan,
             length.out = design$sites_per_chromosome)), design$chromosomes),
         burnin = design$burnin_generations,
-        founderSize = candidate$founder, recordEvery = recordEvery, seed = seed)
+        founderSize = candidate$founder, recordEvery = recordEvery, seed = seed,
+        recordSites = recordSites)
 }
 
 #' Sequence summaries for population-history comparison

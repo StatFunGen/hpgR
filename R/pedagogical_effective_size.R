@@ -141,9 +141,10 @@ estimateDiversitySize <- function(haplotypes, mutationRate,
                                   sequenceLength = ncol(haplotypes),
                                   mutationModel = c("infinite_sites", "symmetric_parental")) {
     x <- populationHaplotypes(haplotypes)
-    mu <- positiveScalar(mutationRate, "mutationRate")
+    checkInputs(mutationRate = positiveScalar, sequenceLength = positiveScalar)
+    mu <- mutationRate
+    length <- sequenceLength
     if (mu >= .5) stop("mutationRate must be smaller than 1/2", call. = FALSE)
-    length <- positiveScalar(sequenceLength, "sequenceLength")
     if (length < ncol(x)) stop("sequenceLength is smaller than the site count", call. = FALSE)
     model <- match.arg(mutationModel)
     k <- colSums(x)
@@ -210,24 +211,21 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
                            minMinorAlleleFrequency = .1, maxPairs = 50000L,
                            seed = 1L) {
     x <- populationHaplotypes(haplotypes)
+    checkInputs(geneticPositions = list(numericVector, length = ncol(x)),
+        distanceBreaks = list(numericVector, minimum = 0),
+        minMinorAlleleFrequency = positiveScalar, maxPairs = scalarInteger,
+        seed = list(scalarInteger, minimum = 0L))
     n <- nrow(x)
     if (n < 4L) stop("at least four sampled haplotypes are required", call. = FALSE)
-    if (!is.numeric(geneticPositions) || length(geneticPositions) != ncol(x) ||
-        any(!is.finite(geneticPositions))) {
-        stop("geneticPositions must give one finite Morgan position per site", call. = FALSE)
-    }
     if (is.null(chromosome)) chromosome <- rep("1", ncol(x))
     if (length(chromosome) != ncol(x) || anyNA(chromosome)) {
         stop("chromosome must label each site", call. = FALSE)
     }
-    if (!is.numeric(distanceBreaks) || length(distanceBreaks) < 2L ||
-        any(!is.finite(distanceBreaks)) || any(distanceBreaks < 0) ||
-        any(diff(distanceBreaks) <= 0)) {
+    if (length(distanceBreaks) < 2L || any(diff(distanceBreaks) <= 0)) {
         stop("distanceBreaks must be increasing nonnegative Morgan distances", call. = FALSE)
     }
-    cutoff <- positiveScalar(minMinorAlleleFrequency, "minMinorAlleleFrequency")
+    cutoff <- minMinorAlleleFrequency
     if (cutoff >= .5) stop("minor allele frequency cutoff must be below 1/2", call. = FALSE)
-    checkInputs(maxPairs = scalarInteger, seed = list(scalarInteger, minimum = 0L))
     maxPairs <- as.integer(maxPairs)
     seed <- as.integer(seed)
     restore <- rngRestorer()
@@ -248,7 +246,6 @@ estimateLdSize <- function(haplotypes, geneticPositions, chromosome = NULL,
     if (!length(first)) stop("no within-chromosome pairs fall in the distance bins", call. = FALSE)
     joint <- vapply(seq_along(first), function(j)
         mean(x[, first[j]] * x[, second[j]]), numeric(1))
-    D <- tskitD(joint, p[first], p[second])
     rho2 <- tskitR2(joint, p[first], p[second])
     r <- -expm1(-2 * distance) / 2
     gamma <- ((1 - r)^2 + r^2) / (2 * r * (2 - r))
@@ -325,14 +322,16 @@ summarizeIbdSharing <- function(segments, haplotypePairs, chromosomeLengthsCm,
                                lengthBreaks = c(8, 10, 14, Inf)) {
     checkInputs(haplotypePairs = positiveScalar,
         chromosomeLengthsCm = list(numericVector, minimum = 0))
-    if (length(lengthBreaks) < 2L || anyNA(lengthBreaks) ||
-        any(!is.finite(head(lengthBreaks, -1L))) || any(diff(lengthBreaks) <= 0) || lengthBreaks[1L] <= 0 ||
-        !is.infinite(tail(lengthBreaks, 1L)) ||
-        !is.data.frame(segments) || !"lengthCm" %in% names(segments) ||
-        any(!is.finite(segments$lengthCm) | segments$lengthCm < 0) ||
-        sum(chromosomeLengthsCm) <= 0)
-        stop("supply valid segments, positive analyzed length and increasing bins ending in Inf",
-             call. = FALSE)
+    if (!is.data.frame(segments) || !"lengthCm" %in% names(segments))
+        stop("segments must contain lengthCm", call. = FALSE)
+    numericVector(segments$lengthCm, "segments$lengthCm", minimum = 0, empty = TRUE)
+    if (!is.numeric(lengthBreaks) || is.complex(lengthBreaks) ||
+        length(lengthBreaks) < 2L || anyNA(lengthBreaks) ||
+        any(!is.finite(head(lengthBreaks, -1L))) || any(diff(lengthBreaks) <= 0) ||
+        lengthBreaks[1L] <= 0 || tail(lengthBreaks, 1L) != Inf)
+        stop("length bins must increase from a positive value to Inf", call. = FALSE)
+    if (sum(chromosomeLengthsCm) <= 0)
+        stop("analyzed chromosome length must be positive", call. = FALSE)
     bin <- cut(segments$lengthCm, lengthBreaks, right = FALSE, labels = FALSE)
     count <- tabulate(bin, nbins = length(lengthBreaks) - 1L)
     shared <- vapply(seq_along(count), function(b)
@@ -344,9 +343,9 @@ summarizeIbdSharing <- function(segments, haplotypePairs, chromosomeLengthsCm,
 
 #' Fit a constant effective size to long IBD sharing
 #'
-#' Minimize squared differences of log genome fractions, using the bin criterion
-#' of Carmi et al. (2014) and the finite-chromosome expectation in
-#' expectedIbdLength. A changing population history need not fit any constant size.
+#' Fit the observed genome fraction in each length bin to expectedIbdLength
+#' by minimizing squared log residuals (Carmi et al., 2014). The fitted constant
+#' size summarizes sharing across the ancestral generations contributing to these bins.
 #' @inheritParams summarizeIbdSharing
 #' @param limits Lower and upper diploid effective sizes searched.
 #' @param maxGeneration Number of ancestral generations in the expectation sum.
@@ -361,16 +360,111 @@ estimateIbdSize <- function(segments, haplotypePairs, chromosomeLengthsCm,
                               nondecreasing = TRUE, distinct = TRUE),
                 maxGeneration = scalarInteger)
     bins <- summarizeIbdSharing(segments, haplotypePairs, chromosomeLengthsCm, lengthBreaks)
-    predict <- function(size) {
-        tails <- vapply(lengthBreaks, function(c)
-            if (is.finite(c)) sum(expectedIbdLength(rep(size, maxGeneration), c,
+    predictFractions <- function(size) {
+        sizes <- rep(size, maxGeneration)
+        tails <- vapply(lengthBreaks, function(threshold)
+            if (is.finite(threshold)) sum(expectedIbdLength(sizes, threshold,
                 chromosomeLengthsCm)) / sum(chromosomeLengthsCm) else 0, numeric(1))
         head(tails, -1L) - tail(tails, -1L)
     }
     if (any(bins$fraction == 0)) return(list(Ne = NA_real_, bins = bins,
         predicted = rep(NA_real_, nrow(bins)), loss = NA_real_, limits = limits))
     fit <- stats::optimize(function(logSize)
-        sum((log(bins$fraction) - log(predict(exp(logSize))))^2), log(limits))
-    list(Ne = exp(fit$minimum), bins = bins, predicted = predict(exp(fit$minimum)),
+        sum((log(bins$fraction) - log(predictFractions(exp(logSize))))^2), log(limits))
+    list(Ne = exp(fit$minimum), bins = bins, predicted = predictFractions(exp(fit$minimum)),
          loss = fit$objective, limits = limits)
+}
+
+
+#' Follow expected diversity through a known size history
+#'
+#' Apply the Wright--Fisher pairwise-diversity recurrence with symmetric 0/1
+#' mutation of parental copies before reproduction. Sizes are ordered forward
+#' in time; each transition uses the parental size. Recombination changes
+#' dependence among sites but does not change this one-site expectation.
+#' @param sizes Diploid sizes, including the initial and final generations.
+#' @param mutationRate Symmetric mutation probability per site, from 0 to below 1/2.
+#' @param initialDiversity Probability that two distinct initial copies differ.
+#' @return Expected diversity for every supplied generation, including the initial one.
+#' @details With a=2u(1-u) and b=(1-2u)^2, the update is
+#'   H[t+1]=(1-1/(2N[t]))(a+bH[t]). This is the finite-state version of the
+#'   mutation--drift recurrence in Pritchard, Section 2.1, for the parental
+#'   mutation timing in simulatePopulation.
+#' @examples
+#' expectedDiversity(c(100, 20, 20, 100), 2.5e-5, initialDiversity = 0.01)
+#' @export
+expectedDiversity <- function(sizes, mutationRate, initialDiversity = 0) {
+    checkInputs(sizes = list(numericVector, minimum = 1),
+                mutationRate = list(numericVector, length = 1L, minimum = 0, maximum = .5),
+                initialDiversity = probability)
+    if (mutationRate == .5) stop("mutationRate must be smaller than 1/2", call. = FALSE)
+    a <- 2 * mutationRate * (1 - mutationRate)
+    b <- (1 - 2 * mutationRate)^2
+    H <- c(initialDiversity, numeric(length(sizes) - 1L))
+    for (t in seq_len(length(sizes) - 1L))
+        H[t + 1L] <- (1 - 1 / (2 * sizes[t])) * (a + b * H[t])
+    H
+}
+
+#' Estimate ancestral size given the subsequent size history
+#'
+#' Undo a specified recent diversity trajectory and estimate the constant
+#' ancestral size. The ancestor is at symmetric-mutation equilibrium by default.
+#' A finite ancestralGenerations instead starts from identical sequences.
+#' @param diversity Pairwise diversity per site in the final sample.
+#' @inheritParams expectedDiversity
+#' @param ancestralGenerations Ancestral generations from identical sequences,
+#'   or Inf for ancestral equilibrium.
+#' @param bounds Lower and upper ancestral diploid sizes allowed.
+#' @return List containing Ne, inferred ancestral diversity, predicted final
+#'   diversity, mutationInput and ancestralWeight in H_final=A+B*H_initial,
+#'   and the supplied model settings. This is a point estimate conditional on
+#'   the complete recent history, mutation rate and ancestral initialization.
+#' @details The known recurrence gives H_final=A+B*H_initial. Invert it to get
+#'   H_initial=(H_final-A)/B. At ancestral equilibrium,
+#'   Ne=(a+b*H_initial)/(2*a*(1-2*H_initial)). A finite ancestral run uses
+#'   H_initial=H_equilibrium*(1-q^g), q=(1-1/(2*Ne))*b, and numerical root finding.
+#'   A founder sample without replacement preserves expected pairwise diversity
+#'   for exchangeable ancestral copies; the recent sizes start at the founders.
+#'   The function does not estimate all recent sizes from one diversity value.
+#' @examples
+#' recent <- c(rep(20, 20), 20 * 50^((0:40) / 40))
+#' estimateAncestralSize(0.0073, recent, 2.5e-5)
+#' @export
+estimateAncestralSize <- function(diversity, sizes, mutationRate,
+                                   ancestralGenerations = Inf, bounds = c(1, 1e7)) {
+    checkInputs(diversity = probability,
+                bounds = list(numericVector, length = 2L, minimum = 1,
+                              nondecreasing = TRUE, distinct = TRUE))
+    A <- tail(expectedDiversity(sizes, mutationRate), 1L)
+    if (mutationRate == 0) stop("a positive mutation rate is required", call. = FALSE)
+    if (!identical(ancestralGenerations, Inf))
+        scalarInteger(ancestralGenerations, "ancestralGenerations")
+    a <- 2 * mutationRate * (1 - mutationRate)
+    b <- (1 - 2 * mutationRate)^2
+    B <- prod((1 - 1 / (2 * head(sizes, -1L))) * b)
+    if (B == 0) stop("the specified history has lost its ancestral diversity signal",
+                     call. = FALSE)
+    initial <- (diversity - A) / B
+    if (initial < 0 || initial >= .5)
+        stop("diversity is outside the range of the specified history", call. = FALSE)
+    if (is.infinite(ancestralGenerations)) {
+        Ne <- (a + b * initial) / (2 * a * (1 - 2 * initial))
+    } else {
+        ancestralH <- function(N) {
+            q <- (1 - 1 / (2 * N)) * b
+            (1 - 1 / (2 * N)) * a / (1 - q) *
+                (-expm1(ancestralGenerations * log(q)))
+        }
+        limits <- vapply(bounds, ancestralH, numeric(1))
+        if (initial < limits[1L] || initial > limits[2L])
+            stop("diversity implies an ancestral size outside bounds", call. = FALSE)
+        Ne <- exp(stats::uniroot(function(z) ancestralH(exp(z)) - initial,
+                                  log(bounds), tol = 1e-10)$root)
+    }
+    if (Ne < bounds[1L] || Ne > bounds[2L])
+        stop("diversity implies an ancestral size outside bounds", call. = FALSE)
+    list(Ne = Ne, ancestralDiversity = initial, expectedDiversity = A + B * initial,
+         mutationInput = A, ancestralWeight = B, sizes = sizes,
+         mutationRate = mutationRate, ancestralGenerations = ancestralGenerations)
 }

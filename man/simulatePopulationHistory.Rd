@@ -4,7 +4,13 @@
 \alias{simulatePopulationHistory}
 \title{Simulate the declared population history}
 \usage{
-simulatePopulationHistory(candidate, design, seed, recordEvery = 10000L)
+simulatePopulationHistory(
+  candidate,
+  design,
+  seed,
+  recordEvery = 10000L,
+  recordSites = NULL
+)
 }
 \arguments{
 \item{candidate}{Founder size, small-population size, duration and growth.}
@@ -14,6 +20,9 @@ simulatePopulationHistory(candidate, design, seed, recordEvery = 10000L)
 \item{seed}{R random seed.}
 
 \item{recordEvery}{Interval between stored generation records.}
+
+\item{recordSites}{Optional marker-column indices whose actual parental-copy
+transmissions are recorded in every generation, including burn-in.}
 }
 \value{
 The observed DNA, calibration and separate simulation records.

@@ -36,7 +36,8 @@ pgKingmanTree(
   Ne,
   n = 12L,
   ancestry_seed = 814901L,
-  sample_ids = paste0("S", seq_len(n))
+  sample_ids = paste0("S", seq_len(n)),
+  populationSizes = NULL
 )
 
 pgDiscreteGenealogy(
@@ -44,7 +45,8 @@ pgDiscreteGenealogy(
   n = 12L,
   ancestry_seed = 814901L,
   max_extension = 20000L,
-  sample_ids = paste0("S", seq_len(n))
+  sample_ids = paste0("S", seq_len(n)),
+  ancestralSize = sizes[1L]
 )
 
 pgMutateTree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
@@ -72,13 +74,18 @@ pgMutateTree(tree, length_bp = 1000, mu = 2e-05, mutation_seed = 914901L)
 
 \item{pair}{Two distinct one-based sample indices for the pairwise common-ancestor time.}
 
-\item{Ne}{Positive diploid effective size for a constant-size Kingman model.}
+\item{Ne}{Positive ancestral diploid effective size; used throughout when
+populationSizes is omitted.}
 
 \item{ancestry_seed}{Nonnegative integer seed for ancestry draws.}
+
+\item{populationSizes}{Optional one-generation diploid sizes backward from sampling.}
 
 \item{sizes}{Nonempty positive integer diploid sizes in forward generation order, beginning with the ancestral population.}
 
 \item{max_extension}{Nonnegative integer limit for generations added before the stated history to complete sample ancestry.}
+
+\item{ancestralSize}{Diploid size before the specified discrete history.}
 
 \item{length_bp}{Positive analyzed region length in bases.}
 

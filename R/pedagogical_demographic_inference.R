@@ -125,3 +125,53 @@ terminalSpectrumFit <- function(spectra, mutationRate, sequenceLength) {
         expected = expected(estimate[1L], estimate[2L]), constantNe = constant,
         constantExpected = expected(constant, 0), observed = total)
 }
+#' Fit ancestral size and growth duration to chromosome spectra
+#'
+#' A Poisson composite likelihood uses the demographic SFS expectation.
+#' Founder size, small-population duration and present size are supplied;
+#' ancestral size and the growth duration are fitted. Sizes are diploid.
+#' @param spectra Chromosome rows, derived-count columns 1 through n - 1.
+#' @param mutationRate Mutation rate per base per generation.
+#' @param sequenceLength Analyzed bases per chromosome, including invariant sites.
+#' @param founderSize Number of founding diploid individuals.
+#' @param bottleneckGenerations Generations at the founder size.
+#' @param presentSize Present diploid population size.
+#' @param growthGenerations Candidate positive integer growth durations.
+#' @param bounds Lower and upper ancestral sizes for optimization.
+#' @return Fitted parameters, expected and observed counts, constant-size fit,
+#'   and profile composite log likelihood over the growth durations.
+#' @export
+fitHistorySpectrum <- function(spectra, mutationRate, sequenceLength,
+    founderSize = 20L, bottleneckGenerations = 20L, presentSize = 1000L,
+    growthGenerations = seq.int(10L, 80L, 5L), bounds = c(5, 1000)) {
+    checkInputs(spectra = list(numericMatrix, minimum = 0),
+        mutationRate = positiveScalar, sequenceLength = positiveScalar,
+        founderSize = scalarInteger, bottleneckGenerations = scalarInteger,
+        presentSize = scalarInteger,
+        growthGenerations = list(numericVector, minimum = 1, integer = TRUE, distinct = TRUE),
+        bounds = list(numericVector, length = 2L, minimum = .Machine$double.xmin))
+    if (bounds[1L] >= bounds[2L] || ncol(spectra) < 2L)
+        stop("ordered bounds and at least two SFS bins are required", call. = FALSE)
+    n <- ncol(spectra) + 1L
+    observed <- colSums(spectra)
+    exposures <- nrow(spectra) * sequenceLength
+    expectations <- function(ancestral, growth) {
+        schedule <- c(rep(founderSize, bottleneckGenerations),
+            round(exp(seq(log(founderSize), log(presentSize), length.out = growth + 1L)))[-1L])
+        parents <- head(c(founderSize, schedule), -1L)
+        expectedHistorySFS(n, c(ancestral, parents), mutationRate, exposures)
+    }
+    fits <- lapply(growthGenerations, function(g) stats::optimize(function(logN)
+        -sum(stats::dpois(observed, expectations(exp(logN), g), log = TRUE)),
+        log(bounds)))
+    profile <- data.frame(growthGenerations = growthGenerations,
+        ancestralSize = exp(vapply(fits, `[[`, 0, "minimum")),
+        logLikelihood = -vapply(fits, `[[`, 0, "objective"))
+    best <- profile[which.max(profile$logLikelihood), ]
+    constant <- sum(observed) / (4 * mutationRate * exposures * sum(1 / seq_len(n - 1L)))
+    list(estimate = c(ancestralSize = best$ancestralSize,
+                     growthGenerations = best$growthGenerations), profile = profile,
+        observed = observed, expected = expectations(best$ancestralSize, best$growthGenerations),
+        constantNe = constant,
+        constantExpected = expectedSFS(n, constant, mutationRate, exposures))
+}

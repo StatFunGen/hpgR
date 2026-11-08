@@ -2,7 +2,7 @@
 % Please edit documentation in R/msprime.R
 \name{simulateAncestry}
 \alias{simulateAncestry}
-\title{Simulate constant-size Hudson ancestry in R}
+\title{Simulate Hudson ancestry in R}
 \usage{
 simulateAncestry(
   samples,
@@ -10,13 +10,14 @@ simulateAncestry(
   sequenceLength,
   recombinationRate = 0,
   seed = 8149L,
-  recordFullArg = FALSE
+  recordFullArg = FALSE,
+  populationSizes = NULL
 )
 }
 \arguments{
 \item{samples}{Number of present-day diploid sampled individuals.}
 
-\item{populationSize}{Constant diploid effective size.}
+\item{populationSize}{Diploid effective size before the recorded recent history.}
 
 \item{sequenceLength}{Positive integer sequence length in bases.}
 
@@ -26,12 +27,14 @@ Ancestral breakpoints fall between integer positions.}
 \item{seed}{Positive integer R seed. Caller RNG state is restored.}
 
 \item{recordFullArg}{Retain recombination and noncoalescing ancestry records.}
+
+\item{populationSizes}{Optional diploid sizes in successive one-generation
+epochs backward from sampling. Older epochs use populationSize.}
 }
 \value{
 An hpgR_ancestry R list with node and edge tables, zero-based sample
   IDs, sequence length, event records and source metadata. This restricted
-  interface does not implement structured/changing populations, migration,
-  ancient samples, selection, gene conversion, DTWF or the full msprime API.
+  interface follows one population with piecewise-constant sizes.
 }
 \description{
 Translate the neutral single-population Hudson event kernels from the

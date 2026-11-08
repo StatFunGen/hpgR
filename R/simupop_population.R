@@ -11,13 +11,28 @@ simupopWithSeed <- function(seed, draw) {
 
 simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
                                 sampleSize, burnin, founderSize, recordEvery,
-                                seed, markers, fractions) {
+                                seed, markers, fractions, recordSites = NULL) {
     simupopWithSeed(seed, function() {
         haplotypes <- matrix(0L, nrow = 2L * sizes[1L], ncol = sum(loci))
+        copyParents <- list()
         nextGeneration <- function(h, size) {
             h <- simupopMutate(h, mutationRate, reverseMutationRate)
             parents <- simupopParents(nrow(h) %/% 2L, size)
-            simupopMeiosis(h, parents, loci, fractions, binary = TRUE)
+            transmission <- simupopMeiosis(h, parents, loci, fractions,
+                binary = TRUE, returnEvents = !is.null(recordSites))
+            if (is.null(recordSites)) return(transmission)
+            # Read the parental row from the realized Recombinator events.
+            # Recording consumes no random draws and leaves the DNA unchanged.
+            copies <- vapply(recordSites, function(site) {
+                chromosome <- markers$chromosome[site]
+                local <- site - sum(loci[seq_len(chromosome - 1L)])
+                switches <- transmission$events$switches[[chromosome]]
+                parity <- tabulate(switches[switches[, 2L] < local, 1L],
+                                   nbins = length(parents)) %% 2L
+                2L * parents - 1L + bitwXor(transmission$events$starts[, chromosome], parity)
+            }, integer(length(parents)))
+            copyParents[[length(copyParents) + 1L]] <<- copies
+            transmission$haplotypes
         }
         summarize <- function(generation, h, p = colMeans(h)) {
             c(generation = generation, size = nrow(h) / 2L,
@@ -61,7 +76,7 @@ simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
                 segregating_sites = rowSums(p > 0 & p < 1))
         }))
         h <- final$haplotypes
-        list(observed = list(haplotypes = h,
+        result <- list(observed = list(haplotypes = h,
                  genotypes = h[seq(1L, nrow(h), 2L), , drop = FALSE] +
                      h[seq(2L, nrow(h), 2L), , drop = FALSE],
                  sample_ids = sprintf("S%03d", seq_len(sampleSize)),
@@ -80,5 +95,9 @@ simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
                  sizes = sizes, ancestralSize = sizes[1L],
                  reproductiveSizes = c(if (is.null(founderSize)) sizes[1L] else
                      founderSize, sizes[-1L])))
+        if (!is.null(recordSites)) result$records$copyParents <-
+            list(sites = recordSites, markers = markers[recordSites, , drop = FALSE],
+                 parents = copyParents)
+        result
     })
 }
