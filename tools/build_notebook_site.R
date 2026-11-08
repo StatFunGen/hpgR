@@ -111,8 +111,15 @@ main <- function() {
             'downloads:', paste0('  - file: downloads/', entry$file),
             '    title: Download R notebook')
         dataFiles <- names(book$metadata$notebook_input_sha256)
-        for (path in dataFiles[startsWith(dataFiles, 'data/')])
-            header <- c(header, paste0('  - file: ', path))
+        for (path in dataFiles[startsWith(dataFiles, 'data/')]) {
+            dataTitle <- switch(basename(path),
+                observed.rds = 'Observed DNA',
+                calibration.rds = 'Rate and map calibration',
+                history_predictions.rds = 'Simulated history predictions',
+                basename(path))
+            header <- c(header, paste0('  - file: ', path),
+                paste0('    title: ', quoteYaml(dataTitle)))
+        }
         header <- c(header, '---', '')
         book$cells[[1L]]$source <- paste(c(header, first), collapse = '\n')
         jsonlite::write_json(book, file.path(stage, entry$file), auto_unbox = TRUE,

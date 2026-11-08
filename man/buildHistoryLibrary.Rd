@@ -18,7 +18,8 @@ names and summary columns, generated with disjoint simulation seeds.}
 }
 \value{
 A prediction library containing frozen means, variance scales and
-  independent calibration discrepancies. Candidate labels describe hypotheses;
+  independent calibration discrepancies and their per-summary contributions.
+  Candidate labels describe hypotheses;
   no generating history or generation record is read by this calculation.
 }
 \description{

@@ -1,13 +1,19 @@
 #!/usr/bin/env Rscript
 # Run the course notebooks with this package and verify their saved outputs.
-# Rscript tools/sync_vignettes.R [NOTEBOOK_DIRECTORY] [--build-site]
+# Rscript tools/sync_vignettes.R [NOTEBOOK_DIRECTORY] [--build-site] [--figure-dir=PATH]
 main <- function() {
 args <- commandArgs(trailingOnly=TRUE)
 script <- sub('^--file=', '', commandArgs()[grepl('^--file=', commandArgs())])
 root <- normalizePath(file.path(dirname(script), '..'), mustWork=TRUE)
 directories <- args[!startsWith(args, '--')]
-if (length(directories) > 1L || any(startsWith(args, '--') & args != '--build-site'))
-    stop('Supply at most one notebook directory and optionally --build-site')
+figure_flags <- args[startsWith(args, '--figure-dir=')]
+if (length(directories) > 1L || length(figure_flags) > 1L ||
+    any(startsWith(args, '--') & args != '--build-site' &
+        !startsWith(args, '--figure-dir=')))
+    stop('Supply one notebook directory, optionally --build-site and --figure-dir=PATH')
+figure_dir <- if (length(figure_flags)) sub('^--figure-dir=', '', figure_flags) else NULL
+if (!is.null(figure_dir) && !nzchar(figure_dir)) stop('Supply a figure output directory')
+if (!is.null(figure_dir)) figure_dir <- normalizePath(figure_dir, mustWork=FALSE)
 site <- normalizePath(if (length(directories)) directories[1L] else
     file.path(root, 'notebooks'), mustWork=TRUE)
 build_site <- '--build-site' %in% args
@@ -84,6 +90,7 @@ on.exit({
     }
 }, add=TRUE)
 Sys.unsetenv(c('P8149_FIGURE_DIR','R_HOME'))
+if (!is.null(figure_dir)) Sys.setenv(P8149_FIGURE_DIR=figure_dir)
 kernel_root <- file.path(stage, 'jupyter')
 dir.create(file.path(kernel_root, 'kernels/ir'), recursive=TRUE)
 jsonlite::write_json(list(argv=c(r,'--slave','--vanilla','-e',

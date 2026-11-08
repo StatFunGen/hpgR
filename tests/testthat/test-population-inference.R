@@ -148,6 +148,10 @@ test_that("candidate comparison reads final summaries and independent calibratio
     fit <- comparePopulationHistories(observed, library)
     expect_identical(fit$selected, "stable")
     expect_equal(fit$profile$discrepancy, c(0, 32))
+    expect_equal(fit$contributions,
+        rbind(stable = c(rare = 0, common = 0), bottleneck = c(rare = 16, common = 16)))
+    expect_equal(library$calibrationContributions$stable,
+        matrix(c(1,0,1,1,0,1),ncol=2,dimnames=list(NULL,c("rare","common"))))
     expect_equal(fit$profile$compatibility, c(1, .25))
     expect_identical(fit$observedSummary, c(rare = 2, common = 3))
     expect_equal(library$centers["bottleneck", ], c(rare = 6, common = 7))

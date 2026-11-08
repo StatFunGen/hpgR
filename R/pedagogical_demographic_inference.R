@@ -26,7 +26,8 @@ historySummaryMatrix <- function(x, name) {
 #'   names and summary columns, generated with disjoint simulation seeds.
 #' @param varianceFloor Positive numerical lower bound on common variance scales.
 #' @return A prediction library containing frozen means, variance scales and
-#'   independent calibration discrepancies. Candidate labels describe hypotheses;
+#'   independent calibration discrepancies and their per-summary contributions.
+#'   Candidate labels describe hypotheses;
 #'   no generating history or generation record is read by this calculation.
 #' @details The discrepancy is the sum of squared residuals divided by common
 #'   simulation variances. Its calibration includes correlations among summaries.
@@ -53,12 +54,14 @@ buildHistoryLibrary <- function(training, calibration, varianceFloor = 1e-12) {
     centers <- do.call(rbind, lapply(training, colMeans))
     variances <- do.call(rbind, lapply(training, function(x) apply(x, 2L, stats::var)))
     scale <- pmax(colMeans(variances), floor)
-    discrepancy <- lapply(seq_along(calibration), function(j) {
+    contributions <- lapply(seq_along(calibration), function(j) {
         residual <- sweep(calibration[[j]], 2L, centers[j, ], "-")
-        rowSums(sweep(residual^2, 2L, scale, "/"))
+        sweep(residual^2, 2L, scale, "/")
     })
-    names(discrepancy) <- names(training)
+    names(contributions) <- names(training)
+    discrepancy <- lapply(contributions, rowSums)
     list(centers = centers, scale = scale, calibrationDiscrepancy = discrepancy,
+         calibrationContributions = contributions,
          training = training, calibration = calibration, summaryNames = features,
          method = "simulation_calibrated_squared_distance")
 }
@@ -71,8 +74,10 @@ buildHistoryLibrary <- function(training, calibration, varianceFloor = 1e-12) {
 #' with that chromosome design.
 #' @param observedSummary Finite named numeric vector of final-DNA summaries.
 #' @param library Result of buildHistoryLibrary.
-#' @return List with selected candidate, ranked discrepancies, simulation check
-#'   fractions, frozen predictions and the supplied observations. Check fractions
+#' @return List with the nearest candidate mean (selected), ranked discrepancies,
+#'   simulation check
+#'   fractions, frozen predictions, per-summary contributions and the observations.
+#'   Check fractions
 #'   are not posterior probabilities over the candidate histories.
 #' @export
 comparePopulationHistories <- function(observedSummary, library) {
@@ -83,7 +88,8 @@ comparePopulationHistories <- function(observedSummary, library) {
     }
     observation <- observedSummary[library$summaryNames]
     residual <- sweep(library$centers, 2L, observation, "-")
-    distance <- rowSums(sweep(residual^2, 2L, library$scale, "/"))
+    contributions <- sweep(residual^2, 2L, library$scale, "/")
+    distance <- rowSums(contributions)
     checks <- vapply(seq_along(distance), function(j) {
         simulated <- library$calibrationDiscrepancy[[j]]
         (1 + sum(simulated >= distance[j])) / (1 + length(simulated))
@@ -93,7 +99,7 @@ comparePopulationHistories <- function(observedSummary, library) {
     profile <- profile[order(profile$discrepancy), , drop = FALSE]
     list(selected = profile$candidate[1L], profile = profile,
          observedSummary = observation, predictions = library$centers,
-         scale = library$scale, method = library$method)
+         scale = library$scale, contributions = contributions, method = library$method)
 }
 
 # Closed-form Poisson composite-likelihood fit for Pritchard's specified

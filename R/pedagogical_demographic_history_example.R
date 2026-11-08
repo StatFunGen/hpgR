@@ -197,8 +197,8 @@ populationHistoryPredictions <- function(predictionData = populationHistoryDesig
 #' @param regeneratePredictions Logical. Regenerate every candidate bank using
 #'   its stored seeds in R.
 #' @return A list with simulation records (when requested), DNA summaries,
-#'   diversity and LD estimates, fitting/checking features, candidate libraries,
-#'   fitted history and held-out check.
+#'   diversity, LD and IBD estimates, fitting/checking features, candidate libraries,
+#'   candidate comparison and reserved-chromosome checks.
 #' @details This is the complete classroom recipe, with its fixed LD filtering
 #'   and chromosome split. General-purpose calculations are documented under
 #'   simulatePopulation, summarizePopulationSample, estimateDiversitySize,

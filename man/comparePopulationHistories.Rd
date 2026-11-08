@@ -12,8 +12,10 @@ comparePopulationHistories(observedSummary, library)
 \item{library}{Result of buildHistoryLibrary.}
 }
 \value{
-List with selected candidate, ranked discrepancies, simulation check
-  fractions, frozen predictions and the supplied observations. Check fractions
+List with the nearest candidate mean (selected), ranked discrepancies,
+  simulation check
+  fractions, frozen predictions, per-summary contributions and the observations.
+  Check fractions
   are not posterior probabilities over the candidate histories.
 }
 \description{

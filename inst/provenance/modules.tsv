@@ -2,7 +2,7 @@ file	kind	source_ids	validation_scope
 simupop.R	upstream	parent-choice;transmission;parent-records;native-mating;native-mutation;native-sampling	self-contained R copying and diploid simulation interfaces; exact event replay and independent native probability-law tests
 simupop_reproduction.R	upstream	native-mating;native-mutation;native-sampling;recombination;individual-order	R translations of neutral parent choice, parental mutation, meiosis and ordered individual sampling; event replay and analytic law checks; fixed-column copying preserves full-map event draws and complete seeded trajectories
 simupop_population.R	upstream	native-mating;native-mutation;native-sampling	composition of translated operators; explicit burn-in, founder sampling and observation records; local R seed with caller state restored
-pedagogical_effective_size.R	pedagogical		diversity, LD and successive-generation effective-size estimates; source kernels and defining equations
+pedagogical_effective_size.R	pedagogical		diversity, LD, IBD and successive-generation effective-size estimates; source kernels and defining equations
 pedagogical_demographic_history_example.R	pedagogical		complete classroom population-history recipe; calls reusable simulation and inference functions; differential check against the step-by-step notebook
 hpgR-package.R	documentation		package-level documentation
 expected_sfs.R	upstream	sfs	constant-size expected SFS; explicit size conversion

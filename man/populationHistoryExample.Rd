@@ -28,8 +28,8 @@ its stored seeds in R.}
 }
 \value{
 A list with simulation records (when requested), DNA summaries,
-  diversity and LD estimates, fitting/checking features, candidate libraries,
-  fitted history and held-out check.
+  diversity, LD and IBD estimates, fitting/checking features, candidate libraries,
+  candidate comparison and reserved-chromosome checks.
 }
 \description{
 Use the same final DNA for diversity, LD, IBD and candidate-history comparison.
