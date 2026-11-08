@@ -36,21 +36,55 @@ simulatePopulationHistory <- function(candidate, design, seed,
 #' @param observed Final-sample haplotypes and marker coordinates.
 #' @param design LD distance bins and other declared design choices.
 #' @param chromosomes Chromosomes used for this calculation.
-#' @return Grouped SFS proportions and distance-binned LD.
+#' @return Grouped SFS proportions, distance-binned LD and long IBD sharing.
 #' @export
 populationSampleFeatures <- function(observed, design, chromosomes) {
     markers <- observed$markers
     take <- markers$chromosome %in% chromosomes
     H <- observed$haplotypes[, take, drop = FALSE]
-    dna <- summarizePopulationSample(H, chromosome = markers$chromosome[take])
+    groups <- if (!is.null(design$sfs_group_breaks)) {
+        edges <- design$sfs_group_breaks
+        counts <- seq_len(floor(nrow(H) / 2L))
+        bins <- cut(counts, edges, labels = FALSE, right = TRUE)
+        stats::setNames(lapply(seq_len(length(edges) - 1L), function(b)
+            counts[bins == b]), paste0("bin", seq_len(length(edges) - 1L)))
+    } else NULL
+    dna <- summarizePopulationSample(H, chromosome = markers$chromosome[take],
+                                      sfsGroups = groups)
     ld <- estimateLdSize(H[seq(1L, nrow(H), 2L), , drop = FALSE],
         geneticPositions = markers$genetic_position[take],
         chromosome = markers$chromosome[take],
-        distanceBreaks = design$ld_distance_breaks,
+        distanceBreaks = if (is.null(design$history_ld_distance_breaks))
+            design$ld_distance_breaks else design$history_ld_distance_breaks,
         maxPairs = 500000L, seed = 101L)
+    ibd <- if (!is.null(design$ibd_length_breaks))
+        populationIbdSummary(observed, design, chromosomes)$bins$fraction else numeric()
     c(stats::setNames(dna$groupedSfsPerSite,
                      paste0("sfs_", names(dna$groupedSfsPerSite))),
-      stats::setNames(ld$bins$meanRho2, paste0("ld_", seq_len(nrow(ld$bins)))))
+      stats::setNames(ld$bins$meanRho2, paste0("ld_", seq_len(nrow(ld$bins)))),
+      stats::setNames(ibd, paste0("ibd_", seq_along(ibd))))
+}
+
+# The classroom DNA has known phase. One sampled haplotype per person is used
+# for both LD and long-segment matching; invariant and rare sites are excluded
+# from matching, while diversity and the SFS use every analyzed base.
+populationIbdSummary <- function(observed, design, chromosomes) {
+    markers <- observed$markers
+    take <- markers$chromosome %in% chromosomes
+    h <- observed$haplotypes[seq.int(1L, nrow(observed$haplotypes), 2L), take, drop = FALSE]
+    m <- markers[take, , drop = FALSE]
+    lengths <- vapply(split(m$genetic_position, m$chromosome),
+        function(p) 100 * diff(range(p)), numeric(1))
+    p <- colMeans(h)
+    use <- p >= design$ibd_minimum_maf & p <= 1 - design$ibd_minimum_maf
+    segments <- if (any(use)) detectIbdSegments(h[, use, drop = FALSE],
+        m$genetic_position[use], m$chromosome[use], wordSize = 1L,
+        minimumCm = design$ibd_length_breaks[1L]) else
+        data.frame(lengthCm = numeric())
+    pairs <- choose(nrow(h), 2L)
+    list(segments = segments, haplotypePairs = pairs, chromosomeLengthsCm = lengths,
+        markersUsed = sum(use), bins = summarizeIbdSharing(segments, pairs, lengths,
+                                                          design$ibd_length_breaks))
 }
 
 examplePopulationPredictions <- function(candidates, design, banks, workers = 1L) {
@@ -103,11 +137,14 @@ examplePopulationPredictions <- function(candidates, design, banks, workers = 1L
 populationHistoryDesign <- function() {
     design <- list(ancestral_size = 100L, founder_size = 20L,
         bottleneck_generations = 20L, expansion_generations = 40L,
-        present_size = 1000L, chromosomes = 8L, sites_per_chromosome = 2000L,
+        present_size = 1000L, chromosomes = 8L, sites_per_chromosome = 10000L,
         mutation_rate = 2.5e-5, genetic_length_morgan = .2,
         sample_diploids = 64L, burnin_generations = 1000L,
         observation_seed = 20261103L, ld_distance_breaks = c(.03, .07, .12, .2),
-        fitting_chromosomes = 1:6, checking_chromosomes = 7:8)
+        fitting_chromosomes = 1:6, checking_chromosomes = 7:8,
+        sfs_group_breaks = c(0, 1, 2, 4, 8, 16, 32, Inf),
+        history_ld_distance_breaks = c(.03, .05, .07, .10, .13, .16, .20),
+        ibd_length_breaks = c(8, 10, 14, Inf), ibd_minimum_maf = .1)
     candidates <- list(expansion_only = list(founder = NULL, small = 100L,
         duration = 20L, growth = 40L), shallow_founding = list(founder = 40L,
         small = 40L, duration = 20L, growth = 40L),
@@ -117,8 +154,8 @@ populationHistoryDesign <- function() {
         "20 founders, 60 generations ago", "20 founders, 100 generations ago"),
         names(candidates))
     banks <- lapply(seq_along(candidates), function(j)
-        list(training_seeds = as.integer(100000L + 1000L * j + 1:12),
-             calibration_seeds = as.integer(200000L + 1000L * j + 1:20)))
+        list(training_seeds = as.integer(100000L + 1000L * j + 1:40),
+             calibration_seeds = as.integer(200000L + 1000L * j + 1:40)))
     names(banks) <- names(candidates)
     list(design = design, candidates = candidates, labels = labels, banks = banks)
 }
@@ -146,8 +183,8 @@ populationHistoryPredictions <- function(predictionData = populationHistoryDesig
 
 #' Run the complete population-history worked example
 #'
-#' Use the same final DNA for diversity, LD, and candidate-history comparison.
-#' The example selects one homologue per individual for LD and reserves the
+#' Use the same final DNA for diversity, LD, IBD and candidate-history comparison.
+#' The example selects one haplotype per individual for LD and reserves the
 #' chromosomes declared in the supplied design for a prediction check.
 #' Simulation, estimation and comparison call the reusable hpgR functions.
 #'
@@ -222,6 +259,11 @@ populationHistoryExample <- function(observed, calibration, predictionData,
         chromosome = observed$markers$chromosome,
         distanceBreaks = design$ld_distance_breaks,
         maxPairs = 500000L, seed = 101L)
+    ibd_summary <- if (!is.null(design$ibd_length_breaks))
+        populationIbdSummary(observed, design, seq_len(design$chromosomes)) else NULL
+    ibd_fit <- if (!is.null(ibd_summary)) estimateIbdSize(ibd_summary$segments,
+        ibd_summary$haplotypePairs, ibd_summary$chromosomeLengthsCm,
+        lengthBreaks = design$ibd_length_breaks) else NULL
     fit_features <- populationSampleFeatures(observed, design,
                                               design$fitting_chromosomes)
     check_features <- populationSampleFeatures(observed, design,
@@ -232,7 +274,7 @@ populationHistoryExample <- function(observed, calibration, predictionData,
                                           lapply(banks, `[[`, "cal_check"))
     list(simulation = simulation, dna_summary = dna_summary,
          diversity_fit = diversity_fit, finite_state_fit = finite_state_fit,
-         ld_fit = ld_fit, fit_features = fit_features, check_features = check_features,
+         ld_fit = ld_fit, ibd_summary = ibd_summary, ibd_fit = ibd_fit, fit_features = fit_features, check_features = check_features,
          history_library = history_library, heldout_library = heldout_library,
          history_fit = comparePopulationHistories(fit_features, history_library),
          history_check = comparePopulationHistories(check_features, heldout_library))

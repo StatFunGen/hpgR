@@ -312,3 +312,65 @@ estimateFromGenerations <- function(parent_frequency, offspring_frequency) {
     c(parental_p = p, transitions = length(changes), variance = s2,
       c_V = c_V, Ne_V = 1 / (2 * c_V))
 }
+
+#' Genome fractions shared in IBD length bins
+#' @param segments Segment table from detectIbdSegments.
+#' @param haplotypePairs Number of compared haplotype pairs, including pairs with no segments.
+#' @param chromosomeLengthsCm Analyzed lengths of all chromosomes in cM.
+#' @param lengthBreaks Increasing cM boundaries, ending with Inf.
+#' @return Data frame with length boundaries, counts, total shared cM and
+#'   genome fractions averaged over haplotype pairs.
+#' @export
+summarizeIbdSharing <- function(segments, haplotypePairs, chromosomeLengthsCm,
+                               lengthBreaks = c(8, 10, 14, Inf)) {
+    checkInputs(haplotypePairs = positiveScalar,
+        chromosomeLengthsCm = list(numericVector, minimum = 0))
+    if (length(lengthBreaks) < 2L || anyNA(lengthBreaks) ||
+        any(!is.finite(head(lengthBreaks, -1L))) || any(diff(lengthBreaks) <= 0) || lengthBreaks[1L] <= 0 ||
+        !is.infinite(tail(lengthBreaks, 1L)) ||
+        !is.data.frame(segments) || !"lengthCm" %in% names(segments) ||
+        any(!is.finite(segments$lengthCm) | segments$lengthCm < 0) ||
+        sum(chromosomeLengthsCm) <= 0)
+        stop("supply valid segments, positive analyzed length and increasing bins ending in Inf",
+             call. = FALSE)
+    bin <- cut(segments$lengthCm, lengthBreaks, right = FALSE, labels = FALSE)
+    count <- tabulate(bin, nbins = length(lengthBreaks) - 1L)
+    shared <- vapply(seq_along(count), function(b)
+        sum(segments$lengthCm[!is.na(bin) & bin == b]), numeric(1))
+    data.frame(lowerCm = head(lengthBreaks, -1L), upperCm = tail(lengthBreaks, -1L),
+        count = count, sharedCm = shared,
+        fraction = shared / (haplotypePairs * sum(chromosomeLengthsCm)))
+}
+
+#' Fit a constant effective size to long IBD sharing
+#'
+#' Minimize squared differences of log genome fractions, using the bin criterion
+#' of Carmi et al. (2014) and the finite-chromosome expectation in
+#' expectedIbdLength. A changing population history need not fit any constant size.
+#' @inheritParams summarizeIbdSharing
+#' @param limits Lower and upper diploid effective sizes searched.
+#' @param maxGeneration Number of ancestral generations in the expectation sum.
+#' @return Ne, observed and predicted bin fractions, log-scale loss, and limits.
+#'   The result is NA when any observed bin is empty; the positive-bin log fit
+#'   then requires a different prespecified binning or a count likelihood.
+#' @export
+estimateIbdSize <- function(segments, haplotypePairs, chromosomeLengthsCm,
+                            lengthBreaks = c(8, 10, 14, Inf),
+                            limits = c(2, 1e6), maxGeneration = 1000L) {
+    checkInputs(limits = list(numericVector, length = 2L, minimum = .5,
+                              nondecreasing = TRUE, distinct = TRUE),
+                maxGeneration = scalarInteger)
+    bins <- summarizeIbdSharing(segments, haplotypePairs, chromosomeLengthsCm, lengthBreaks)
+    predict <- function(size) {
+        tails <- vapply(lengthBreaks, function(c)
+            if (is.finite(c)) sum(expectedIbdLength(rep(size, maxGeneration), c,
+                chromosomeLengthsCm)) / sum(chromosomeLengthsCm) else 0, numeric(1))
+        head(tails, -1L) - tail(tails, -1L)
+    }
+    if (any(bins$fraction == 0)) return(list(Ne = NA_real_, bins = bins,
+        predicted = rep(NA_real_, nrow(bins)), loss = NA_real_, limits = limits))
+    fit <- stats::optimize(function(logSize)
+        sum((log(bins$fraction) - log(predict(exp(logSize))))^2), log(limits))
+    list(Ne = exp(fit$minimum), bins = bins, predicted = predict(exp(fit$minimum)),
+         loss = fit$objective, limits = limits)
+}

@@ -17,7 +17,7 @@ simupopPopulation <- function(sizes, loci, mutationRate, reverseMutationRate,
         nextGeneration <- function(h, size) {
             h <- simupopMutate(h, mutationRate, reverseMutationRate)
             parents <- simupopParents(nrow(h) %/% 2L, size)
-            simupopMeiosis(h, parents, loci, fractions)
+            simupopMeiosis(h, parents, loci, fractions, binary = TRUE)
         }
         summarize <- function(generation, h, p = colMeans(h)) {
             c(generation = generation, size = nrow(h) / 2L,

@@ -63,7 +63,7 @@ for (name in names(books)) {
         !any(trimws(code) == "library(hpgR)"),
         !any(grepl(".p7_eval(", code, fixed = TRUE)),
         all(vapply(cells[nzchar(trimws(code))], function(c) !is.null(c$execution_count), TRUE)))
-    plotting_helpers <- c('drawFigure', 'drawTree', 'drawCarriers',
+    plotting_helpers <- c('drawFigure', 'drawPredictionPanel', 'drawTree', 'drawCarriers',
         'cladeNodes', 'treePositions', 'drawRecordedTree')
     for (part in code) for (expr in parse(text = part)) {
         if (is.call(expr) && identical(expr[[1L]], as.name('<-')) &&

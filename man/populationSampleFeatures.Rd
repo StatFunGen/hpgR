@@ -14,7 +14,7 @@ populationSampleFeatures(observed, design, chromosomes)
 \item{chromosomes}{Chromosomes used for this calculation.}
 }
 \value{
-Grouped SFS proportions and distance-binned LD.
+Grouped SFS proportions, distance-binned LD and long IBD sharing.
 }
 \description{
 Sequence summaries for population-history comparison

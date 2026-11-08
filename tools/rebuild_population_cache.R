@@ -15,7 +15,9 @@ simulation <- simulatePopulationHistory(
     specification$design$observation_seed, recordEvery = 1L)
 saveRDS(simulation$observed, file.path(directory, "observed.rds"), version = 3)
 saveRDS(simulation$calibration, file.path(directory, "calibration.rds"), version = 3)
-cat("Generating 128 independent R replicates using", workers, "workers\n")
+replicateCount <- sum(vapply(specification$banks, function(b)
+    length(b$training_seeds) + length(b$calibration_seeds), integer(1)))
+cat("Generating", replicateCount, "independent R replicates using", workers, "workers\n")
 started <- proc.time()
 predictions <- populationHistoryPredictions(specification, workers)
 saveRDS(predictions, file.path(directory, "history_predictions.rds"), version = 3)
@@ -28,8 +30,8 @@ manifest <- list(schema_version = 2L, engine = "hpgR", language = "R",
     canonical_notebook = "P8149_Lecture_9_Effective_Size_and_History.ipynb",
     files = c("observed.rds", "calibration.rds", "history_predictions.rds"),
     generation_design = design, candidates = specification$candidates,
-    prediction_replicates_per_candidate = 12L,
-    calibration_replicates_per_candidate = 20L,
+    prediction_replicates_per_candidate = length(specification$banks[[1L]]$training_seeds),
+    calibration_replicates_per_candidate = length(specification$banks[[1L]]$calibration_seeds),
     seed_ledger = predictions$seed_ledger,
     observation = list(diploid_individuals = design$sample_diploids,
         phased_haplotypes = 2L * design$sample_diploids,

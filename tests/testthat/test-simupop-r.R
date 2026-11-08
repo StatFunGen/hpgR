@@ -212,3 +212,20 @@ test_that("supplied parent and individual-sampling records replay exactly", {
     expect_length(unique(recorded$indices), 3L)
     expect_identical(sample_individuals(h, 3L, indices = recorded$indices), recorded)
 })
+test_that("binary copying preserves states and the full-map random stream", {
+    copy <- hpgR:::simupopMeiosis
+    for (seed in 1:20) {
+        set.seed(seed)
+        h <- matrix(rbinom(20*200,1,.15),20,200)
+        h[,1:60] <- 0L; h[,61:90] <- 1L
+        parents <- sample.int(10,40,replace=TRUE)
+        fractions <- list(rep(.001,99),rep(.01,99))
+        state <- get(".Random.seed", .GlobalEnv)
+        original <- copy(h,parents,c(100L,100L),fractions,returnEvents=TRUE)
+        final <- get(".Random.seed", .GlobalEnv)
+        assign(".Random.seed", state, .GlobalEnv)
+        fast <- copy(h,parents,c(100L,100L),fractions,returnEvents=TRUE,binary=TRUE)
+        expect_identical(fast,original)
+        expect_identical(get(".Random.seed", .GlobalEnv),final)
+    }
+})

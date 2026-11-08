@@ -119,7 +119,7 @@ simupopSwitches <- function(gametes, probabilities) {
 # matrix has columns gamete and after, where after is a chromosome-local site
 # index: switching after site k changes the source beginning at site k+1.
 simupopMeiosis <- function(haplotypes, parents, loci, fractions,
-                            events = NULL, returnEvents = FALSE) {
+                            events = NULL, returnEvents = FALSE, binary = FALSE) {
     if (!is.matrix(haplotypes) || !is.numeric(haplotypes) ||
         !nrow(haplotypes) || nrow(haplotypes) %% 2L || !ncol(haplotypes)) {
         stop("haplotypes must have two rows for each parental diploid",
@@ -170,11 +170,21 @@ simupopMeiosis <- function(haplotypes, parents, loci, fractions,
         switches <- events$switches
     }
     offspring <- matrix(0L, nrow = gametes, ncol = ncol(haplotypes))
+    # All transmission events above use the full map. Constant binary columns
+    # have the same offspring state for every parent choice and switch path.
+    variable <- rep(TRUE, ncol(haplotypes))
+    if (binary) {
+        counts <- colSums(haplotypes)
+        fixedOne <- which(counts == nrow(haplotypes))
+        if (length(fixedOne)) offspring[, fixedOne] <- 1L
+        variable <- counts > 0 & counts < nrow(haplotypes)
+    }
     offset <- 0L
     for (j in seq_along(loci)) {
         columns <- seq.int(offset + 1L, offset + loci[j])
+        active <- columns[variable[columns]]
         source <- 2L * parents - 1L + starts[, j]
-        offspring[, columns] <- haplotypes[source, columns, drop = FALSE]
+        if (length(active)) offspring[, active] <- haplotypes[source, active, drop = FALSE]
         changes <- switches[[j]]
         if (!is.matrix(changes) || !is.numeric(changes) || ncol(changes) != 2L ||
             any(!is.finite(changes)) || any(changes != floor(changes)) ||
@@ -192,7 +202,7 @@ simupopMeiosis <- function(haplotypes, parents, loci, fractions,
                 other <- 2L * parents[gamete] - starts[gamete, j]
                 ends <- c(cuts[-1L], loci[j])
                 for (k in seq.int(1L, length(cuts), 2L)) {
-                    replace <- seq.int(offset + cuts[k] + 1L, offset + ends[k])
+                    replace <- active[active > offset + cuts[k] & active <= offset + ends[k]]
                     offspring[gamete, replace] <- haplotypes[other, replace]
                 }
             }

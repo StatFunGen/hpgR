@@ -32,8 +32,8 @@ A list with simulation records (when requested), DNA summaries,
   fitted history and held-out check.
 }
 \description{
-Use the same final DNA for diversity, LD, and candidate-history comparison.
-The example selects one homologue per individual for LD and reserves the
+Use the same final DNA for diversity, LD, IBD and candidate-history comparison.
+The example selects one haplotype per individual for LD and reserves the
 chromosomes declared in the supplied design for a prediction check.
 Simulation, estimation and comparison call the reusable hpgR functions.
 }

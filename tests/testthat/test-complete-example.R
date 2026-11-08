@@ -26,7 +26,7 @@ test_that("the population-history recipe fixes independent R replicate seeds", {
     expect_length(x$candidates, 4L)
     seeds <- unlist(lapply(x$banks, function(b)
         c(b$training_seeds, b$calibration_seeds)))
-    expect_length(seeds, 128L)
+    expect_length(seeds, 320L)
     expect_false(anyDuplicated(seeds) > 0L)
     expect_false(x$design$observation_seed %in% seeds)
 })
@@ -48,7 +48,7 @@ test_that("serial and parallel R prediction rebuilds use identical seeded draws"
     x$banks <- list(a = list(training_seeds = 38001:38002, calibration_seeds = 38101:38102),
         b = list(training_seeds = 38201:38202, calibration_seeds = 38301:38302))
     serial <- populationHistoryPredictions(x)
-    expect_identical(dim(serial$banks$a$train_fit), c(2L, 6L))
+    expect_identical(dim(serial$banks$a$train_fit), c(2L, 16L))
     expect_true(all(is.finite(serial$banks$a$train_fit)))
     if (.Platform$OS.type != "windows") {
         parallel <- populationHistoryPredictions(x, workers = 2L)
