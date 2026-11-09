@@ -175,3 +175,96 @@ fitHistorySpectrum <- function(spectra, mutationRate, sequenceLength,
         constantNe = constant,
         constantExpected = expectedSFS(n, constant, mutationRate, exposures))
 }
+
+#' Fit bottleneck size and date from chromosome spectra
+#'
+#' Profile a classical SFS Poisson composite likelihood over ancestral size.
+#' Expectations call expectedHistorySFS(), from Daniel Nachun's
+#' demographyTools::.sfs_expected_single_pop. The recent history has a fixed
+#' bottleneck duration followed by exponential growth to the supplied size.
+#' @inheritParams fitHistorySpectrum
+#' @param bottleneckSizes Candidate positive integer diploid bottleneck sizes.
+#' @param bootstrapReplicates Number of whole-chromosome bootstrap refits.
+#' @param seed Seed for bootstrap resampling; the caller's RNG is restored.
+#' @return A list with estimate, profile, expected and observed spectra,
+#'   bootstrap estimates, marginal percentile intervals and supplied settings.
+#'   Dates are generations before the sample. Intervals describe chromosome
+#'   variation conditional on the model, supplied rates and sampled pedigree.
+#' @references Pritchard, An Owner's Guide to the Human Genome, Section 3.3.
+#'   Handbook of Statistical Genomics (2019), Chapter 8, Equation 8.15.
+#' @examples
+#' counts <- rbind(c(30, 12, 8), c(28, 14, 7))
+#' fitBottleneckSpectrum(counts, 1e-5, 10000,
+#'     bottleneckSizes = c(10, 20), growthGenerations = c(20, 40))
+#' @export
+fitBottleneckSpectrum <- function(spectra, mutationRate, sequenceLength,
+    bottleneckSizes = seq.int(2L, 100L, 2L),
+    growthGenerations = seq.int(5L, 120L, 5L),
+    bottleneckGenerations = 20L, presentSize = 1000L,
+    bounds = c(2, 10000), bootstrapReplicates = 0L, seed = 20261108L) {
+    checkInputs(spectra = list(numericMatrix, minimum = 0, columns = 2L),
+        mutationRate = positiveScalar, sequenceLength = positiveScalar,
+        bottleneckSizes = list(numericVector, minimum = 1, integer = TRUE, distinct = TRUE),
+        growthGenerations = list(numericVector, minimum = 1, integer = TRUE, distinct = TRUE),
+        bottleneckGenerations = scalarInteger, presentSize = scalarInteger,
+        bounds = list(numericVector, length = 2L, minimum = .Machine$double.xmin),
+        bootstrapReplicates = list(scalarInteger, minimum = 0L),
+        seed = list(scalarInteger, minimum = 0L))
+    if (bounds[1L] >= bounds[2L] || max(bottleneckSizes) >= min(bounds[2L], presentSize))
+        stop("Bottleneck sizes must be below present size and the upper ancestral bound",
+             call. = FALSE)
+    if (any(spectra != floor(spectra)))
+        stop("SFS entries must be integer site counts", call. = FALSE)
+    if (bootstrapReplicates > 0L && nrow(spectra) < 2L)
+        stop("Bootstrap refits require at least two chromosomes", call. = FALSE)
+    grid <- expand.grid(bottleneckSize = sort(bottleneckSizes),
+                        growthGenerations = sort(growthGenerations))
+    n <- ncol(spectra) + 1L
+    exposure <- nrow(spectra) * sequenceLength
+    # The source expectation is affine in the ancestral tail size. Two
+    # source-kernel calls cache that dependence for every grid cell and refit.
+    basis <- lapply(seq_len(nrow(grid)), function(i) {
+        b <- grid$bottleneckSize[i]
+        g <- grid$growthGenerations[i]
+        schedule <- c(rep(b, bottleneckGenerations),
+            round(exp(seq(log(b), log(presentSize), length.out = g + 1L)))[-1L])
+        parents <- head(c(b, schedule), -1L)
+        p1 <- expectedHistorySFS(n, c(1, parents), mutationRate, exposure)
+        p2 <- expectedHistorySFS(n, c(2, parents), mutationRate, exposure)
+        list(intercept = 2 * p1 - p2, slope = p2 - p1)
+    })
+    profileCounts <- function(counts) {
+        fits <- lapply(seq_along(basis), function(i) {
+            p <- basis[[i]]
+            stats::optimize(function(logN)
+                -sum(stats::dpois(counts, p$intercept + exp(logN) * p$slope, log = TRUE)),
+                log(c(max(bounds[1L], grid$bottleneckSize[i]), bounds[2L])))
+        })
+        data.frame(grid,
+            ancestralSize = exp(vapply(fits, function(f) f$minimum, 0)),
+            logLikelihood = -vapply(fits, function(f) f$objective, 0))
+    }
+    bestEstimate <- function(profile) {
+        row <- profile[which.max(profile$logLikelihood), ]
+        c(bottleneckSize = row$bottleneckSize,
+          growthGenerations = row$growthGenerations,
+          ancestralSize = row$ancestralSize,
+          bottleneckBegan = row$growthGenerations + bottleneckGenerations)
+    }
+    observed <- colSums(spectra)
+    profile <- profileCounts(observed)
+    estimate <- bestEstimate(profile)
+    at <- which.max(profile$logLikelihood)
+    bootstrap <- pgWithSeed(seed, function() {
+        t(vapply(seq_len(bootstrapReplicates), function(i)
+            bestEstimate(profileCounts(colSums(spectra[
+                sample.int(nrow(spectra), nrow(spectra), replace = TRUE), , drop = FALSE]))),
+            estimate))
+    })
+    list(estimate = estimate, profile = profile, observed = observed,
+         expected = basis[[at]]$intercept + estimate[["ancestralSize"]] * basis[[at]]$slope,
+         bootstrap = bootstrap, interval = if (bootstrapReplicates)
+             apply(bootstrap, 2L, stats::quantile, c(.025, .975)) else NULL,
+         settings = list(bottleneckGenerations = bottleneckGenerations,
+             presentSize = presentSize, bounds = bounds))
+}
