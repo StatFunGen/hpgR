@@ -134,10 +134,14 @@ main <- function() {
     for (lecture in sort(unique(vapply(selected, `[[`, 0L, 'lecture')))) {
         entries <- Filter(function(entry) entry$lecture == lecture, selected)
         toc <- c(toc, paste0('    - title: Lecture ', lecture), '      children:')
-        home <- c(home, '', paste0('## Lecture ', lecture), '',
-            '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
-        for (entry in entries) {
+        home <- c(home, '', paste0('## Lecture ', lecture), '')
+        if (lecture == 9L)
+            home <- c(home, 'Read 1 and 2 first. In notebook 3, start at **Fit a population size history from the same sample** for the classroom example. Notebook 4 is for self-study.', '')
+        home <- c(home, '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
+        for (i in seq_along(entries)) {
+            entry <- entries[[i]]
             label <- titles[entry$file]
+            if (lecture == 9L) label <- paste0(i, '. ', label)
             toc <- c(toc, paste0('        - file: ', entry$file),
                 paste0('          title: ', quoteYaml(label)))
             home <- c(home, paste0(':::{card} ', label),

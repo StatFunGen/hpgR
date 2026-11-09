@@ -174,10 +174,6 @@
       "title": "Population structure genotypes (RDS)"
     },
     {
-      "file": "data/P8149_Homework_9_Toy_Sequences.csv",
-      "title": "Ancestral and derived sequence states (CSV)"
-    },
-    {
       "file": "data/population_history/ancestry_truth.rds",
       "title": "Recorded point genealogies of the shared forward population (RDS)"
     }
