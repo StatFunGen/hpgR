@@ -7,6 +7,13 @@ Teaching examples and data downloads are listed in `catalog.json`.
 `data/` contains their inputs. Models and estimators live in hpgR; figures
 and plotting helpers live in the notebooks.
 
+Lecture 9 runs in this order: final-sample size and history, recorded
+ancestry and waiting times, then mutation counts and population size history.
+Lecture 10 starts with split and migration, then differentiation, Manhattan
+rats, archaic gene flow, and the local genealogy appendix. Each notebook
+runs on its own. The Lecture 9 panel and the Lecture 10 appendix read the
+same RDS files under `data/population_history/`.
+
 Assignment requirements and function suggestions are in the lecture slides.
 Students write their own reports using hpgR and the supplied data.
 

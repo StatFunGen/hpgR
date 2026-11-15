@@ -110,13 +110,7 @@
       "website": true
     },
     {
-      "file": "P8149_Lecture_9_Ancestral_Graphs.ipynb",
-      "lecture": 9,
-      "role": "teaching_demonstration",
-      "website": true
-    },
-    {
-      "file": "P8149_Lecture_10_Differentiation_Is_Not_History.ipynb",
+      "file": "P8149_Lecture_10_Split_Drift_Migration.ipynb",
       "lecture": 10,
       "role": "teaching_demonstration",
       "website": false
@@ -128,13 +122,19 @@
       "website": false
     },
     {
-      "file": "P8149_Lecture_10_Split_Drift_Migration.ipynb",
+      "file": "P8149_Lecture_10_Manhattan_Rats_and_Migration_Barriers.ipynb",
       "lecture": 10,
       "role": "teaching_demonstration",
       "website": false
     },
     {
-      "file": "P8149_Lecture_10_Wahlund_Effect.ipynb",
+      "file": "P8149_Lecture_10_Archaic_Gene_Flow.ipynb",
+      "lecture": 10,
+      "role": "teaching_demonstration",
+      "website": false
+    },
+    {
+      "file": "P8149_Lecture_10_Ancestral_Graphs.ipynb",
       "lecture": 10,
       "role": "teaching_demonstration",
       "website": false

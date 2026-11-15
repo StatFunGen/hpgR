@@ -6,6 +6,7 @@
 \alias{models_demographic_processes}
 \alias{poolAlleleFrequencies}
 \alias{simulateMigrationDrift}
+\alias{simulateDemeFrequencies}
 \alias{migrationFrequencies}
 \alias{pairwiseFst}
 \alias{frequencyDifferentiation}
@@ -16,6 +17,8 @@ zeroCountUpperBound(n, confidence = 0.95)
 poolAlleleFrequencies(p, weights = rep(1/length(p), length(p)))
 
 simulateMigrationDrift(start, Ne, m, generations)
+
+simulateDemeFrequencies(frequencies, Ne, migration, generations)
 
 migrationFrequencies(p1, p2, m, generations)
 
@@ -40,15 +43,22 @@ frequencyDifferentiation(p)
 
 \item{generations}{Nonnegative integer number of reproductive updates.}
 
+\item{frequencies}{Matrix of starting allele frequencies, with demes in rows
+and independent loci in columns.}
+
+\item{migration}{Square matrix whose rows give the parental source
+probabilities for each destination deme.}
+
 \item{p1}{Frequency or frequency vector for population one.}
 
 \item{p2}{Frequency or equal-length frequency vector for population two.}
 }
 \value{
-poolAlleleFrequencies returns source and pooled genotype probabilities, pooled_p, H_S, H_T and F_ST. Migration functions return generation-by-two-population matrices including generation zero. pairwiseFst returns an elementwise vector; frequencyDifferentiation returns p_bar, H_T, H_S and F_ST. F_ST is NA when pooled heterozygosity is zero. zeroCountUpperBound returns one binomial probability bound per n.
+`simulateDemeFrequencies()` returns a deme-by-locus matrix of final
+  allele frequencies. poolAlleleFrequencies returns source and pooled genotype probabilities, pooled_p, H_S, H_T and F_ST. Migration functions return generation-by-two-population matrices including generation zero. pairwiseFst returns an elementwise vector; frequencyDifferentiation returns p_bar, H_T, H_S and F_ST. F_ST is NA when pooled heterozygosity is zero. zeroCountUpperBound returns one binomial probability bound per n.
 }
 \description{
-Pooling combines source Hardy--Weinberg genotype frequencies without remating. Migration exchanges a fraction m symmetrically between two populations; the drift simulator then draws 2Ne allele copies independently within each population.
+Pooling combines source Hardy--Weinberg genotype frequencies without remating. Migration exchanges a fraction m symmetrically between two populations; the drift simulator then draws 2Ne allele copies independently within each population. The deme model applies the same update at independent loci using a migration matrix.
 }
 \examples{
 poolAlleleFrequencies(c(.2,.8))

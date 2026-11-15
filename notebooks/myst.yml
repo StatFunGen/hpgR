@@ -7,7 +7,7 @@ project:
   license: BSD-3-Clause
 
 site:
-  template: book-theme
+  template: https://github.com/jupyter-book/myst-theme/releases/download/myst-to-react%401.4.1/book-theme.zip
   title: P8149 Human Population Genetics
   actions:
     - title: GitHub

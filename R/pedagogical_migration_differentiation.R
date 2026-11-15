@@ -1,6 +1,6 @@
 #' Allele-frequency pooling, migration and drift
 #'
-#' Pooling combines source Hardy--Weinberg genotype frequencies without remating. Migration exchanges a fraction m symmetrically between two populations; the drift simulator then draws 2Ne allele copies independently within each population.
+#' Pooling combines source Hardy--Weinberg genotype frequencies without remating. Migration exchanges a fraction m symmetrically between two populations; the drift simulator then draws 2Ne allele copies independently within each population. The deme model applies the same update at independent loci using a migration matrix.
 #'
 #' @name models_demographic_processes
 #' @param p1 Frequency or frequency vector for population one.
@@ -13,7 +13,12 @@
 #' @param weights Nonnegative source weights summing to one, one per frequency.
 #' @param start Numeric vector of two starting allele frequencies.
 #' @param Ne Positive integer diploid population size per population.
-#' @returns poolAlleleFrequencies returns source and pooled genotype probabilities, pooled_p, H_S, H_T and F_ST. Migration functions return generation-by-two-population matrices including generation zero. pairwiseFst returns an elementwise vector; frequencyDifferentiation returns p_bar, H_T, H_S and F_ST. F_ST is NA when pooled heterozygosity is zero. zeroCountUpperBound returns one binomial probability bound per n.
+#' @param frequencies Matrix of starting allele frequencies, with demes in rows
+#'   and independent loci in columns.
+#' @param migration Square matrix whose rows give the parental source
+#'   probabilities for each destination deme.
+#' @returns `simulateDemeFrequencies()` returns a deme-by-locus matrix of final
+#'   allele frequencies. poolAlleleFrequencies returns source and pooled genotype probabilities, pooled_p, H_S, H_T and F_ST. Migration functions return generation-by-two-population matrices including generation zero. pairwiseFst returns an elementwise vector; frequencyDifferentiation returns p_bar, H_T, H_S and F_ST. F_ST is NA when pooled heterozygosity is zero. zeroCountUpperBound returns one binomial probability bound per n.
 #' @examples
 #' poolAlleleFrequencies(c(.2,.8))
 #' migrationFrequencies(.2,.8,.05,3)
@@ -48,6 +53,22 @@ simulateMigrationDrift <- function(start, Ne, m, generations) {
     frequency[t + 1, ] <- rbinom(2, size = 2 * Ne, prob = mixed) / (2 * Ne)
   }
   frequency
+}
+
+#' @rdname models_demographic_processes
+#' @export
+simulateDemeFrequencies <- function(frequencies, Ne, migration, generations) {
+    checkInputs(frequencies = list(numericMatrix, minimum = 0, maximum = 1),
+                Ne = scalarInteger, migration = list(numericMatrix, minimum = 0, maximum = 1),
+                generations = list(scalarInteger, minimum = 0L))
+    demes <- nrow(frequencies)
+    if (!all(dim(migration) == demes) || any(abs(rowSums(migration) - 1) > 1e-12))
+        stop("migration must have one row per deme and row sums of one", call. = FALSE)
+    for (g in seq_len(generations)) {
+        mixed <- migration %*% frequencies
+        frequencies[] <- rbinom(length(mixed), 2 * Ne, pmin(mixed, 1)) / (2 * Ne)
+    }
+    frequencies
 }
 
 #' @rdname models_demographic_processes

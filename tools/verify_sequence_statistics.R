@@ -23,7 +23,8 @@ header <- c(
     "#include <stdio.h>", "#include <stdlib.h>", "#include <stdbool.h>",
     "#include <assert.h>", "#include <math.h>",
     "typedef size_t tsk_size_t; typedef unsigned tsk_flags_t;",
-    "typedef struct { const tsk_size_t *sample_set_sizes; } sample_count_stat_params_t;",
+    "typedef int tsk_id_t;",
+    "typedef struct { const tsk_size_t *sample_set_sizes; const tsk_id_t *set_indexes; } sample_count_stat_params_t;",
     "typedef struct { tsk_size_t num_samples; } tsk_treeseq_t;",
     "typedef struct { tsk_size_t n, k; } tsk_site_t;",
     "#define TSK_UNUSED(x) x", "#define GET_2D_ROW(x,K,j) ((x)+(K)*(j))",
@@ -62,6 +63,14 @@ main <- c(
     "  D_summary_func(1,state,1,&d,&p); r2_summary_func(1,state,1,&r,&p);",
     "  printf(\"D\\t%zu\\t%zu\\t%zu\\t%zu\\t%.17g\\n\",n,a,b,c,d);",
     "  printf(\"r2\\t%zu\\t%zu\\t%zu\\t%zu\\t%.17g\\n\",n,a,b,c,r);",
+    " }",
+    " tsk_size_t sizes[]={2,3,4,5}; tsk_id_t sets[]={0,1,2,3};",
+    " sample_count_stat_params_t p={sizes,sets};",
+    " for (int a=0; a<=2; a++) for (int b=0; b<=3; b++)",
+    " for (int c=0; c<=4; c++) for (int d=0; d<=5; d++) {",
+    "   double x[]={a,b,c,d}, y[]={2-a,3-b,4-c,5-d}, f, g;",
+    "   f4_summary_func(4,x,1,&f,&p); f4_summary_func(4,y,1,&g,&p);",
+    "   printf(\"f4\\t%d\\t%d\\t%d\\t%d\\t%.17g\\n\",a,b,c,d,f+g);",
     " } return 0; }")
 directory <- tempfile("hpgr-statistics-")
 dir.create(directory)
@@ -69,13 +78,15 @@ cfile <- file.path(directory, "reference.c")
 writeLines(c(header, extract("fold", "inline void"),
              extract("tsk_treeseq_update_site_afs"),
              extract("diversity_summary_func"), extract("D_summary_func"),
-             extract("r2_summary_func"), main), cfile)
+             extract("r2_summary_func"), extract("f4_summary_func"), main), cfile)
 binary <- file.path(directory, "reference")
 status <- system2(Sys.getenv("CC", "cc"),
     c("-std=c99", "-O2", shQuote(cfile), "-lm", "-o", shQuote(binary)))
 stopifnot(status == 0L)
 output <- system2(binary, stdout = TRUE)
 reference <- read.delim(text = paste(output, collapse = "\n"), na.strings = c("nan", "-nan"))
+f4 <- subset(reference, kind == "f4")
+reference <- subset(reference, kind != "f4")
 actual <- vapply(seq_len(nrow(reference)), function(i) {
     r <- reference[i, ]
     switch(r$kind,
@@ -92,3 +103,11 @@ if (length(args) == 2L) write.table(reference, args[2L], sep = "\t", quote = FAL
                                   row.names = FALSE, na = "NaN")
 cat(sprintf("PASS: %d original-C statistic cases; max absolute difference %.3g\n",
             nrow(reference), error))
+actualF4 <- vapply(seq_len(nrow(f4)), function(i) {
+    r <- f4[i, ]
+    frequencyF4(r$n / 2, r$a / 3, r$b / 4, r$c / 5)
+}, numeric(1))
+errorF4 <- max(abs(actualF4 - f4$value))
+stopifnot(errorF4 < 2e-15)
+cat(sprintf("PASS: %d original-C f4 cases; max absolute difference %.3g\n",
+            nrow(f4), errorF4))

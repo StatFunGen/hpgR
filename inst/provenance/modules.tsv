@@ -35,11 +35,12 @@ pedagogical_haplotype_hmm.R	pedagogical		binary observations, donor-redraw simul
 pedagogical_linkage.R	pedagogical		count-based linkage likelihood and maximum LOD calculation
 pedagogical_kinship.R	pedagogical		PLINK-style IBS moments, frequency moments and KING formula with independent-marker family simulations
 pedagogical_population_structure.R	pedagogical		standardized PCA, binomial ancestry EM and local ancestry association; current notebook equations and fixed-seed parity
-pedagogical_migration_differentiation.R	pedagogical		two-population migration and finite sampling; frequency-based differentiation and HWE pooling
+pedagogical_migration_differentiation.R	pedagogical		migration matrices and finite sampling; frequency-based differentiation and HWE pooling
 pedagogical_selection.R	pedagogical		diploid viability selection, deterministic trajectories and binomial sampling controls
 pedagogical_quantitative_traits.R	pedagogical		Gaussian and marker-effect traits, sibling covariance, standardized GRM and profile ML; fixed-seed notebook parity
-sequence_statistics.R	upstream	tskit-site-statistics	biallelic complete-call diversity, D, r2 and one-sample-set SFS kernels; direct original-C oracle comparisons
+sequence_statistics.R	upstream	tskit-site-statistics	biallelic complete-call diversity, D, r2, f4 and one-sample-set SFS kernels; direct original-C oracle comparisons
 pedagogical_demographic_inference.R	pedagogical		candidate-history discrepancies and terminal-extension likelihood; independent calibration and optimizer checks
 pedagogical_genetic_drift.R	pedagogical		finite-population allele counts, mutation paths, drift moments and binomial bounds; analytical and seeded cases
 ibd_segments.R	upstream	ibd-word-matching	fixed-word match extension and gap expiry; original C++ interval and length fixtures
 ibd_sharing.R	upstream	ibd-length-expectation	discrete-generation shared ancestry probability and finite-chromosome expected shared length; original C++ fixtures
+pedagogical_structured_ancestry.R	pedagogical		Discrete two-deme pair coalescence and three-lineage split/pulse site-pattern model.

@@ -95,6 +95,7 @@ main <- function() {
             book$cells), function(cell) paste(cell$source, collapse = ''), ''), collapse = '\n')
         local <- regmatches(markdown, gregexpr(
             '(?:data|assets|widgets)/[A-Za-z0-9_./-]+', markdown, perl = TRUE))[[1L]]
+        local <- local[!endsWith(local, '/')]
         dependencies <- unique(c(dependencies, local,
             names(book$metadata$notebook_input_sha256)))
         # Only publication metadata is added to the staged reading copy.
@@ -136,7 +137,7 @@ main <- function() {
         toc <- c(toc, paste0('    - title: Lecture ', lecture), '      children:')
         home <- c(home, '', paste0('## Lecture ', lecture), '')
         if (lecture == 9L)
-            home <- c(home, 'Read 1 and 2 first. In notebook 3, start at **Fit a population size history from the same sample** for the classroom example. Notebook 4 is for self-study.', '')
+            home <- c(home, 'Run these in order: estimate size from the final DNA, trace its sampled ancestors, then fit a size history from the frequency spectrum.', '')
         home <- c(home, '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
         for (i in seq_along(entries)) {
             entry <- entries[[i]]

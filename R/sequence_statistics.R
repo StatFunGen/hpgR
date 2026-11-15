@@ -21,3 +21,23 @@ tskitSfs <- function(count, n, polarised = TRUE) {
     if (polarised) tabulate(count, n - 1L) else
         tabulate(pmin(count, n - count), floor(n / 2))
 }
+
+#' Four-population allele-frequency statistic
+#'
+#' Average the biallelic site contributions to f4. The two allele
+#' orientations sum to (pA - pB) * (pC - pD) at each site.
+#' @param pA,pB,pC,pD Frequencies of the same allele at the same sites in
+#'   four disjoint samples, in the order f4(A, B; C, D).
+#' @return The mean f4 contribution per supplied site.
+#' @source Tskit's f4_summary_func in trees.c, supplied in Daniel Nachun's tskitR.
+#' @examples
+#' frequencyF4(c(.8, .7), c(.2, .3), c(.9, .6), c(.1, .5))
+#' @export
+frequencyF4 <- function(pA, pB, pC, pD) {
+    checkInputs(pA = list(probability, length = NULL),
+        pB = list(probability, length = length(pA)),
+        pC = list(probability, length = length(pA)),
+        pD = list(probability, length = length(pA)))
+    difference <- pC - pD
+    mean(pA * (1 - pB) * difference - (1 - pA) * pB * difference)
+}

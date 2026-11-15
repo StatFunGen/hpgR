@@ -9,7 +9,7 @@ popgen_files <- c("P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
     "P8149_Lecture_9_Effective_Size_and_History.ipynb",
     "P8149_Lecture_9_Two_DNA_Copies.ipynb",
     "P8149_Lecture_9_Mutations_on_a_Tree.ipynb",
-    "P8149_Lecture_9_Ancestral_Graphs.ipynb")
+    "P8149_Lecture_10_Ancestral_Graphs.ipynb")
 catalog <- if (file.exists(file.path(site,'catalog.json')))
     jsonlite::fromJSON(file.path(site,'catalog.json'),simplifyVector=FALSE) else NULL
 files <- if (is.null(catalog)) sort(list.files(site, '^P8149_Lecture_.*[.]ipynb$')) else
@@ -64,7 +64,7 @@ for (name in names(books)) {
         !any(grepl(".p7_eval(", code, fixed = TRUE)),
         all(vapply(cells[nzchar(trimws(code))], function(c) !is.null(c$execution_count), TRUE)))
     plotting_helpers <- c('drawFigure', 'drawPredictionPanel', 'drawTree', 'drawCarriers',
-        'cladeNodes', 'treePositions', 'drawRecordedTree')
+        'cladeNodes', 'treePositions', 'drawRecordedTree', 'drawFourCopyTree')
     for (part in code) for (expr in parse(text = part)) {
         if (is.call(expr) && identical(expr[[1L]], as.name('<-')) &&
             is.symbol(expr[[2L]]) && is.call(expr[[3L]]) &&
@@ -99,6 +99,8 @@ publicData <- function(name) {
     cell <- Filter(function(c) c$id == "public-data", books[[name]]$cells)
     stopifnot(length(cell) == 1L)
     env <- new.env(parent = .GlobalEnv)
+    old <- setwd(site)
+    on.exit(setwd(old))
     eval(parse(text = sourceText(cell[[1L]])), envir = env)
     env
 }
@@ -109,9 +111,9 @@ arg <- publicData(popgen_files[6L])
 stopifnot(identical(pair$observed, population$observed),
     identical(tree$observed, population$observed),
     identical(arg$observed, population$observed),
-    identical(pair$ancestry_truth, tree$ancestry_truth),
-    identical(tree$ancestry_truth, arg$ancestry_truth),
-    identical(tree$ancestry_truth, readRDS(file.path(site,
+    identical(pair$ancestry_truth, arg$ancestry_truth),
+    !exists("ancestry_truth", envir = tree, inherits = FALSE),
+    identical(arg$ancestry_truth, readRDS(file.path(site,
         "data/population_history/ancestry_truth.rds"))))
 for (name in c("observed", "calibration"))
     stopifnot(identical(get(name, population),
@@ -156,11 +158,13 @@ if (length(args) > 2L) {
         image <- matches(text, "\\\\includegraphics(?:\\[[^]]*\\])?\\{[^}]+\\}")
         for (item in image) {
             value <- sub("^.*\\{([^}]+)\\}$", "\\1", item)
-            if (startsWith(value, "figures/coalescent/simulation_inference/"))
+            if (startsWith(value, "figures/coalescent/simulation_inference/") ||
+                grepl("^figures/migration/(stepping_stone_barrier_simulation|abba_baba_simulation|f4_ancestry_ratio_simulation|migration_cross_population_(ancestry|differences))[.]pdf$", value))
                 figures <<- unique(c(figures, sub("[.]pdf$", "", basename(value))))
         }
     }
-    visit("lectures/columbia_2026_P8149/P8149_2026_Lecture_9.tex")
+    for (lecture in c(9L, 10L))
+        visit(sprintf("lectures/columbia_2026_P8149/P8149_2026_Lecture_%d.tex", lecture))
     textbook <- c(p7_pritchard_f2_57_complete = "Pritchard, Fig. 2.57")
     for (figure in setdiff(figures, names(textbook))) {
         owner <- vapply(books, function(book) sum(vapply(codeCells(book), function(c)
