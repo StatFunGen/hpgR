@@ -35,7 +35,7 @@ main <- function() {
     selected <- Filter(function(entry) isTRUE(entry$website), allEntries)
     if (!length(selected)) stop('The website publication list is empty')
     if (any(vapply(selected, function(entry)
-        !entry$lecture %in% c(2L, 3L, 8L, 9L) ||
+        !entry$lecture %in% c(2L, 3L, 8L, 9L, 10L) ||
         !identical(entry$role, 'teaching_demonstration') ||
         grepl('homework|answer|solution|midterm|instructor', entry$file, ignore.case = TRUE), TRUE)))
         stop('A notebook is outside the approved publication scope')
@@ -142,7 +142,7 @@ main <- function() {
         for (i in seq_along(entries)) {
             entry <- entries[[i]]
             label <- titles[entry$file]
-            if (lecture == 9L) label <- paste0(i, '. ', label)
+            if (lecture %in% c(9L, 10L)) label <- paste0(i, '. ', label)
             toc <- c(toc, paste0('        - file: ', entry$file),
                 paste0('          title: ', quoteYaml(label)))
             home <- c(home, paste0(':::{card} ', label),

@@ -15,11 +15,15 @@ main <- function() {
     entries <- catalog$notebooks
     selected <- Filter(function(entry) isTRUE(entry$website), entries)
     files <- vapply(selected, `[[`, '', 'file')
-    slugs <- tolower(gsub('_', '-', sub('[.]ipynb$', '', files)))
     config <- readJson(file.path(stage, '_build/site/config.json'))
     pages <- Filter(function(page) !is.null(page$slug), config$projects[[1L]]$pages)
-    stopifnot(setequal(slugs, vapply(pages, `[[`, '', 'slug')),
-        length(pages) == length(files))
+    slugs <- vapply(pages, `[[`, '', 'slug')
+    stopifnot(length(slugs) == length(files), !anyDuplicated(slugs))
+    rendered <- lapply(file.path(html, paste0(slugs, '.json')), readJson)
+    sourceUrls <- vapply(rendered, function(page) page$frontmatter$source_url, '')
+    expectedUrls <- paste0('https://github.com/StatFunGen/hpgR/blob/main/notebooks/', files)
+    stopifnot(setequal(sourceUrls, expectedUrls))
+    pageOrder <- match(expectedUrls, sourceUrls)
     hash <- function(path) {
         program <- Sys.which('shasum')
         arguments <- c('-a', '256', shQuote(path))
@@ -55,7 +59,7 @@ main <- function() {
     localLinks <- character()
     for (i in seq_along(files)) {
         name <- files[i]
-        page <- readJson(file.path(html, paste0(slugs[i], '.json')))
+        page <- rendered[[pageOrder[i]]]
         book <- readJson(file.path(source, name))
         expected <- c(name, names(book$metadata$notebook_input_sha256))
         expected <- expected[expected == name | startsWith(expected, 'data/')]
@@ -68,9 +72,7 @@ main <- function() {
             downloads <- downloads + as.integer(path == name)
             inputs <- inputs + as.integer(path != name)
         }
-        stopifnot(file.exists(file.path(html, slugs[i], 'index.html')),
-            identical(page$frontmatter$source_url,
-                paste0('https://github.com/StatFunGen/hpgR/blob/main/notebooks/', name)),
+        stopifnot(file.exists(file.path(html, slugs[pageOrder[i]], 'index.html')),
             identical(page$frontmatter$edit_url,
                 paste0('https://github.com/StatFunGen/hpgR/edit/main/notebooks/', name)))
         localLinks <- unique(c(localLinks, localUrls(page)))
