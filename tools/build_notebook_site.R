@@ -137,7 +137,7 @@ main <- function() {
         toc <- c(toc, paste0('    - title: Lecture ', lecture), '      children:')
         home <- c(home, '', paste0('## Lecture ', lecture), '')
         if (lecture == 9L)
-            home <- c(home, 'Run these in order: estimate size from the final DNA, trace its sampled ancestors, then fit a size history from the frequency spectrum.', '')
+            home <- c(home, 'Start with size and history, then trace sampled ancestors and fit a size history to the frequency spectrum. The fourth notebook accompanies the local genealogy material after the homework.', '')
         home <- c(home, '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
         for (i in seq_along(entries)) {
             entry <- entries[[i]]

@@ -110,13 +110,13 @@
       "website": true
     },
     {
-      "file": "P8149_Lecture_10_Split_Drift_Migration.ipynb",
-      "lecture": 10,
+      "file": "P8149_Lecture_9_Ancestral_Graphs.ipynb",
+      "lecture": 9,
       "role": "teaching_demonstration",
-      "website": false
+      "website": true
     },
     {
-      "file": "P8149_Lecture_10_Migration_and_Wahlund.ipynb",
+      "file": "P8149_Lecture_10_Split_Drift_Migration.ipynb",
       "lecture": 10,
       "role": "teaching_demonstration",
       "website": false

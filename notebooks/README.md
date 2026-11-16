@@ -7,12 +7,22 @@ Teaching examples and data downloads are listed in `catalog.json`.
 `data/` contains their inputs. Models and estimators live in hpgR; figures
 and plotting helpers live in the notebooks.
 
-Lecture 9 runs in this order: final-sample size and history, recorded
-ancestry and waiting times, then mutation counts and population size history.
-Lecture 10 starts with split and migration, then differentiation, Manhattan
-rats, archaic gene flow, and the local genealogy appendix. Each notebook
-runs on its own. The Lecture 9 panel and the Lecture 10 appendix read the
-same RDS files under `data/population_history/`.
+## Lecture 9
+
+1. [Population Size and History from Present-Day DNA](P8149_Lecture_9_Effective_Size_and_History.ipynb)
+2. [Trace the Sample through Its Parents](P8149_Lecture_9_Two_DNA_Copies.ipynb)
+3. [Mutations on Trees and Population Size History](P8149_Lecture_9_Mutations_on_a_Tree.ipynb)
+4. [Simulate and Date Local Genealogies](P8149_Lecture_9_Ancestral_Graphs.ipynb) accompanies the material after the homework.
+
+## Lecture 10
+
+1. [Split, Drift, Migration, and Differentiation](P8149_Lecture_10_Split_Drift_Migration.ipynb)
+2. [Manhattan Rats and a Barrier to Migration](P8149_Lecture_10_Manhattan_Rats_and_Migration_Barriers.ipynb)
+3. [Archaic Gene Flow and Shared Alleles](P8149_Lecture_10_Archaic_Gene_Flow.ipynb)
+4. [Local Genealogies and Introgressed Segments](P8149_Lecture_10_Ancestral_Graphs.ipynb)
+
+The Lecture 9 panel and the local genealogy notebook use the same simulated
+population under `data/population_history/`.
 
 Assignment requirements and function suggestions are in the lecture slides.
 Students write their own reports using hpgR and the supplied data.

@@ -9,6 +9,7 @@ popgen_files <- c("P8149_Lecture_8_Sampling_Drift_Mutation.ipynb",
     "P8149_Lecture_9_Effective_Size_and_History.ipynb",
     "P8149_Lecture_9_Two_DNA_Copies.ipynb",
     "P8149_Lecture_9_Mutations_on_a_Tree.ipynb",
+    "P8149_Lecture_9_Ancestral_Graphs.ipynb",
     "P8149_Lecture_10_Ancestral_Graphs.ipynb")
 catalog <- if (file.exists(file.path(site,'catalog.json')))
     jsonlite::fromJSON(file.path(site,'catalog.json'),simplifyVector=FALSE) else NULL
@@ -108,10 +109,13 @@ population <- publicData(popgen_files[3L])
 pair <- publicData(popgen_files[4L])
 tree <- publicData(popgen_files[5L])
 arg <- publicData(popgen_files[6L])
+introgression <- publicData(popgen_files[7L])
 stopifnot(identical(pair$observed, population$observed),
     identical(tree$observed, population$observed),
     identical(arg$observed, population$observed),
+    identical(introgression$observed, arg$observed),
     identical(pair$ancestry_truth, arg$ancestry_truth),
+    identical(introgression$ancestry_truth, arg$ancestry_truth),
     !exists("ancestry_truth", envir = tree, inherits = FALSE),
     identical(arg$ancestry_truth, readRDS(file.path(site,
         "data/population_history/ancestry_truth.rds"))))
