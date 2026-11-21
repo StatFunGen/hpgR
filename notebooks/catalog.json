@@ -143,13 +143,13 @@
       "file": "P8149_Lecture_11_Favored_Allele.ipynb",
       "lecture": 11,
       "role": "teaching_demonstration",
-      "website": false
+      "website": true
     },
     {
       "file": "P8149_Lecture_11_Sickle_Cell_Trait.ipynb",
       "lecture": 11,
       "role": "teaching_demonstration",
-      "website": false
+      "website": true
     },
     {
       "file": "P8149_Lecture_12_Ancient_Dogs_Uncertainty.ipynb",

@@ -35,7 +35,7 @@ main <- function() {
     selected <- Filter(function(entry) isTRUE(entry$website), allEntries)
     if (!length(selected)) stop('The website publication list is empty')
     if (any(vapply(selected, function(entry)
-        !entry$lecture %in% c(2L, 3L, 8L, 9L, 10L) ||
+        !entry$lecture %in% c(2L, 3L, 8L, 9L, 10L, 11L) ||
         !identical(entry$role, 'teaching_demonstration') ||
         grepl('homework|answer|solution|midterm|instructor', entry$file, ignore.case = TRUE), TRUE)))
         stop('A notebook is outside the approved publication scope')
@@ -138,6 +138,8 @@ main <- function() {
         home <- c(home, '', paste0('## Lecture ', lecture), '')
         if (lecture == 9L)
             home <- c(home, 'Start with size and history, then trace sampled ancestors and fit a size history to the frequency spectrum. The fourth notebook accompanies the local genealogy material after the homework.', '')
+        if (lecture == 11L)
+            home <- c(home, 'Start with E.1, then work through E.2.', '')
         home <- c(home, '::::{grid} 1 1 2 2', ':class: p8149-notebook-grid', '')
         for (i in seq_along(entries)) {
             entry <- entries[[i]]

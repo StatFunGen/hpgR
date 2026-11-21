@@ -20,7 +20,7 @@ if (!is.null(catalog)) {
         setequal(files,list.files(site,'[.]ipynb$')))
     for (entry in catalog$notebooks) stopifnot(
         identical(entry$role, 'teaching_demonstration'),
-        identical(entry$website, entry$lecture %in% c(2L,3L,8L,9L,10L)),
+        identical(entry$website, entry$lecture %in% c(2L,3L,8L,9L,10L,11L)),
         !grepl('homework|answer|solution|midterm|instructor',entry$file,ignore.case=TRUE))
     dataFiles <- vapply(catalog$datasets, `[[`, '', 'file')
     stopifnot(!anyDuplicated(dataFiles),
